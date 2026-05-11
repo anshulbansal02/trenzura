@@ -102,14 +102,14 @@ function ProductsPage() {
     <main className="fashion-container py-10 lg:py-14">
       <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="fashion-eyebrow">Catalog</p>
+          <p className="fashion-eyebrow">Shop</p>
           <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
-            The kurti edit
+            Kurtis and sets
           </h1>
         </div>
         <p className="fashion-copy max-w-xl">
-          Browse by size, price, and availability. The grid stays visual first, with enough
-          detail to compare pieces without losing the rhythm of shopping.
+          Find everyday kurtis, coordinated sets, and occasion-ready pieces by size, price, and
+          availability.
         </p>
       </div>
 
@@ -131,10 +131,9 @@ function ProductsPage() {
                   </span>
                 </>
               ) : (
-                'Showing the full collection'
+                'Showing all styles'
               )}
             </p>
-            {results.elapsed ? <p>{results.elapsed}</p> : null}
           </div>
           <ProductGrid products={results.products} />
         </section>

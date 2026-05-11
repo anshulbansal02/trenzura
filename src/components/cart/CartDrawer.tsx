@@ -53,7 +53,7 @@ export function CartDrawer() {
               <div>
                 <p className="font-serif text-3xl text-[var(--color-ink)]">Your bag is empty</p>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                  Add a size from any product page to start checkout.
+                  Choose a style and size to begin your order.
                 </p>
                 <Button
                   nativeButton={false}

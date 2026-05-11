@@ -15,7 +15,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const firstAvailableSize = product.sizes.find((size) => size.stockAvailable > 0)
 
   return (
-    <div className="group/card transition duration-300 ease-out hover:-translate-y-1">
+    <div className="group/card transition duration-300 ease-out">
       <Link
         to="/products/$slug"
         params={{ slug: product.slug }}

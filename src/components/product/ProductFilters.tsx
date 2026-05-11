@@ -93,7 +93,7 @@ export function ProductFilters({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Try pink, kurti, set"
+            placeholder="Search kurtis, sets, colours"
             className="h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
           />
           {query ? (
@@ -108,7 +108,7 @@ export function ProductFilters({
           ) : null}
         </div>
         <p className="text-xs leading-5 text-[var(--color-muted)]">
-          Search by product name, category, description, or size.
+          Search by style, colour, fit, or occasion.
         </p>
       </div>
 
@@ -173,7 +173,7 @@ export function ProductFilters({
                   })
                 }
                 className={joinClasses(
-                  'h-9 rounded-full border text-sm font-semibold transition duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-9 rounded-full border text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
                   isSelected
                     ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)]',

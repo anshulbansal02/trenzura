@@ -21,7 +21,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
             aria-pressed={activeImage === image}
             onClick={() => setActiveImage(image)}
             className={joinClasses(
-              'aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-[0.85rem] border bg-[var(--color-line)] transition duration-150 ease-out hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 lg:w-full',
+              'aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-[0.85rem] border bg-[var(--color-line)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 lg:w-full',
               activeImage === image
                 ? 'border-[var(--color-rouge)]'
                 : 'border-transparent hover:border-[var(--color-line)]',

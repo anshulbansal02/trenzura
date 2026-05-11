@@ -146,12 +146,12 @@ function CheckoutPage() {
 
     if (!isSupabaseConfigured) {
       setStatus('error')
-      setMessage('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+      setMessage('Checkout is temporarily unavailable. Please try again later.')
       return
     }
 
     setStatus('loading')
-    setMessage(activePendingOrder ? 'Opening secure Razorpay checkout...' : 'Creating a secure payment order...')
+    setMessage(activePendingOrder ? 'Opening secure checkout...' : 'Preparing your order...')
 
     try {
       const order = activePendingOrder ?? (await createCheckoutOrder())
@@ -162,7 +162,7 @@ function CheckoutPage() {
       if (!activePendingOrder && order.totals.total !== total) {
         setStatus('idle')
         setMessage(
-          `Your payable total is now ${formatPrice(order.totals.total)} after live price and stock checks. Review the updated summary, then continue to Razorpay.`,
+          `Your payable total is now ${formatPrice(order.totals.total)}. Review the updated summary, then continue to payment.`,
         )
         return
       }
@@ -192,7 +192,7 @@ function CheckoutPage() {
     )
 
     if (error || !order) {
-      throw new Error(error?.message ?? 'Unable to create payment order')
+      throw new Error(error?.message ?? 'Unable to prepare your order')
     }
 
     return order
@@ -225,21 +225,21 @@ function CheckoutPage() {
         ondismiss: () => {
           if (!paymentStarted) {
             setStatus('idle')
-            setMessage('Payment was cancelled before completion.')
+        setMessage('Payment was cancelled. You can try again when ready.')
           }
         },
       },
       handler: async (response: RazorpaySuccessResponse) => {
         paymentStarted = true
         setStatus('loading')
-        setMessage('Verifying payment...')
+        setMessage('Confirming your payment...')
 
         try {
           const verification = await verifyPayment(order.orderUuid, response)
           const needsReview = verification.orderStatus === 'payment_review_required'
 
           if (!verification.verified && !needsReview) {
-            throw new Error(verification.error ?? 'Payment verification failed')
+            throw new Error(verification.error ?? 'We could not confirm the payment')
           }
 
           clearCart()
@@ -256,12 +256,12 @@ function CheckoutPage() {
           })
           setMessage(
             needsReview
-              ? 'Payment was received. The order needs manual stock review before fulfillment.'
+              ? 'Payment was received. We are checking availability before dispatch.'
               : createSuccessMessage(verification),
           )
         } catch (error) {
           setStatus('error')
-          setMessage(error instanceof Error ? error.message : 'Unable to verify payment')
+          setMessage(error instanceof Error ? error.message : 'Unable to confirm your payment')
         }
       },
     })
@@ -292,17 +292,17 @@ function CheckoutPage() {
         <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-[1.25rem] p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <ConfirmationLine label="Order number" value={confirmation.orderNumber} />
-            <ConfirmationLine label="Payment ID" value={confirmation.paymentId ?? 'Recorded'} />
+            <ConfirmationLine label="Payment reference" value={confirmation.paymentId ?? 'Recorded'} />
             <ConfirmationLine
-              label="Order status"
-              value={formatStatus(confirmation.orderStatus ?? 'paid')}
+              label="Order"
+              value={formatCustomerOrderStatus(confirmation.orderStatus ?? 'paid')}
             />
             <ConfirmationLine
-              label="Shipment"
+              label="Delivery"
               value={
                 confirmation.trackingNumber
                   ? confirmation.trackingNumber
-                  : formatStatus(confirmation.shipmentStatus ?? 'shipment_pending')
+                  : formatCustomerDeliveryStatus(confirmation.shipmentStatus ?? 'shipment_pending')
               }
             />
           </div>
@@ -331,7 +331,7 @@ function CheckoutPage() {
           <p className="fashion-eyebrow">Checkout</p>
           <h1 className="fashion-display mt-2 text-5xl">Your bag is empty</h1>
           <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
-            Add a product and size before starting checkout.
+            Choose a style and size to begin your order.
           </p>
           <Button
             nativeButton={false}
@@ -359,8 +359,7 @@ function CheckoutPage() {
           </h1>
         </div>
         <p className="fashion-copy max-w-xl">
-          Supabase validates live stock and pricing, then Razorpay collects payment details in a
-          secure checkout window.
+          Add your delivery details, review your bag, and pay securely when everything looks right.
         </p>
       </div>
 
@@ -433,11 +432,11 @@ function CheckoutPage() {
             <div className="mt-5 rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
                 <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
-                Razorpay secure checkout
+                Secure payment
               </p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                Card, UPI, and wallet details are collected inside Razorpay. The storefront never
-                receives card or UPI credentials.
+                Pay with UPI, cards, wallets, and more. Payment details are handled by our payment
+                partner.
               </p>
             </div>
           </section>
@@ -516,7 +515,7 @@ function CheckoutPage() {
             {activePendingOrder ? (
               <p className="flex items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)]">
                 <PackageCheck className="size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-                Live price and stock have been confirmed for this payment order.
+                Your bag total has been confirmed for this order.
               </p>
             ) : null}
           </div>
@@ -539,7 +538,7 @@ async function verifyPayment(orderUuid: string, response: RazorpaySuccessRespons
   )
 
   if (error || !data) {
-    throw new Error(error?.message ?? 'Unable to verify payment')
+    throw new Error(error?.message ?? 'Unable to confirm your payment')
   }
 
   return data
@@ -662,18 +661,46 @@ function normalizeFormForFingerprint(form: CheckoutForm) {
 
 function createSuccessMessage(verification: VerifyPaymentResponse) {
   if (verification.shipment?.trackingNumber) {
-    return `Payment verified. Shipment tracking number: ${verification.shipment.trackingNumber}.`
+    return `Your order is confirmed. Tracking number: ${verification.shipment.trackingNumber}.`
   }
 
   if (verification.orderStatus === 'shipment_pending') {
-    return 'Payment verified. Your order is ready for fulfillment.'
+    return 'Your order is confirmed. We will share tracking after dispatch.'
   }
 
-  return 'Payment verified. Your order has been recorded for fulfillment.'
+  return 'Your order is confirmed. We will start preparing it shortly.'
 }
 
-function formatStatus(status: string) {
-  return status
+function formatCustomerOrderStatus(status: string) {
+  const labels: Record<string, string> = {
+    paid: 'Confirmed',
+    shipment_pending: 'Preparing',
+    payment_review_required: 'Being checked',
+    payment_pending: 'Awaiting payment',
+    payment_failed: 'Payment incomplete',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+  }
+
+  return labels[status] ?? toTitleCase(status)
+}
+
+function formatCustomerDeliveryStatus(status: string) {
+  const labels: Record<string, string> = {
+    pending: 'Preparing for dispatch',
+    shipment_pending: 'Preparing for dispatch',
+    created: 'Preparing for dispatch',
+    in_transit: 'On the way',
+    delivered: 'Delivered',
+    failed: 'We will contact you',
+  }
+
+  return labels[status] ?? toTitleCase(status)
+}
+
+function toTitleCase(value: string) {
+  return value
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')

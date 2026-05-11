@@ -72,11 +72,10 @@ function ProductPreviewPage() {
 
       <section className="mt-12 grid gap-10 border-y border-[var(--color-line)] py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)]">
         <div>
-          <h2 className="fashion-display text-3xl">Product notes</h2>
+          <h2 className="fashion-display text-3xl">About this piece</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            A cleaner product page keeps the garment visual, the fit information close, and the
-            buying action direct. Select your size first, then add it to cart with full stock
-            feedback.
+            Designed for repeat wear: easy to style, comfortable through the day, and polished
+            enough for plans after work.
           </p>
 
           <Accordion.Root
@@ -97,8 +96,10 @@ function ProductPreviewPage() {
                 <ul className="space-y-3 text-sm text-[var(--color-muted)]">
                   {[
                     product.categoryLabel,
-                    `${product.stockAvailable} total pieces available`,
-                    `${product.sizes.map((size) => size.label).join(', ')} sizes`,
+                    `${product.sizes.map((size) => size.label).join(', ')} available sizes`,
+                    product.stockAvailable <= 8
+                      ? 'Limited quantities available'
+                      : 'Ready to ship',
                   ].map((detail) => (
                     <li key={detail} className="flex gap-3">
                       <span className="mt-2 size-1 rounded-full bg-[var(--color-rouge)]" />
@@ -120,8 +121,8 @@ function ProductPreviewPage() {
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Panel className="pb-5 text-sm leading-6 text-[var(--color-muted)]">
-                Ships within 1-2 business days with tracking after dispatch. Size exchanges can be
-                handled within 7 days.
+                Ships within 1-2 business days. Tracking is shared after dispatch, and eligible
+                size exchanges can be requested within 7 days.
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion.Root>
@@ -179,7 +180,7 @@ function ProductPreviewPage() {
                 key={item.productId}
                 to="/products/$slug"
                 params={{ slug: item.slug }}
-                className="group rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition duration-200 ease-out hover:-translate-y-1 hover:shadow-lg hover:shadow-stone-950/10"
+                className="group rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition duration-200 ease-out hover:shadow-lg hover:shadow-stone-950/10"
               >
                 <ProductMedia product={item} className="aspect-[4/5]" />
                 <div className="mt-3 flex items-start justify-between gap-3">

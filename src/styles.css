@@ -45,11 +45,6 @@ textarea {
   font: inherit;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
 ::selection {
   background: var(--color-rouge);
   color: var(--color-paper);
@@ -88,7 +83,6 @@ a {
   .fashion-button-primary:hover {
     background: var(--color-rouge-dark);
     box-shadow: 0 16px 34px rgb(85 39 46 / 0.18);
-    transform: translateY(-2px);
   }
 
   .fashion-button-primary:disabled {
@@ -108,7 +102,6 @@ a {
   .fashion-button-secondary:hover {
     background: var(--color-surface);
     box-shadow: 0 12px 28px rgb(23 19 16 / 0.08);
-    transform: translateY(-2px);
   }
 
   .fashion-focus {

@@ -38,8 +38,9 @@ function Home() {
               Trenzura
             </h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-[var(--color-paper)]/86 sm:text-lg">
-              Printed kurtis and coordinated sets with an easy, polished feel. Made to move from
-              weekday errands to small celebrations without changing the rhythm of your day.
+              Printed kurtis and coordinated sets for bright mornings, family lunches, and easy
+              festive evenings. Comfortable silhouettes, polished details, and pieces you will
+              reach for often.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button
@@ -59,11 +60,11 @@ function Home() {
                   <Link
                     to="/products/$slug"
                     params={{ slug: heroProduct.slug }}
-                    className="inline-flex h-12 items-center rounded-full border border-[var(--color-paper)]/70 px-6 text-sm font-semibold text-[var(--color-paper)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-paper)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-paper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)] active:translate-y-0 active:scale-[0.99]"
+                    className="inline-flex h-12 items-center rounded-full border border-[var(--color-paper)]/70 px-6 text-sm font-semibold text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-paper)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-paper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)] active:scale-[0.99]"
                   />
                 }
               >
-                View the lead piece
+                View featured set
               </Button>
             </div>
           </div>
@@ -74,7 +75,7 @@ function Home() {
         <div className="mb-7 flex items-end justify-between gap-6">
           <div>
             <p className="fashion-eyebrow">Shop by mood</p>
-            <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">Curated edits</h2>
+            <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">Freshly picked</h2>
           </div>
           <Link
             to="/products"
@@ -112,9 +113,9 @@ function Home() {
       <section className="fashion-container py-8 lg:py-12">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="fashion-eyebrow">Featured</p>
+            <p className="fashion-eyebrow">This week</p>
             <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">
-              Pieces with presence
+              New favourites
             </h2>
           </div>
           <Link
@@ -138,9 +139,9 @@ function Home() {
             />
           </div>
           <div className="p-6 sm:p-8 lg:p-10">
-            <p className="fashion-eyebrow">Latest drops</p>
+            <p className="fashion-eyebrow">Latest arrivals</p>
             <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">
-              Quiet details, easy silhouettes
+              Easy outfits, ready to wear
             </h2>
             <div className="mt-8 divide-y divide-[var(--color-line)]">
               {newArrivals.map((product) => (
@@ -174,7 +175,7 @@ function Home() {
                 />
               }
             >
-              Browse offers
+              Shop offers
             </Button>
           </div>
         </div>
@@ -183,10 +184,10 @@ function Home() {
       <section className="border-y border-[var(--color-line)] bg-[var(--color-surface)]">
         <div className="fashion-container grid gap-8 py-12 md:grid-cols-4">
           {[
-            ['Free shipping', `Applied on orders over ${formatPrice(250000)}.`],
-            ['Easy exchanges', 'Simple 7-day exchange flow for size issues.'],
-            ['Secure payments', 'Razorpay-ready checkout architecture.'],
-            ['Stock aware', 'Size availability stays visible before cart.'],
+            ['Free shipping', `On orders over ${formatPrice(250000)}.`],
+            ['Easy exchanges', '7-day size exchanges on eligible pieces.'],
+            ['Secure payments', 'Pay safely with UPI, cards, wallets, and more.'],
+            ['Size-first shopping', 'Available sizes are shown before you add to bag.'],
           ].map(([title, copy]) => (
             <div key={title}>
               <h3 className="font-serif text-xl text-[var(--color-ink)]">{title}</h3>

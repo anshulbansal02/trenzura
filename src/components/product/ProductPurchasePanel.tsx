@@ -89,12 +89,12 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
                   setQuantity(1)
                 }}
                 className={joinClasses(
-                  'h-11 rounded-full border text-sm font-semibold transition duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-11 rounded-full border text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
                   isSelected
                     ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
                   !isAvailable &&
-                    'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:translate-y-0 hover:border-[var(--color-line)]',
+                    'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:border-[var(--color-line)]',
                 )}
               >
                 {size.label}
@@ -143,7 +143,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
           type="button"
           disabled={!canAddToCart}
           onClick={addCurrentSelection}
-          className="fashion-button-primary h-12 px-5 disabled:hover:translate-y-0"
+          className="fashion-button-primary h-12 px-5"
         >
           Add to bag
         </Button>
@@ -180,7 +180,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
             className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]"
             aria-hidden="true"
           />
-          <span>Secure checkout with Razorpay-ready payment handoff.</span>
+          <span>Secure payment options at checkout.</span>
         </p>
       </div>
     </div>
