@@ -16,9 +16,18 @@ import { useMemo, useState } from 'react'
 import { useCart } from '../components/cart/CartProvider'
 import { ProductMedia } from '../components/product/ProductMedia'
 import { formatPrice, freeShippingThresholdPaise, standardShippingPaise } from '../lib/format'
+import { createPageMeta } from '../lib/seo'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
 
-export const Route = createFileRoute('/checkout')({ component: CheckoutPage })
+export const Route = createFileRoute('/checkout')({
+  head: () =>
+    createPageMeta({
+      title: 'Checkout | Trenzura',
+      description: 'Secure checkout for your Trenzura bag with UPI, card, and wallet payments.',
+      path: '/checkout',
+    }),
+  component: CheckoutPage,
+})
 
 type CheckoutForm = {
   email: string
@@ -371,12 +380,16 @@ function CheckoutPage() {
               <CheckoutField
                 label="Email"
                 type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
                 value={form.email}
                 onChange={(value) => updateField('email', value)}
               />
               <CheckoutField
                 label="Phone"
                 type="tel"
+                placeholder="98765 43210"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(value) => updateField('phone', value)}
               />
@@ -388,34 +401,45 @@ function CheckoutPage() {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <CheckoutField
                 label="Full name"
+                placeholder="Aarav Sharma"
+                autoComplete="name"
                 value={form.fullName}
                 onChange={(value) => updateField('fullName', value)}
               />
               <CheckoutField
                 label="Pincode"
                 inputMode="numeric"
+                placeholder="400001"
+                autoComplete="postal-code"
                 value={form.pincode}
                 onChange={(value) => updateField('pincode', value)}
               />
               <CheckoutField
                 label="Address"
+                placeholder="Flat 12, Palm Grove Apartments, MG Road"
+                autoComplete="street-address"
                 value={form.addressLine}
                 onChange={(value) => updateField('addressLine', value)}
                 className="sm:col-span-2"
               />
               <CheckoutField
                 label="Landmark"
+                placeholder="Near City Mall"
                 value={form.landmark}
                 onChange={(value) => updateField('landmark', value)}
                 required={false}
               />
               <CheckoutField
                 label="City"
+                placeholder="Mumbai"
+                autoComplete="address-level2"
                 value={form.city}
                 onChange={(value) => updateField('city', value)}
               />
               <CheckoutField
                 label="State"
+                placeholder="Maharashtra"
+                autoComplete="address-level1"
                 value={form.state}
                 onChange={(value) => updateField('state', value)}
               />
@@ -551,6 +575,8 @@ function CheckoutField({
   className,
   type = 'text',
   inputMode,
+  placeholder,
+  autoComplete,
   required = true,
 }: {
   label: string
@@ -559,6 +585,8 @@ function CheckoutField({
   className?: string
   type?: string
   inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
+  placeholder?: string
+  autoComplete?: string
   required?: boolean
 }) {
   return (
@@ -568,6 +596,8 @@ function CheckoutField({
         required={required}
         type={type}
         inputMode={inputMode}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
         className="mt-2 h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"

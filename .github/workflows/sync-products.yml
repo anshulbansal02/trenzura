@@ -2,10 +2,20 @@ name: Sync products
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        default: qa
+        options:
+          - qa
+          - prod
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     env:
       GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
       GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}

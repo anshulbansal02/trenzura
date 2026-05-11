@@ -1,6 +1,6 @@
 import { Button } from '@base-ui/react/button'
 import { Link } from '@tanstack/react-router'
-import { Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
+import { BadgeCheck, Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
@@ -9,9 +9,16 @@ import { formatPrice, joinClasses } from '../../lib/format'
 
 type ProductPurchasePanelProps = {
   product: Product
+  variant?: 'default' | 'quickLook'
+  onAdded?: () => void
 }
 
-export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
+export function ProductPurchasePanel({
+  product,
+  variant = 'default',
+  onAdded,
+}: ProductPurchasePanelProps) {
+  const isQuickLook = variant === 'quickLook'
   const availableSizes = useMemo(
     () => product.sizes.filter((size) => size.stockAvailable > 0),
     [product.sizes],
@@ -38,10 +45,15 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
   function addCurrentSelection() {
     if (!canAddToCart) return
     addItem({ product, size: selectedSize, quantity })
+    onAdded?.()
   }
 
   return (
-    <div className="fashion-surface rounded-[1.25rem] p-4 lg:p-5">
+    <div
+      className={joinClasses(
+        isQuickLook ? '' : 'fashion-surface rounded-[1.25rem] p-4 lg:p-5',
+      )}
+    >
       <div className="flex items-start justify-between gap-5">
         <div>
           <p className="text-2xl font-semibold text-[var(--color-ink)]">
@@ -60,11 +72,21 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
           {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
         </p>
       </div>
+      {!isQuickLook ? (
+        <div className="mt-4 grid gap-2 text-xs font-medium text-[var(--color-muted)] sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+          {['Tax included', 'Ready to ship', 'Secure payment'].map((label) => (
+            <p key={label} className="flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-2">
+              <BadgeCheck className="size-3.5 text-[var(--color-sage)]" aria-hidden="true" />
+              {label}
+            </p>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-6">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Select size</p>
-          {product.sizeChart.length > 0 ? (
+          {product.sizeChart.length > 0 && !isQuickLook ? (
             <a
               href="#size-chart"
               className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)]"
@@ -104,41 +126,50 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
         </div>
         {selectedInventory ? (
           <p className="mt-2 text-xs text-[var(--color-muted)]">
-            {selectedInventory.stockAvailable} available in {selectedInventory.label}
+            {selectedInventory.stockAvailable <= 3
+              ? `Only ${selectedInventory.stockAvailable} left in ${selectedInventory.label}`
+              : `${selectedInventory.stockAvailable} available in ${selectedInventory.label}`}
           </p>
         ) : (
           <p className="mt-2 text-xs text-red-700">This product is currently sold out.</p>
         )}
       </div>
 
-      <div className="mt-6">
-        <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
-        <div className="mt-3 inline-flex h-11 items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
-          <button
-            type="button"
-            disabled={quantity <= 1}
-            aria-label="Decrease quantity"
-            onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-            className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
-          >
-            <Minus className="mx-auto size-4" aria-hidden="true" />
-          </button>
-          <span className="w-10 text-center text-sm font-semibold text-[var(--color-ink)]">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            disabled={!selectedInventory || quantity >= maxQuantity}
-            aria-label="Increase quantity"
-            onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-            className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
-          >
-            <Plus className="mx-auto size-4" aria-hidden="true" />
-          </button>
+      {!isQuickLook ? (
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
+          <div className="mt-3 inline-flex h-11 items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
+            <button
+              type="button"
+              disabled={quantity <= 1}
+              aria-label="Decrease quantity"
+              onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+              className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+            >
+              <Minus className="mx-auto size-4" aria-hidden="true" />
+            </button>
+            <span className="w-10 text-center text-sm font-semibold text-[var(--color-ink)]">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              disabled={!selectedInventory || quantity >= maxQuantity}
+              aria-label="Increase quantity"
+              onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+              className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+            >
+              <Plus className="mx-auto size-4" aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <div
+        className={joinClasses(
+          'mt-6 grid gap-3',
+          isQuickLook ? '' : 'sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
+        )}
+      >
         <Button
           type="button"
           disabled={!canAddToCart}
@@ -147,41 +178,52 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
         >
           Add to bag
         </Button>
-        <Button
-          nativeButton={false}
-          render={
-            <Link
-              to="/checkout"
-              onClick={addCurrentSelection}
-              className={joinClasses(
-                'fashion-button-secondary h-12 px-5',
-                canAddToCart
-                  ? ''
-                  : 'pointer-events-none border-stone-200 bg-stone-100 text-stone-500 shadow-none',
-              )}
-            />
-          }
-        >
-          Buy now
-        </Button>
+        {!isQuickLook ? (
+          <Button
+            nativeButton={false}
+            render={
+              <Link
+                to="/checkout"
+                onClick={addCurrentSelection}
+                className={joinClasses(
+                  'fashion-button-secondary h-12 px-5',
+                  canAddToCart
+                    ? ''
+                    : 'pointer-events-none border-stone-200 bg-stone-100 text-stone-500 shadow-none',
+                )}
+              />
+            }
+          >
+            Buy now
+          </Button>
+        ) : null}
       </div>
 
-      <div className="mt-6 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]">
+      <div
+        className={joinClasses(
+          'mt-6 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]',
+          isQuickLook ? 'text-xs leading-5' : '',
+        )}
+      >
         <p className="flex gap-3">
           <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
           <span>Ships in 1-2 business days from the studio.</span>
         </p>
-        <p className="flex gap-3">
-          <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-          <span>Free shipping over {formatPrice(250000)} and easy 7-day exchanges.</span>
-        </p>
-        <p className="flex gap-3">
-          <ShieldCheck
-            className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]"
-            aria-hidden="true"
-          />
-          <span>Secure payment options at checkout.</span>
-        </p>
+        {!isQuickLook ? (
+          <>
+            <p className="flex gap-3">
+              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
+              <span>Free shipping over {formatPrice(250000)} and easy 7-day exchanges.</span>
+            </p>
+            <p className="flex gap-3">
+              <ShieldCheck
+                className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]"
+                aria-hidden="true"
+              />
+              <span>Secure payment options at checkout.</span>
+            </p>
+          </>
+        ) : null}
       </div>
     </div>
   )

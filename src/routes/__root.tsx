@@ -3,6 +3,8 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { CartDrawer } from '../components/cart/CartDrawer'
 import { CartProvider } from '../components/cart/CartProvider'
 import { SiteHeader } from '../components/layout/SiteHeader'
+import { RouteNotFound } from '../components/layout/RouteBoundaries'
+import { createPageMeta, siteDescription, siteName } from '../lib/seo'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -15,12 +17,14 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
+      ...createPageMeta({
+        title: siteName,
+        description: siteDescription,
+        path: '/',
+      }).meta,
       {
-        title: 'Trenzura',
-      },
-      {
-        name: 'description',
-        content: 'A modern clothing storefront built with TanStack Start.',
+        name: 'theme-color',
+        content: '#171310',
       },
     ],
     links: [
@@ -28,8 +32,31 @@ export const Route = createRootRoute({
         rel: 'stylesheet',
         href: appCss,
       },
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: '/favicon.svg',
+      },
+      {
+        rel: 'alternate icon',
+        href: '/favicon.ico',
+      },
+      {
+        rel: 'apple-touch-icon',
+        href: '/apple-touch-icon.svg',
+      },
+      {
+        rel: 'mask-icon',
+        href: '/safari-pinned-tab.svg',
+        color: '#171310',
+      },
+      {
+        rel: 'manifest',
+        href: '/site.webmanifest',
+      },
     ],
   }),
+  notFoundComponent: RouteNotFound,
   shellComponent: RootDocument,
 })
 
@@ -41,8 +68,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-[var(--color-canvas)] text-[var(--color-ink)] antialiased">
         <CartProvider>
+          <a href="#page-content" className="skip-link">
+            Skip to content
+          </a>
           <SiteHeader />
-          {children}
+          <div id="page-content" tabIndex={-1}>
+            {children}
+          </div>
           <CartDrawer />
         </CartProvider>
         <Scripts />

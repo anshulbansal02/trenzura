@@ -3,6 +3,14 @@ name: Retry shipment
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        default: qa
+        options:
+          - qa
+          - prod
       order_number:
         description: Friendly order number, for example TZ-20260511-A7K2F1
         required: true
@@ -11,11 +19,13 @@ on:
 jobs:
   retry:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - name: Build request body
         env:
           ORDER_NUMBER: ${{ inputs.order_number }}
-        run: node -e "process.stdout.write(JSON.stringify({ orderNumber: process.env.ORDER_NUMBER }))" > body.json
+        run: |
+          node -e "process.stdout.write(JSON.stringify({ orderNumber: process.env.ORDER_NUMBER }))" > body.json
 
       - name: Retry shipment
         env:

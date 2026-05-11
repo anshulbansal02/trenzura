@@ -16,6 +16,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "pnpm build:ci && wrangler deploy",
+    "deploy:qa": "CLOUDFLARE_ENV=qa pnpm build:ci && CLOUDFLARE_ENV=qa wrangler deploy",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
     "googleapis": "^171.4.0",
+    "jose": "^6.2.3",
     "lucide-react": "^1.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

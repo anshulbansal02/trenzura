@@ -1,12 +1,13 @@
 import { Accordion } from '@base-ui/react/accordion'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Ruler, ShieldCheck, Truck, Undo2 } from 'lucide-react'
 
 import { ProductGallery } from '../components/product/ProductGallery'
 import { ProductMedia } from '../components/product/ProductMedia'
 import { ProductPurchasePanel } from '../components/product/ProductPurchasePanel'
 import { getProductBySlug, products } from '../data/products'
 import { formatPrice } from '../lib/format'
+import { createPageMeta, createProductJsonLd } from '../lib/seo'
 
 export const Route = createFileRoute('/products_/$slug')({
   loader: ({ params }) => {
@@ -17,6 +18,40 @@ export const Route = createFileRoute('/products_/$slug')({
     }
 
     return { product }
+  },
+  head: ({ params }) => {
+    const product = getProductBySlug(params.slug)
+
+    if (!product) {
+      return createPageMeta({
+        title: 'Product not found | Trenzura',
+        description: 'This Trenzura product is unavailable.',
+        path: '/products',
+      })
+    }
+
+    const seo = createPageMeta({
+      title: `${product.title} | Trenzura`,
+      description: product.description,
+      path: `/products/${product.slug}`,
+      image: product.images[0],
+      type: 'product',
+    })
+
+    return {
+      ...seo,
+      meta: [
+        ...seo.meta,
+        { property: 'product:price:amount', content: String(product.sellingPricePaise / 100) },
+        { property: 'product:price:currency', content: 'INR' },
+      ],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(createProductJsonLd(product)),
+        },
+      ],
+    }
   },
   component: ProductPreviewPage,
 })
@@ -29,6 +64,15 @@ function ProductPreviewPage() {
         item.category === product.category && item.productId !== product.productId,
     )
     .slice(0, 3)
+  const availableSizeLabels = product.sizes
+    .filter((size) => size.stockAvailable > 0)
+    .map((size) => size.label)
+  const confidenceItems = [
+    { Icon: Truck, title: 'Dispatch', copy: 'Ships in 1-2 business days' },
+    { Icon: Undo2, title: 'Exchange', copy: '7-day eligible size exchange' },
+    { Icon: Ruler, title: 'Fit', copy: `${availableSizeLabels.join(', ')} ready to order` },
+    { Icon: ShieldCheck, title: 'Payment', copy: 'UPI, cards, wallets, and more' },
+  ]
 
   return (
     <main className="fashion-container py-8 lg:py-12">
@@ -63,6 +107,20 @@ function ProductPreviewPage() {
           <p className="mt-7 max-w-2xl text-base leading-7 text-[var(--color-muted)]">
             {product.description}
           </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {confidenceItems.map(({ Icon, title, copy }) => (
+              <div
+                key={title}
+                className="rounded-[0.85rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3"
+              >
+                <Icon className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
+                <p className="mt-2 text-xs font-semibold uppercase text-[var(--color-muted)]">
+                  {title}
+                </p>
+                <p className="mt-1 text-sm text-[var(--color-ink)]">{copy}</p>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-8">
             <ProductPurchasePanel product={product} />
@@ -74,8 +132,8 @@ function ProductPreviewPage() {
         <div>
           <h2 className="fashion-display text-3xl">About this piece</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            Designed for repeat wear: easy to style, comfortable through the day, and polished
-            enough for plans after work.
+            Designed for repeat wear: easy to style, comfortable through the day, and clear enough
+            to buy without guessing on fit, availability, or delivery.
           </p>
 
           <Accordion.Root
@@ -97,6 +155,7 @@ function ProductPreviewPage() {
                   {[
                     product.categoryLabel,
                     `${product.sizes.map((size) => size.label).join(', ')} available sizes`,
+                    `${product.images.length} product photos for front and detail views`,
                     product.stockAvailable <= 8
                       ? 'Limited quantities available'
                       : 'Ready to ship',
@@ -182,7 +241,7 @@ function ProductPreviewPage() {
                 params={{ slug: item.slug }}
                 className="group rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition duration-200 ease-out hover:shadow-lg hover:shadow-stone-950/10"
               >
-                <ProductMedia product={item} className="aspect-[4/5]" />
+                <ProductMedia product={item} className="aspect-[4/5]" hoverZoom />
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <p className="font-semibold text-[var(--color-ink)]">{item.title}</p>
                   <p className="mt-1 text-sm text-[var(--color-muted)]">

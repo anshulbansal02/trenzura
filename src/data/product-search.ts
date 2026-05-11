@@ -3,7 +3,7 @@ import { create, insertMultiple, search } from '@orama/orama'
 import type { Product } from './product-schema'
 import { products } from './products'
 
-export type ProductSort = 'recommended' | 'price-asc' | 'price-desc' | 'discount-desc'
+export type ProductSort = 'recommended' | 'newest' | 'price-asc' | 'price-desc' | 'discount-desc'
 
 export type ProductSearchInput = {
   query: string
@@ -164,6 +164,12 @@ function sortProducts(items: Product[], sort: ProductSort, query = '') {
       (left, right) =>
         right.discountPercent - left.discountPercent ||
         left.sellingPricePaise - right.sellingPricePaise,
+    )
+  }
+
+  if (sort === 'newest') {
+    return productsToSort.sort(
+      (left, right) => products.indexOf(left) - products.indexOf(right),
     )
   }
 
