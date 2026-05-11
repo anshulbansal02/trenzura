@@ -1,0 +1,502 @@
+[
+  {
+    "productId": "TZ-001",
+    "slug": "yellow-kurti-pant-set-4x4r",
+    "title": "Yellow Kurti & Pant Set",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-001/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-001/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-001/1.jpg",
+      "TZ-001/2.jpg"
+    ],
+    "mrpPaise": 249000,
+    "sellingPricePaise": 199000,
+    "discountPercent": 20,
+    "sizes": [
+      {
+        "variantId": "TZ-001:m",
+        "label": "M",
+        "stockAvailable": 8,
+        "active": true
+      },
+      {
+        "variantId": "TZ-001:l",
+        "label": "L",
+        "stockAvailable": 10,
+        "active": true
+      },
+      {
+        "variantId": "TZ-001:xl",
+        "label": "XL",
+        "stockAvailable": 7,
+        "active": true
+      },
+      {
+        "variantId": "TZ-001:xxl",
+        "label": "XXL",
+        "stockAvailable": 3,
+        "active": true
+      }
+    ],
+    "stockAvailable": 28,
+    "description": "A bright kurti and pant co-ord cut for easy festive days and polished daily wear.",
+    "sizeChart": [
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "44 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "44 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "45 in"
+        }
+      },
+      {
+        "size": "XXL",
+        "measurements": {
+          "Bust": "44 in",
+          "Length": "45 in"
+        }
+      }
+    ],
+    "category": "sets",
+    "categoryLabel": "Sets",
+    "imageAlt": "Yellow Kurti & Pant Set",
+    "featured": true,
+    "active": true
+  },
+  {
+    "productId": "TZ-002",
+    "slug": "belt-short-kurti-4x4s",
+    "title": "Belt Short Kurti",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-002/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-002/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-002/1.jpg",
+      "TZ-002/2.jpg"
+    ],
+    "mrpPaise": 169000,
+    "sellingPricePaise": 139000,
+    "discountPercent": 18,
+    "sizes": [
+      {
+        "variantId": "TZ-002:s",
+        "label": "S",
+        "stockAvailable": 5,
+        "active": true
+      },
+      {
+        "variantId": "TZ-002:m",
+        "label": "M",
+        "stockAvailable": 9,
+        "active": true
+      },
+      {
+        "variantId": "TZ-002:l",
+        "label": "L",
+        "stockAvailable": 8,
+        "active": true
+      },
+      {
+        "variantId": "TZ-002:xl",
+        "label": "XL",
+        "stockAvailable": 4,
+        "active": true
+      }
+    ],
+    "stockAvailable": 26,
+    "description": "A structured short kurti with a waist belt detail for a clean modern silhouette.",
+    "sizeChart": [
+      {
+        "size": "S",
+        "measurements": {
+          "Bust": "36 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "35 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "35 in"
+        }
+      }
+    ],
+    "category": "kurtis",
+    "categoryLabel": "Kurtis",
+    "imageAlt": "Belt Short Kurti",
+    "featured": true,
+    "active": true
+  },
+  {
+    "productId": "TZ-003",
+    "slug": "camel-print-short-kurti-4x4t",
+    "title": "Camel Print Short Kurti",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-003/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-003/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-003/1.jpg",
+      "TZ-003/2.jpg"
+    ],
+    "mrpPaise": 149000,
+    "sellingPricePaise": 127000,
+    "discountPercent": 15,
+    "sizes": [
+      {
+        "variantId": "TZ-003:s",
+        "label": "S",
+        "stockAvailable": 4,
+        "active": true
+      },
+      {
+        "variantId": "TZ-003:m",
+        "label": "M",
+        "stockAvailable": 8,
+        "active": true
+      },
+      {
+        "variantId": "TZ-003:l",
+        "label": "L",
+        "stockAvailable": 9,
+        "active": true
+      },
+      {
+        "variantId": "TZ-003:xl",
+        "label": "XL",
+        "stockAvailable": 6,
+        "active": true
+      },
+      {
+        "variantId": "TZ-003:xxl",
+        "label": "XXL",
+        "stockAvailable": 2,
+        "active": true
+      }
+    ],
+    "stockAvailable": 29,
+    "description": "A printed short kurti with a relaxed fit and everyday-friendly length.",
+    "sizeChart": [
+      {
+        "size": "S",
+        "measurements": {
+          "Bust": "36 in",
+          "Length": "33 in"
+        }
+      },
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "35 in"
+        }
+      },
+      {
+        "size": "XXL",
+        "measurements": {
+          "Bust": "44 in",
+          "Length": "35 in"
+        }
+      }
+    ],
+    "category": "kurtis",
+    "categoryLabel": "Kurtis",
+    "imageAlt": "Camel Print Short Kurti",
+    "featured": false,
+    "active": true
+  },
+  {
+    "productId": "TZ-004",
+    "slug": "blue-printed-short-kurti-4x4u",
+    "title": "Blue Printed Short Kurti",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-004/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-004/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-004/1.jpg",
+      "TZ-004/2.jpg"
+    ],
+    "mrpPaise": 159000,
+    "sellingPricePaise": 127000,
+    "discountPercent": 20,
+    "sizes": [
+      {
+        "variantId": "TZ-004:s",
+        "label": "S",
+        "stockAvailable": 3,
+        "active": true
+      },
+      {
+        "variantId": "TZ-004:m",
+        "label": "M",
+        "stockAvailable": 9,
+        "active": true
+      },
+      {
+        "variantId": "TZ-004:l",
+        "label": "L",
+        "stockAvailable": 7,
+        "active": true
+      },
+      {
+        "variantId": "TZ-004:xl",
+        "label": "XL",
+        "stockAvailable": 5,
+        "active": true
+      }
+    ],
+    "stockAvailable": 24,
+    "description": "A blue printed kurti made for simple pairings with denims, pants, or palazzos.",
+    "sizeChart": [
+      {
+        "size": "S",
+        "measurements": {
+          "Bust": "36 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "34 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "35 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "35 in"
+        }
+      }
+    ],
+    "category": "kurtis",
+    "categoryLabel": "Kurtis",
+    "imageAlt": "Blue Printed Short Kurti",
+    "featured": true,
+    "active": true
+  },
+  {
+    "productId": "TZ-005",
+    "slug": "pink-printed-kurti-pant-4x4v",
+    "title": "Pink Printed Kurti & Pant",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-005/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-005/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-005/1.jpg",
+      "TZ-005/2.jpg"
+    ],
+    "mrpPaise": 239000,
+    "sellingPricePaise": 187000,
+    "discountPercent": 22,
+    "sizes": [
+      {
+        "variantId": "TZ-005:m",
+        "label": "M",
+        "stockAvailable": 6,
+        "active": true
+      },
+      {
+        "variantId": "TZ-005:l",
+        "label": "L",
+        "stockAvailable": 8,
+        "active": true
+      },
+      {
+        "variantId": "TZ-005:xl",
+        "label": "XL",
+        "stockAvailable": 5,
+        "active": true
+      },
+      {
+        "variantId": "TZ-005:xxl",
+        "label": "XXL",
+        "stockAvailable": 2,
+        "active": true
+      }
+    ],
+    "stockAvailable": 21,
+    "description": "A coordinated printed kurti and pant set with a soft color story and easy movement.",
+    "sizeChart": [
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "44 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "44 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "45 in"
+        }
+      },
+      {
+        "size": "XXL",
+        "measurements": {
+          "Bust": "44 in",
+          "Length": "45 in"
+        }
+      }
+    ],
+    "category": "sets",
+    "categoryLabel": "Sets",
+    "imageAlt": "Pink Printed Kurti & Pant",
+    "featured": false,
+    "active": true
+  },
+  {
+    "productId": "TZ-006",
+    "slug": "black-long-kurti-4x4w",
+    "title": "Black Long Kurti",
+    "images": [
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-006/1.jpg",
+      "https://tvrrgphxdifrxirtcoou.supabase.co/storage/v1/object/public/product-images/TZ-006/2.jpg"
+    ],
+    "imageStoragePaths": [
+      "TZ-006/1.jpg",
+      "TZ-006/2.jpg"
+    ],
+    "mrpPaise": 199000,
+    "sellingPricePaise": 167000,
+    "discountPercent": 16,
+    "sizes": [
+      {
+        "variantId": "TZ-006:s",
+        "label": "S",
+        "stockAvailable": 4,
+        "active": true
+      },
+      {
+        "variantId": "TZ-006:m",
+        "label": "M",
+        "stockAvailable": 7,
+        "active": true
+      },
+      {
+        "variantId": "TZ-006:l",
+        "label": "L",
+        "stockAvailable": 8,
+        "active": true
+      },
+      {
+        "variantId": "TZ-006:xl",
+        "label": "XL",
+        "stockAvailable": 4,
+        "active": true
+      },
+      {
+        "variantId": "TZ-006:xxl",
+        "label": "XXL",
+        "stockAvailable": 1,
+        "active": true
+      }
+    ],
+    "stockAvailable": 24,
+    "description": "A versatile black long kurti with a refined fall and an easy occasion-ready shape.",
+    "sizeChart": [
+      {
+        "size": "S",
+        "measurements": {
+          "Bust": "36 in",
+          "Length": "46 in"
+        }
+      },
+      {
+        "size": "M",
+        "measurements": {
+          "Bust": "38 in",
+          "Length": "46 in"
+        }
+      },
+      {
+        "size": "L",
+        "measurements": {
+          "Bust": "40 in",
+          "Length": "47 in"
+        }
+      },
+      {
+        "size": "XL",
+        "measurements": {
+          "Bust": "42 in",
+          "Length": "47 in"
+        }
+      },
+      {
+        "size": "XXL",
+        "measurements": {
+          "Bust": "44 in",
+          "Length": "48 in"
+        }
+      }
+    ],
+    "category": "kurtis",
+    "categoryLabel": "Kurtis",
+    "imageAlt": "Black Long Kurti",
+    "featured": false,
+    "active": true
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "name": "trenzura",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*",
+    "#shared/*": "./shared/*"
+  },
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "sync:products": "tsx scripts/sync-products.ts",
+    "sync:images": "tsx scripts/sync-images.ts",
+    "sync:products:supabase": "pnpm sync:products && pnpm sync:images && tsx scripts/sync-products-to-supabase.ts",
+    "typecheck": "tsc --noEmit",
+    "build:ci": "pnpm sync:products && vite build",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "pnpm build:ci && wrangler deploy",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.4.1",
+    "@orama/orama": "^3.1.18",
+    "@supabase/supabase-js": "^2.105.4",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "googleapis": "^171.4.0",
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.18",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.36.3",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "wrangler": "^4.90.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss",
+      "sharp",
+      "workerd"
+    ]
+  }
+}
