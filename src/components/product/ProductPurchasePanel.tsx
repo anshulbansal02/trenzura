@@ -62,11 +62,12 @@ export function ProductPurchasePanel({
   }
 
   return (
-    <div
-      className={joinClasses(
-        isQuickLook ? '' : 'fashion-surface rounded-[1.25rem] p-4 lg:p-5',
-      )}
-    >
+    <>
+      <div
+        className={joinClasses(
+          isQuickLook ? '' : 'fashion-surface rounded-[1.25rem] p-4 lg:p-5',
+        )}
+      >
       <div className="flex items-start justify-between gap-5">
         <div>
           <p className="text-2xl font-semibold text-[var(--color-ink)]">
@@ -222,6 +223,40 @@ export function ProductPurchasePanel({
           </>
         ) : null}
       </div>
-    </div>
+      </div>
+
+      {!isQuickLook ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-2xl shadow-stone-950/12 backdrop-blur-xl sm:hidden">
+          <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
+                {selectedSize ? `${product.title} - ${selectedSize}` : product.title}
+              </p>
+              <p className="mt-0.5 text-sm text-[var(--color-muted)]">
+                {formatPrice(product.sellingPricePaise)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={!canAddToCart}
+                onClick={addCurrentSelection}
+                className="fashion-button-secondary h-12 px-4 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
+              >
+                Add
+              </Button>
+              <Button
+                type="button"
+                disabled={!canAddToCart}
+                onClick={buyCurrentSelection}
+                className="fashion-button-primary h-12 px-5"
+              >
+                Buy
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

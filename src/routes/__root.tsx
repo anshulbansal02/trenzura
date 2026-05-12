@@ -3,6 +3,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { AddToBagToast } from '../components/cart/AddToBagToast'
 import { CartDrawer } from '../components/cart/CartDrawer'
 import { CartProvider } from '../components/cart/CartProvider'
+import { MobileBottomNav } from '../components/layout/MobileBottomNav'
 import { SiteHeader } from '../components/layout/SiteHeader'
 import { RouteNotFound } from '../components/layout/RouteBoundaries'
 import { createPageMeta, siteDescription, siteName } from '../lib/seo'
@@ -78,6 +79,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </div>
           <AddToBagToast />
           <CartDrawer />
+          <MobileBottomNav />
         </CartProvider>
         <Scripts />
       </body>

@@ -384,7 +384,7 @@ function CheckoutPage() {
   }
 
   return (
-    <main className="fashion-container py-10 lg:py-14">
+    <main className="fashion-container pb-36 pt-10 lg:py-14">
       <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="fashion-eyebrow">Checkout</p>
@@ -398,7 +398,7 @@ function CheckoutPage() {
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <form onSubmit={submitCheckout} className="space-y-8">
+        <form id="checkout-form" onSubmit={submitCheckout} className="space-y-8">
           <section className="fashion-surface rounded-[1.25rem] p-5">
             <h2 className="font-serif text-2xl text-[var(--color-ink)]">Contact</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -407,6 +407,7 @@ function CheckoutPage() {
                 type="email"
                 placeholder="you@example.com"
                 autoComplete="email"
+                enterKeyHint="next"
                 value={form.email}
                 onChange={(value) => updateField('email', value)}
               />
@@ -415,6 +416,7 @@ function CheckoutPage() {
                 type="tel"
                 placeholder="98765 43210"
                 autoComplete="tel"
+                enterKeyHint="next"
                 value={form.phone}
                 onChange={(value) => updateField('phone', value)}
               />
@@ -428,6 +430,7 @@ function CheckoutPage() {
                 label="Full name"
                 placeholder="Aarav Sharma"
                 autoComplete="name"
+                enterKeyHint="next"
                 value={form.fullName}
                 onChange={(value) => updateField('fullName', value)}
               />
@@ -436,6 +439,7 @@ function CheckoutPage() {
                 inputMode="numeric"
                 placeholder="400001"
                 autoComplete="postal-code"
+                enterKeyHint="next"
                 value={form.pincode}
                 onChange={(value) => updateField('pincode', value)}
               />
@@ -443,6 +447,7 @@ function CheckoutPage() {
                 label="Address"
                 placeholder="Flat 12, Palm Grove Apartments, MG Road"
                 autoComplete="street-address"
+                enterKeyHint="next"
                 value={form.addressLine}
                 onChange={(value) => updateField('addressLine', value)}
                 className="sm:col-span-2"
@@ -450,6 +455,7 @@ function CheckoutPage() {
               <CheckoutField
                 label="Landmark"
                 placeholder="Near City Mall"
+                enterKeyHint="next"
                 value={form.landmark}
                 onChange={(value) => updateField('landmark', value)}
                 required={false}
@@ -458,6 +464,7 @@ function CheckoutPage() {
                 label="City"
                 placeholder="Mumbai"
                 autoComplete="address-level2"
+                enterKeyHint="next"
                 value={form.city}
                 onChange={(value) => updateField('city', value)}
               />
@@ -465,6 +472,7 @@ function CheckoutPage() {
                 label="State"
                 placeholder="Maharashtra"
                 autoComplete="address-level1"
+                enterKeyHint="done"
                 value={form.state}
                 onChange={(value) => updateField('state', value)}
               />
@@ -503,7 +511,7 @@ function CheckoutPage() {
             ) : null}
           </section>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="hidden flex-col-reverse gap-3 sm:flex sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={clearCart}
@@ -525,9 +533,34 @@ function CheckoutPage() {
               {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
             </Button>
           </div>
+
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-2xl shadow-stone-950/12 backdrop-blur-xl sm:hidden">
+            <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-[var(--color-muted)]">
+                  Total
+                </p>
+                <p className="mt-0.5 text-base font-semibold text-[var(--color-ink)]">
+                  {formatPrice(activePendingOrder?.totals.total ?? total)}
+                </p>
+              </div>
+              <Button
+                type="submit"
+                disabled={isCheckoutBusy}
+                className="fashion-button-primary h-12 min-w-36 gap-2 px-5"
+              >
+                {isCheckoutBusy ? (
+                  <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <CreditCard className="size-4" aria-hidden="true" />
+                )}
+                {getMobilePayButtonLabel(status)}
+              </Button>
+            </div>
+          </div>
         </form>
 
-        <aside className="fashion-surface self-start rounded-[1.25rem] p-5 lg:sticky lg:top-24">
+        <aside className="fashion-surface order-first self-start rounded-[1.25rem] p-5 lg:order-none lg:sticky lg:top-24">
           <div className="flex items-center justify-between gap-4">
             <h2 className="font-serif text-2xl text-[var(--color-ink)]">Order summary</h2>
             <p className="text-sm text-[var(--color-muted)]">
@@ -609,6 +642,7 @@ function CheckoutField({
   inputMode,
   placeholder,
   autoComplete,
+  enterKeyHint,
   required = true,
 }: {
   label: string
@@ -619,6 +653,7 @@ function CheckoutField({
   inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
   placeholder?: string
   autoComplete?: string
+  enterKeyHint?: HTMLAttributes<HTMLInputElement>['enterKeyHint']
   required?: boolean
 }) {
   return (
@@ -630,6 +665,7 @@ function CheckoutField({
         inputMode={inputMode}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        enterKeyHint={enterKeyHint}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
         className="mt-2 h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
@@ -748,6 +784,17 @@ function getPayButtonLabel(status: CheckoutStatus, total: number) {
   if (status === 'error') return 'Try again'
 
   return `Pay ${formatPrice(total)}`
+}
+
+function getMobilePayButtonLabel(status: CheckoutStatus) {
+  if (status === 'preparing') return 'Preparing'
+  if (status === 'opening') return 'Opening'
+  if (status === 'payment-open') return 'Opened'
+  if (status === 'confirming') return 'Confirming'
+  if (status === 'cancelled') return 'Try again'
+  if (status === 'error') return 'Try again'
+
+  return 'Pay now'
 }
 
 function validateCheckoutForm(form: CheckoutForm) {

@@ -77,7 +77,7 @@ function Home() {
   ]
 
   return (
-    <main>
+    <main className="pb-24 sm:pb-0">
       <section className="relative overflow-hidden bg-[var(--color-ink)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgb(114_52_61_/_0.26),transparent_30%),linear-gradient(115deg,#171310_0%,#171310_52%,#2b211d_100%)]" />
         <div className="fashion-container relative grid min-h-[82svh] gap-8 py-10 lg:grid-cols-[minmax(0,0.84fr)_minmax(520px,0.86fr)] lg:items-end lg:py-12">

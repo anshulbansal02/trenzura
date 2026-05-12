@@ -247,21 +247,6 @@ function ProductPreviewPage() {
         title="Recently viewed"
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/95 px-5 py-3 shadow-2xl shadow-stone-950/10 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
-              {product.title}
-            </p>
-            <p className="mt-0.5 text-sm text-[var(--color-muted)]">
-              {formatPrice(product.sellingPricePaise)}
-            </p>
-          </div>
-          <a href="#buy-panel" className="fashion-button-primary h-11 shrink-0 px-5">
-            Choose size
-          </a>
-        </div>
-      </div>
     </main>
   )
 }

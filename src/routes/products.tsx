@@ -122,7 +122,7 @@ function ProductsPage() {
   )
 
   return (
-    <main className="fashion-container py-10 lg:py-14">
+    <main className="fashion-container pb-32 pt-10 lg:py-14">
       <div className="mb-10 flex flex-col gap-5 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="fashion-eyebrow">Shop</p>
@@ -230,7 +230,7 @@ function ProductsPage() {
           render={
             <button
               type="button"
-              className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#b58b91] bg-[var(--color-ink)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-xl shadow-stone-950/20 transition duration-150 ease-out hover:bg-[var(--color-rouge-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
+              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#b58b91] bg-[var(--color-ink)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-xl shadow-stone-950/20 transition duration-150 ease-out hover:bg-[var(--color-rouge-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
               aria-label="Open product filters"
             />
           }
