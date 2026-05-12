@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 
 import { createShipmentWorkflow, ShipmentWorkflowError } from '../_shared/domain/shipments.ts'
 import { AuthError, requireServiceRole } from '../_shared/http/auth.ts'

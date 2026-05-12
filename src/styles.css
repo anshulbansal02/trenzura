@@ -17,6 +17,8 @@
   --color-rouge: #72343d;
   --color-rouge-dark: #55272e;
   --color-sage: #687464;
+  --site-header-height: 6.375rem;
+  --sticky-panel-gap: 1.5rem;
   --shadow-soft: 0 18px 60px rgb(23 19 16 / 0.08);
 }
 
@@ -45,9 +47,48 @@ textarea {
   font: inherit;
 }
 
+button,
+[role='button'],
+summary,
+a[href],
+label[for],
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 ::selection {
   background: var(--color-rouge);
   color: var(--color-paper);
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-150%);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: 0.7rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: transform 150ms ease-out;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-paper);
+  outline-offset: 2px;
+}
+
+#page-content:focus {
+  outline: none;
 }
 
 @layer components {

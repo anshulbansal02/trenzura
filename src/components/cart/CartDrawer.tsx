@@ -3,8 +3,9 @@ import { Drawer } from '@base-ui/react/drawer'
 import { Link } from '@tanstack/react-router'
 import { Minus, Plus, ShoppingBag, X } from 'lucide-react'
 
-import { formatPrice, freeShippingThresholdPaise, standardShippingPaise } from '../../lib/format'
+import { formatPrice, standardShippingPaise } from '../../lib/format'
 import { ProductMedia } from '../product/ProductMedia'
+import { RecentlyViewedRail } from '../product/RecentlyViewed'
 import { useCart } from './CartProvider'
 
 export function CartDrawer() {
@@ -19,10 +20,7 @@ export function CartDrawer() {
     removeItem,
     closeCart,
   } = useCart()
-  const shippingLabel = subtotal >= freeShippingThresholdPaise || subtotal === 0
-    ? 'Free'
-    : formatPrice(standardShippingPaise)
-  const total = subtotal >= freeShippingThresholdPaise ? subtotal : subtotal + standardShippingPaise
+  const total = subtotal + standardShippingPaise
 
   return (
     <Drawer.Root open={isOpen} onOpenChange={setCartOpen} swipeDirection="right">
@@ -49,8 +47,8 @@ export function CartDrawer() {
           </div>
 
           {lines.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center px-6 text-center">
-              <div>
+            <div className="flex-1 overflow-y-auto px-6 py-8">
+              <div className="mx-auto max-w-sm text-center">
                 <p className="font-serif text-3xl text-[var(--color-ink)]">Your bag is empty</p>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
                   Choose a style and size to begin your order.
@@ -68,6 +66,14 @@ export function CartDrawer() {
                   Browse products
                 </Button>
               </div>
+              <RecentlyViewedRail
+                compact
+                fallback="featured"
+                limit={2}
+                onProductClick={closeCart}
+                className="mt-10 text-left"
+                title="Recently viewed"
+              />
             </div>
           ) : (
             <>
@@ -104,15 +110,15 @@ export function CartDrawer() {
                         </div>
 
                         <div className="mt-4 flex items-center justify-between gap-3">
-                          <div className="inline-flex h-9 items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)]">
+                          <div className="inline-flex h-9 items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-surface)]">
                             <button
                               type="button"
                               aria-label={`Decrease ${line.product.title} quantity`}
                               disabled={line.quantity <= 1}
                               onClick={() => updateQuantity(line.id, line.quantity - 1)}
-                              className="size-9 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+                              className="grid h-full w-9 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
                             >
-                              <Minus className="mx-auto size-4" aria-hidden="true" />
+                              <Minus className="size-4" aria-hidden="true" />
                             </button>
                             <span className="w-8 text-center text-sm font-medium">
                               {line.quantity}
@@ -122,9 +128,9 @@ export function CartDrawer() {
                               aria-label={`Increase ${line.product.title} quantity`}
                               disabled={line.quantity >= line.maxQuantity}
                               onClick={() => updateQuantity(line.id, line.quantity + 1)}
-                              className="size-9 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+                              className="grid h-full w-9 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
                             >
-                              <Plus className="mx-auto size-4" aria-hidden="true" />
+                              <Plus className="size-4" aria-hidden="true" />
                             </button>
                           </div>
                           <button
@@ -161,21 +167,17 @@ export function CartDrawer() {
                     </div>
                   ) : null}
                   <div className="flex items-center justify-between text-[var(--color-muted)]">
-                    <span>Estimated shipping</span>
-                    <span>{shippingLabel}</span>
+                    <span>Shipping</span>
+                    <span>{formatPrice(standardShippingPaise)}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
                     <span>Total</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                 </div>
-                {subtotal < freeShippingThresholdPaise ? (
-                  <p className="mt-3 text-xs text-[var(--color-muted)]">
-                    Add {formatPrice(freeShippingThresholdPaise - subtotal)} more for free shipping.
-                  </p>
-                ) : (
-                  <p className="mt-3 text-xs text-emerald-700">Free shipping applied.</p>
-                )}
+                <p className="mt-3 text-xs text-[var(--color-muted)]">
+                  Taxes are included. Final payment is handled through secure checkout.
+                </p>
                 <Button
                   nativeButton={false}
                   render={

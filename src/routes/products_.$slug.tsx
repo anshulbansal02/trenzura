@@ -1,12 +1,21 @@
 import { Accordion } from '@base-ui/react/accordion'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
+import { useEffect } from 'react'
 
 import { ProductGallery } from '../components/product/ProductGallery'
 import { ProductMedia } from '../components/product/ProductMedia'
 import { ProductPurchasePanel } from '../components/product/ProductPurchasePanel'
+import { ProductReasons } from '../components/product/ProductReasons'
+import {
+  RecentlyViewedRail,
+  rememberRecentlyViewedProduct,
+} from '../components/product/RecentlyViewed'
 import { getProductBySlug, products } from '../data/products'
 import { formatPrice } from '../lib/format'
+import { createPageMeta, createProductJsonLd } from '../lib/seo'
+
+const defaultProductAccordionValue = ['fit']
 
 export const Route = createFileRoute('/products_/$slug')({
   loader: ({ params }) => {
@@ -17,6 +26,40 @@ export const Route = createFileRoute('/products_/$slug')({
     }
 
     return { product }
+  },
+  head: ({ params }) => {
+    const product = getProductBySlug(params.slug)
+
+    if (!product) {
+      return createPageMeta({
+        title: 'Product not found | Trenzura',
+        description: 'This Trenzura product is unavailable.',
+        path: '/products',
+      })
+    }
+
+    const seo = createPageMeta({
+      title: `${product.title} | Trenzura`,
+      description: product.description,
+      path: `/products/${product.slug}`,
+      image: product.images[0],
+      type: 'product',
+    })
+
+    return {
+      ...seo,
+      meta: [
+        ...seo.meta,
+        { property: 'product:price:amount', content: String(product.sellingPricePaise / 100) },
+        { property: 'product:price:currency', content: 'INR' },
+      ],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(createProductJsonLd(product)),
+        },
+      ],
+    }
   },
   component: ProductPreviewPage,
 })
@@ -29,9 +72,16 @@ function ProductPreviewPage() {
         item.category === product.category && item.productId !== product.productId,
     )
     .slice(0, 3)
+  const availableSizeLabels = product.sizes
+    .filter((size) => size.stockAvailable > 0)
+    .map((size) => size.label)
+
+  useEffect(() => {
+    rememberRecentlyViewedProduct(product)
+  }, [product])
 
   return (
-    <main className="fashion-container py-8 lg:py-12">
+    <main className="fashion-container pb-28 pt-8 lg:py-12">
       <Link
         to="/products"
         className="text-sm font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-rouge)]"
@@ -40,9 +90,11 @@ function ProductPreviewPage() {
       </Link>
 
       <section className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:gap-14">
-        <ProductGallery product={product} />
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <ProductGallery product={product} />
+        </div>
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="min-w-0">
           {product.featured ? (
             <p className="mb-4 inline-flex rounded-full bg-[var(--color-canvas)] px-3 py-1 text-xs font-semibold text-[var(--color-rouge)]">
               Featured
@@ -54,17 +106,17 @@ function ProductPreviewPage() {
               <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
                 {product.title}
               </h1>
-              <p className="mt-3 text-base text-[var(--color-muted)]">
-                {product.categoryLabel}
-              </p>
             </div>
           </div>
 
           <p className="mt-7 max-w-2xl text-base leading-7 text-[var(--color-muted)]">
             {product.description}
           </p>
+          <div className="mt-5 max-w-2xl">
+            <ProductReasons product={product} includeAvailability={false} />
+          </div>
 
-          <div className="mt-8">
+          <div id="buy-panel" className="mt-7 scroll-mt-24">
             <ProductPurchasePanel product={product} />
           </div>
         </div>
@@ -74,39 +126,30 @@ function ProductPreviewPage() {
         <div>
           <h2 className="fashion-display text-3xl">About this piece</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            Designed for repeat wear: easy to style, comfortable through the day, and polished
-            enough for plans after work.
+            Designed for repeat wear: easy to style, comfortable through the day, and clear enough
+            to buy without guessing on fit, availability, or delivery.
           </p>
 
           <Accordion.Root
-            defaultValue={['details']}
+            defaultValue={defaultProductAccordionValue}
             className="mt-7 divide-y divide-[var(--color-line)]"
           >
-            <Accordion.Item value="details">
+            <Accordion.Item value="fit">
               <Accordion.Header>
                 <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-rouge)] focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2">
-                  Details
+                  Fit and sizing
                   <ChevronDown
                     className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
                     aria-hidden="true"
                   />
                 </Accordion.Trigger>
               </Accordion.Header>
-              <Accordion.Panel className="pb-5">
-                <ul className="space-y-3 text-sm text-[var(--color-muted)]">
-                  {[
-                    product.categoryLabel,
-                    `${product.sizes.map((size) => size.label).join(', ')} available sizes`,
-                    product.stockAvailable <= 8
-                      ? 'Limited quantities available'
-                      : 'Ready to ship',
-                  ].map((detail) => (
-                    <li key={detail} className="flex gap-3">
-                      <span className="mt-2 size-1 rounded-full bg-[var(--color-rouge)]" />
-                      <span>{detail}</span>
-                    </li>
-                  ))}
-                </ul>
+              <Accordion.Panel className={accordionPanelClass}>
+                <div className="pb-5">
+                  Available in {availableSizeLabels.join(', ')}. Measurements below are garment
+                  measurements, so compare them with a similar piece you already like before choosing
+                  a size.
+                </div>
               </Accordion.Panel>
             </Accordion.Item>
 
@@ -120,9 +163,11 @@ function ProductPreviewPage() {
                   />
                 </Accordion.Trigger>
               </Accordion.Header>
-              <Accordion.Panel className="pb-5 text-sm leading-6 text-[var(--color-muted)]">
-                Ships within 1-2 business days. Tracking is shared after dispatch, and eligible
-                size exchanges can be requested within 7 days.
+              <Accordion.Panel className={accordionPanelClass}>
+                <div className="pb-5">
+                  Ships within 1-2 business days. Tracking is shared after dispatch, and eligible
+                  size exchanges can be requested within 7 days.
+                </div>
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion.Root>
@@ -182,7 +227,7 @@ function ProductPreviewPage() {
                 params={{ slug: item.slug }}
                 className="group rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition duration-200 ease-out hover:shadow-lg hover:shadow-stone-950/10"
               >
-                <ProductMedia product={item} className="aspect-[4/5]" />
+                <ProductMedia product={item} className="aspect-[4/5]" hoverZoom />
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <p className="font-semibold text-[var(--color-ink)]">{item.title}</p>
                   <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -194,6 +239,17 @@ function ProductPreviewPage() {
           </div>
         </section>
       ) : null}
+
+      <RecentlyViewedRail
+        excludeProductId={product.productId}
+        limit={4}
+        className="mt-14"
+        title="Recently viewed"
+      />
+
     </main>
   )
 }
+
+const accordionPanelClass =
+  'h-[var(--accordion-panel-height)] overflow-hidden text-sm leading-6 text-[var(--color-muted)] transition-[height,opacity] duration-200 ease-out data-[ending-style]:h-0 data-[ending-style]:opacity-0 data-[starting-style]:h-0 data-[starting-style]:opacity-0'

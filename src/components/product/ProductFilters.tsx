@@ -33,12 +33,17 @@ type ProductFiltersProps = {
   resultCount: number
   categoryCounts: ProductCategoryCounts
   onSearchChange: (search: Partial<ProductSearchState>) => void
+  idPrefix?: string
+  onDone?: () => void
+  showHeader?: boolean
+  variant?: 'panel' | 'sheet'
 }
 
 const categories: ProductCategoryFilter[] = ['all', ...productCategories]
 
 const sortLabels: Record<ProductSort, string> = {
   recommended: 'Recommended',
+  newest: 'Newest arrivals',
   'price-asc': 'Price: low to high',
   'price-desc': 'Price: high to low',
   'discount-desc': 'Best discount',
@@ -49,8 +54,13 @@ export function ProductFilters({
   resultCount,
   categoryCounts,
   onSearchChange,
+  idPrefix = 'products',
+  onDone,
+  showHeader = false,
+  variant = 'panel',
 }: ProductFiltersProps) {
   const [query, setQuery] = useState(search.q)
+  const searchInputId = `${idPrefix}-product-search`
 
   useEffect(() => {
     setQuery(search.q)
@@ -78,9 +88,46 @@ export function ProductFilters({
     Number(search.saleOnly)
 
   return (
-    <aside className="fashion-surface space-y-7 self-start rounded-[1.25rem] p-5 lg:sticky lg:top-24">
-      <div className="space-y-3">
-        <label htmlFor="product-search" className="text-sm font-semibold text-[var(--color-ink)]">
+    <aside
+      aria-label="Product filters"
+      className={joinClasses(
+        'w-full min-w-0 self-start overflow-x-hidden',
+        variant === 'panel'
+          ? 'fashion-surface space-y-7 rounded-[1.25rem] p-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
+          : 'space-y-6',
+      )}
+    >
+      {showHeader ? (
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--color-line)] pb-5">
+          <div>
+            <p className="text-base font-semibold text-[var(--color-ink)]">Filters</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
+              Narrow by style, size, price, and availability.
+            </p>
+          </div>
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              onClick={() =>
+                onSearchChange({
+                  category: 'all',
+                  sizes: [],
+                  minPrice: productPriceRange.min,
+                  maxPrice: productPriceRange.max,
+                  inStockOnly: false,
+                  saleOnly: false,
+                })
+              }
+              className="shrink-0 text-sm font-semibold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
+            >
+              Reset
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="space-y-2">
+        <label htmlFor={searchInputId} className="text-sm font-semibold text-[var(--color-ink)]">
           Search
         </label>
         <div className="relative">
@@ -89,11 +136,11 @@ export function ProductFilters({
             aria-hidden="true"
           />
           <input
-            id="product-search"
+            id={searchInputId}
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search kurtis, sets, colours"
+            placeholder="Search styles"
             className="h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
           />
           {query ? (
@@ -107,9 +154,6 @@ export function ProductFilters({
             </Button>
           ) : null}
         </div>
-        <p className="text-xs leading-5 text-[var(--color-muted)]">
-          Search by style, colour, fit, or occasion.
-        </p>
       </div>
 
       <div className="space-y-3">
@@ -188,8 +232,8 @@ export function ProductFilters({
 
       <div className="space-y-3">
         <p className="text-sm font-semibold text-[var(--color-ink)]">Price</p>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="space-y-1">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          <label className="min-w-0 space-y-1">
             <span className="text-xs text-[var(--color-muted)]">Min</span>
             <input
               type="number"
@@ -199,10 +243,10 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ minPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
             />
           </label>
-          <label className="space-y-1">
+          <label className="min-w-0 space-y-1">
             <span className="text-xs text-[var(--color-muted)]">Max</span>
             <input
               type="number"
@@ -212,7 +256,7 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ maxPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
             />
           </label>
         </div>
@@ -275,9 +319,9 @@ export function ProductFilters({
       <div className="border-t border-[var(--color-line)] pt-5">
         <div className="flex items-center justify-between gap-3 text-sm">
           <p className="text-[var(--color-muted)]">
-            {resultCount} {resultCount === 1 ? 'item' : 'items'}
+            {resultCount} {resultCount === 1 ? 'style' : 'styles'}
           </p>
-          {activeFilterCount > 0 ? (
+          {activeFilterCount > 0 && !onDone ? (
             <button
               type="button"
               onClick={() =>
@@ -296,6 +340,15 @@ export function ProductFilters({
             </button>
           ) : null}
         </div>
+        {onDone ? (
+          <Button
+            type="button"
+            onClick={onDone}
+            className="fashion-button-primary mt-4 h-12 w-full px-5"
+          >
+            Show {resultCount} {resultCount === 1 ? 'style' : 'styles'}
+          </Button>
+        ) : null}
       </div>
     </aside>
   )

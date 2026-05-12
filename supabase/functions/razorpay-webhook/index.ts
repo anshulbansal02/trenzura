@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 
 import { alertPaymentReview, createShipmentWorkflow } from '../_shared/domain/shipments.ts'
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
