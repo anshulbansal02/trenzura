@@ -140,7 +140,7 @@ export function ProductFilters({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search style or colour"
+            placeholder="Search styles"
             className="h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
           />
           {query ? (

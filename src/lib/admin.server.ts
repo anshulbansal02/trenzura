@@ -3,7 +3,11 @@ import '@tanstack/react-start/server-only'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { env as workerEnv } from 'cloudflare:workers'
 import { createClient } from '@supabase/supabase-js'
-import { getRequestHeader, getRequestHost } from '@tanstack/react-start/server'
+import {
+  getRequestHeader,
+  getRequestHost,
+  setResponseHeader,
+} from '@tanstack/react-start/server'
 
 const adminViewLimit = 50
 const recentOrdersLimit = 25
@@ -48,7 +52,7 @@ export type AdminLowStockVariantRow = {
 export type AdminDashboard = {
   adminEmail: string
   loadedAt: string
-  counts: {
+  shownCounts: {
     recentOrders: number
     shipmentPendingOrders: number
     paymentReviewOrders: number
@@ -88,100 +92,118 @@ type AdminEnv = {
   accessTeamDomain?: string
   accessAudience?: string
   adminDevEmail?: string
+  adminDevBypass: boolean
   supabaseUrl: string
   supabaseServiceRoleKey: string
   opsServiceRoleKey: string
 }
 
 export async function loadAdminDashboard(): Promise<AdminDashboard> {
-  const adminEmail = await requireAdminEmail()
-  const env = readAdminEnv()
-  const supabase = createAdminSupabaseClient(env)
+  setAdminResponseHeaders()
 
-  const [
-    recentOrders,
-    shipmentPendingOrders,
-    paymentReviewOrders,
-    failedPayments,
-    integrationErrors,
-    lowStockVariants,
-  ] = await Promise.all([
-    selectRows<AdminOrderRow>(supabase, 'ops_orders_recent', recentOrdersLimit),
-    selectRows<AdminOrderRow>(supabase, 'ops_shipment_pending_orders', adminViewLimit),
-    selectRows<AdminOrderRow>(supabase, 'ops_payment_review_orders', adminViewLimit),
-    selectRows<AdminOrderRow>(supabase, 'ops_failed_payments', adminViewLimit),
-    selectRows<AdminIntegrationErrorRow>(supabase, 'ops_integration_errors', adminViewLimit),
-    selectRows<AdminLowStockVariantRow>(supabase, 'ops_low_stock_variants', adminViewLimit),
-  ])
-
-  return {
-    adminEmail,
-    loadedAt: new Date().toISOString(),
-    counts: {
-      recentOrders: recentOrders.length,
-      shipmentPendingOrders: shipmentPendingOrders.length,
-      paymentReviewOrders: paymentReviewOrders.length,
-      failedPayments: failedPayments.length,
-      integrationErrors: integrationErrors.length,
-      lowStockVariants: lowStockVariants.length,
-    },
-    views: {
+  try {
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const supabase = createAdminSupabaseClient(env)
+    const [
       recentOrders,
       shipmentPendingOrders,
       paymentReviewOrders,
       failedPayments,
       integrationErrors,
       lowStockVariants,
-    },
+    ] = await Promise.all([
+      selectRows<AdminOrderRow>(supabase, 'ops_orders_recent', recentOrdersLimit),
+      selectRows<AdminOrderRow>(supabase, 'ops_shipment_pending_orders', adminViewLimit),
+      selectRows<AdminOrderRow>(supabase, 'ops_payment_review_orders', adminViewLimit),
+      selectRows<AdminOrderRow>(supabase, 'ops_failed_payments', adminViewLimit),
+      selectRows<AdminIntegrationErrorRow>(supabase, 'ops_integration_errors', adminViewLimit),
+      selectRows<AdminLowStockVariantRow>(supabase, 'ops_low_stock_variants', adminViewLimit),
+    ])
+
+    return {
+      adminEmail,
+      loadedAt: new Date().toISOString(),
+      shownCounts: {
+        recentOrders: recentOrders.length,
+        shipmentPendingOrders: shipmentPendingOrders.length,
+        paymentReviewOrders: paymentReviewOrders.length,
+        failedPayments: failedPayments.length,
+        integrationErrors: integrationErrors.length,
+        lowStockVariants: lowStockVariants.length,
+      },
+      views: {
+        recentOrders,
+        shipmentPendingOrders,
+        paymentReviewOrders,
+        failedPayments,
+        integrationErrors,
+        lowStockVariants,
+      },
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to load admin dashboard')
   }
 }
 
 export async function retryShipmentFromAdmin(orderNumber: string): Promise<RetryShipmentResult> {
-  const adminEmail = await requireAdminEmail()
-  const env = readAdminEnv()
-  const normalizedOrderNumber = normalizeOrderNumber(orderNumber)
-  const response = await fetch(`${env.supabaseUrl}/functions/v1/retry-shipment`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.supabaseServiceRoleKey}`,
-      apikey: env.supabaseServiceRoleKey,
-      'x-ops-key': env.opsServiceRoleKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ orderNumber: normalizedOrderNumber }),
-  })
-  const responseBody = await response.json().catch(() => null)
+  setAdminResponseHeaders()
 
-  console.log('admin retry-shipment', {
-    adminEmail,
-    orderNumber: normalizedOrderNumber,
-    ok: response.ok,
-    status: response.status,
-  })
+  try {
+    requireSameOriginMutation()
 
-  if (!response.ok) {
-    const errorMessage =
-      responseBody &&
-      typeof responseBody === 'object' &&
-      'error' in responseBody &&
-      typeof responseBody.error === 'string'
-        ? responseBody.error
-        : 'Unable to retry shipment'
-    throw new AdminError(errorMessage, response.status)
-  }
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const normalizedOrderNumber = normalizeOrderNumber(orderNumber)
+    const response = await fetch(`${env.supabaseUrl}/functions/v1/retry-shipment`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.supabaseServiceRoleKey}`,
+        apikey: env.supabaseServiceRoleKey,
+        'x-ops-key': env.opsServiceRoleKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ orderNumber: normalizedOrderNumber }),
+    })
+    const responseBody = await response.json().catch(() => null)
 
-  const result = normalizeRetryResult(responseBody)
+    console.log('admin retry-shipment', {
+      adminEmail,
+      orderNumber: normalizedOrderNumber,
+      ok: response.ok,
+      status: response.status,
+    })
 
-  return {
-    adminEmail,
-    orderNumber: normalizedOrderNumber,
-    result,
+    if (!response.ok) {
+      const errorMessage =
+        responseBody &&
+        typeof responseBody === 'object' &&
+        'error' in responseBody &&
+        typeof responseBody.error === 'string'
+          ? responseBody.error
+          : 'Unable to retry shipment'
+      throw new AdminError(
+        response.status >= 500 ? 'Unable to retry shipment' : errorMessage,
+        response.status,
+        response.status < 500,
+      )
+    }
+
+    const result = normalizeRetryResult(responseBody)
+
+    return {
+      adminEmail,
+      orderNumber: normalizedOrderNumber,
+      result,
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to retry shipment')
   }
 }
 
 function normalizeRetryResult(value: unknown): RetryShipmentResult['result'] {
   if (!value || typeof value !== 'object') {
-    throw new AdminError('Shipment retry returned an invalid response', 502)
+    throw new AdminError('Shipment retry returned an invalid response', 502, false)
   }
 
   const result = value as Record<string, unknown>
@@ -217,7 +239,7 @@ async function requireAdminEmail() {
   }
 
   if (!env.accessTeamDomain || !env.accessAudience) {
-    throw new AdminError('Admin access is not configured', 503)
+    throw new AdminError('Admin access is not configured', 503, false)
   }
 
   const assertion = getRequestHeader('cf-access-jwt-assertion')
@@ -245,12 +267,17 @@ function resolveLocalAdminEmail(env: AdminEnv) {
   const isLocalHost = host.startsWith('localhost') || host.startsWith('127.0.0.1')
   const email = env.adminDevEmail?.toLowerCase()
 
-  if (!isLocalHost || !email) return null
+  if (!env.adminDevBypass || !isLocalDevRuntime() || !isLocalHost || !email) return null
   if (!env.adminEmails.includes(email)) {
     throw new AdminError('ADMIN_DEV_EMAIL must also be listed in ADMIN_EMAILS', 403)
   }
 
   return email
+}
+
+function isLocalDevRuntime() {
+  const nodeEnv = typeof process !== 'undefined' ? process.env.NODE_ENV : undefined
+  return import.meta.env.DEV || nodeEnv === 'development'
 }
 
 function readAdminEnv(): AdminEnv {
@@ -264,6 +291,7 @@ function readAdminEnv(): AdminEnv {
     accessTeamDomain: readEnv('CF_ACCESS_TEAM_DOMAIN'),
     accessAudience: readEnv('CF_ACCESS_AUD'),
     adminDevEmail: readEnv('ADMIN_DEV_EMAIL'),
+    adminDevBypass: readEnv('ADMIN_DEV_BYPASS') === 'true',
     supabaseUrl,
     supabaseServiceRoleKey,
     opsServiceRoleKey,
@@ -278,7 +306,7 @@ function readEnv(name: string) {
 function requireEnv(name: string) {
   const value = readEnv(name)
   if (!value) {
-    throw new AdminError(`${name} is not configured`, 503)
+    throw new AdminError(`${name} is not configured`, 503, false)
   }
 
   return value
@@ -292,7 +320,7 @@ function parseAdminEmails(value: string | undefined) {
       .filter(Boolean) ?? []
 
   if (emails.length === 0) {
-    throw new AdminError('ADMIN_EMAILS is not configured', 503)
+    throw new AdminError('ADMIN_EMAILS is not configured', 503, false)
   }
 
   return emails
@@ -312,7 +340,7 @@ async function selectRows<Row>(supabase: ReturnType<typeof createAdminSupabaseCl
   const { data, error } = await supabase.from(view).select('*').limit(limit)
 
   if (error) {
-    throw new AdminError(`Unable to load ${view}: ${error.message}`, 500)
+    throw new AdminError(`Unable to load ${view}: ${error.message}`, 500, false)
   }
 
   return (data ?? []) as Row[]
@@ -342,10 +370,50 @@ function normalizeOrderNumber(value: string) {
   return orderNumber
 }
 
+function setAdminResponseHeaders() {
+  setResponseHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate')
+  setResponseHeader('CDN-Cache-Control', 'no-store')
+  setResponseHeader('Pragma', 'no-cache')
+  setResponseHeader('X-Robots-Tag', 'noindex, nofollow')
+}
+
+function requireSameOriginMutation() {
+  const host = getRequestHost({ xForwardedHost: true })
+  const origin = getRequestHeader('origin')
+  const secFetchSite = getRequestHeader('sec-fetch-site')
+
+  if (secFetchSite && !['same-origin', 'none'].includes(secFetchSite)) {
+    throw new AdminError('Admin request origin is not allowed', 403)
+  }
+
+  if (!origin) return
+
+  let originHost = ''
+  try {
+    originHost = new URL(origin).host
+  } catch {
+    throw new AdminError('Admin request origin is not allowed', 403)
+  }
+
+  if (originHost !== host) {
+    throw new AdminError('Admin request origin is not allowed', 403)
+  }
+}
+
+function sanitizeAdminError(error: unknown, fallbackMessage: string) {
+  if (error instanceof AdminError && error.expose) {
+    return error
+  }
+
+  console.error(fallbackMessage, error)
+  return new AdminError(fallbackMessage, error instanceof AdminError ? error.status : 500)
+}
+
 class AdminError extends Error {
   constructor(
     message: string,
     readonly status = 500,
+    readonly expose = true,
   ) {
     super(message)
   }

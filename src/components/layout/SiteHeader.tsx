@@ -9,9 +9,9 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-paper)]/90 backdrop-blur-xl">
       <div className="border-b border-[var(--color-line)] bg-[var(--color-ink)] px-4 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-paper)]">
-        <span className="sm:hidden">Free ship over Rs.2,500 - 7-day exchanges</span>
+        <span className="sm:hidden">Ships in 1-2 days - 7-day exchanges</span>
         <span className="hidden sm:inline">
-          Free shipping over Rs.2,500 - 7-day size exchanges - Ships in 1-2 business days
+          Ships in 1-2 business days - 7-day size exchanges - Secure checkout
         </span>
       </div>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">

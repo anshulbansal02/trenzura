@@ -1,5 +1,6 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 
+import { AddToBagToast } from '../components/cart/AddToBagToast'
 import { CartDrawer } from '../components/cart/CartDrawer'
 import { CartProvider } from '../components/cart/CartProvider'
 import { SiteHeader } from '../components/layout/SiteHeader'
@@ -75,6 +76,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <div id="page-content" tabIndex={-1}>
             {children}
           </div>
+          <AddToBagToast />
           <CartDrawer />
         </CartProvider>
         <Scripts />

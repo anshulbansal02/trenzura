@@ -6,6 +6,7 @@ import type { Product } from '../../data/products'
 import { formatPrice } from '../../lib/format'
 import { ProductGallery } from './ProductGallery'
 import { ProductPurchasePanel } from './ProductPurchasePanel'
+import { ProductReasons } from './ProductReasons'
 
 type ProductQuickLookProps = {
   product: Product
@@ -62,6 +63,9 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                 <p className="mt-5 border-t border-[var(--color-line)] pt-4 text-sm leading-6 text-[var(--color-muted)]">
                   {product.description}
                 </p>
+                <div className="mt-4">
+                  <ProductReasons product={product} compact includeAvailability={false} />
+                </div>
                 <Link
                   to="/products/$slug"
                   params={{ slug: product.slug }}

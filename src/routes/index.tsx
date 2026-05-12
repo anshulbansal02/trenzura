@@ -1,8 +1,18 @@
 import { Button } from '@base-ui/react/button'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { HeartHandshake, Ruler, ShieldCheck, Sparkles, Truck } from 'lucide-react'
+import {
+  HeartHandshake,
+  RefreshCcw,
+  Ruler,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+} from 'lucide-react'
 
 import { ProductGrid } from '../components/product/ProductGrid'
+import { RecentlyViewedRail } from '../components/product/RecentlyViewed'
+import { StyleFinder } from '../components/product/StyleFinder'
 import {
   categoryLabels,
   featuredProducts,
@@ -43,6 +53,28 @@ function Home() {
     { Icon: ShieldCheck, label: 'Secure checkout' },
     { Icon: HeartHandshake, label: '7-day size exchanges' },
   ]
+  const footerBenefits = [
+    {
+      Icon: Truck,
+      title: 'Flat shipping',
+      copy: 'Fixed shipping shown before payment.',
+    },
+    {
+      Icon: RefreshCcw,
+      title: 'Easy exchanges',
+      copy: '7-day size exchanges on eligible pieces.',
+    },
+    {
+      Icon: ShieldCheck,
+      title: 'Secure payments',
+      copy: 'Pay safely with UPI, cards, wallets, and more.',
+    },
+    {
+      Icon: ShoppingBag,
+      title: 'Easy shopping',
+      copy: 'Available sizes are shown before you add to bag.',
+    },
+  ]
 
   return (
     <main>
@@ -74,18 +106,10 @@ function Home() {
                 >
                   Shop new arrivals
                 </Button>
-                <Button
-                  nativeButton={false}
-                  render={
-                    <Link
-                      to="/products/$slug"
-                      params={{ slug: heroProduct.slug }}
-                      className="inline-flex h-12 items-center rounded-full border border-[var(--color-paper)]/70 px-6 text-sm font-semibold text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-paper)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-paper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)] active:scale-[0.99]"
-                    />
-                  }
-                >
-                  View featured set
-                </Button>
+                <StyleFinder
+                  triggerLabel="Help me choose"
+                  triggerClassName="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-paper)]/70 px-6 text-sm font-semibold text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-paper)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-paper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)] active:scale-[0.99]"
+                />
               </div>
               <div className="mt-8 flex flex-wrap gap-5 text-sm font-semibold text-[var(--color-paper)]/86">
                 {categoryTiles.map(({ category }) => (
@@ -228,6 +252,8 @@ function Home() {
         </div>
       </section>
 
+      <RecentlyViewedRail className="fashion-container py-8 lg:py-12" limit={4} />
+
       <section className="fashion-container py-8 lg:py-12">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -330,15 +356,15 @@ function Home() {
 
       <section className="border-y border-[var(--color-line)] bg-[var(--color-surface)]">
         <div className="fashion-container grid gap-8 py-12 md:grid-cols-4">
-          {[
-            ['Free shipping', `On orders over ${formatPrice(250000)}.`],
-            ['Easy exchanges', '7-day size exchanges on eligible pieces.'],
-            ['Secure payments', 'Pay safely with UPI, cards, wallets, and more.'],
-            ['Size-first shopping', 'Available sizes are shown before you add to bag.'],
-          ].map(([title, copy]) => (
-            <div key={title}>
-              <h3 className="font-serif text-xl text-[var(--color-ink)]">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">{copy}</p>
+          {footerBenefits.map(({ Icon, title, copy }) => (
+            <div key={title} className="flex gap-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-rouge)] shadow-sm">
+                <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="font-serif text-xl text-[var(--color-ink)]">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{copy}</p>
+              </div>
             </div>
           ))}
         </div>

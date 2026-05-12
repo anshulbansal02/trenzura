@@ -1,4 +1,3 @@
-export const freeShippingThresholdPaise = 250000
 export const standardShippingPaise = 14900
 
 export function formatPrice(valuePaise: number) {

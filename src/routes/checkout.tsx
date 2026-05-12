@@ -11,11 +11,11 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import type { FormEvent, HTMLAttributes } from 'react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { useCart } from '../components/cart/CartProvider'
 import { ProductMedia } from '../components/product/ProductMedia'
-import { formatPrice, freeShippingThresholdPaise, standardShippingPaise } from '../lib/format'
+import { formatPrice, standardShippingPaise } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
 
@@ -51,7 +51,16 @@ const initialForm: CheckoutForm = {
   pincode: '',
 }
 
-type CheckoutStatus = 'idle' | 'loading' | 'success' | 'error'
+type CheckoutStatus =
+  | 'idle'
+  | 'preparing'
+  | 'ready'
+  | 'opening'
+  | 'payment-open'
+  | 'confirming'
+  | 'success'
+  | 'cancelled'
+  | 'error'
 
 type CreateOrderResponse = {
   keyId: string
@@ -118,35 +127,37 @@ function CheckoutPage() {
   const [status, setStatus] = useState<CheckoutStatus>('idle')
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
-  const shipping = subtotal >= freeShippingThresholdPaise || subtotal === 0 ? 0 : standardShippingPaise
+  const shipping = subtotal === 0 ? 0 : standardShippingPaise
   const total = subtotal + shipping
-  const checkoutFingerprint = useMemo(
-    () =>
-      JSON.stringify({
-        customer: normalizeFormForFingerprint(form),
-        items: lines.map((line) => ({
-          productId: line.productId,
-          variantId: line.variantId,
-          size: line.size,
-          quantity: line.quantity,
-        })),
-      }),
-    [form, lines],
-  )
+  const normalizedForm = normalizeCheckoutForm(form)
+  const checkoutFingerprint = JSON.stringify({
+    customer: normalizedForm,
+    items: lines.map((line) => ({
+      productId: line.productId,
+      variantId: line.variantId,
+      size: line.size,
+      quantity: line.quantity,
+    })),
+  })
   const activePendingOrder =
     pendingOrder?.fingerprint === checkoutFingerprint ? pendingOrder : null
   const summaryTotals = activePendingOrder?.totals ?? { subtotal, shipping, total }
+  const isCheckoutBusy = isBusyCheckoutStatus(status)
 
   function updateField(field: keyof CheckoutForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
     setPendingOrder(null)
+    if (!isBusyCheckoutStatus(status)) {
+      setStatus('idle')
+      setMessage('')
+    }
   }
 
   async function submitCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setConfirmation(null)
 
-    const validationMessage = validateCheckoutForm(form)
+    const validationMessage = validateCheckoutForm(normalizedForm)
     if (validationMessage) {
       setStatus('error')
       setMessage(validationMessage)
@@ -159,8 +170,8 @@ function CheckoutPage() {
       return
     }
 
-    setStatus('loading')
-    setMessage(activePendingOrder ? 'Opening secure checkout...' : 'Preparing your order...')
+    setStatus(activePendingOrder ? 'opening' : 'preparing')
+    setMessage('')
 
     try {
       const order = activePendingOrder ?? (await createCheckoutOrder())
@@ -169,9 +180,9 @@ function CheckoutPage() {
       }
 
       if (!activePendingOrder && order.totals.total !== total) {
-        setStatus('idle')
+        setStatus('ready')
         setMessage(
-          `Your payable total is now ${formatPrice(order.totals.total)}. Review the updated summary, then continue to payment.`,
+          `We refreshed your payable total to ${formatPrice(order.totals.total)}. Review it once, then continue to payment.`,
         )
         return
       }
@@ -189,7 +200,7 @@ function CheckoutPage() {
       'create-checkout-order',
       {
         body: {
-          customer: form,
+          customer: normalizedForm,
           items: lines.map((line) => ({
             productId: line.productId,
             variantId: line.variantId,
@@ -211,6 +222,7 @@ function CheckoutPage() {
     await loadCheckoutScript()
 
     let paymentStarted = false
+    setStatus('opening')
     const checkout = new window.Razorpay!({
       key: order.keyId,
       amount: order.amount,
@@ -219,28 +231,39 @@ function CheckoutPage() {
       description: `${itemCount} ${itemCount === 1 ? 'item' : 'items'} from your bag`,
       order_id: order.orderId,
       prefill: {
-        name: form.fullName,
-        email: form.email,
-        contact: form.phone,
+        name: normalizedForm.fullName,
+        email: normalizedForm.email,
+        contact: normalizedForm.phone,
+      },
+      readonly: {
+        name: true,
+        email: true,
+        contact: true,
       },
       notes: {
         orderUuid: order.orderUuid,
         orderNumber: order.orderNumber,
+        customerEmail: normalizedForm.email,
       },
       theme: {
         color: '#72343d',
+        backdrop_color: '#171310',
       },
       modal: {
+        backdropclose: false,
+        confirm_close: true,
+        escape: true,
+        handleback: true,
         ondismiss: () => {
           if (!paymentStarted) {
-            setStatus('idle')
-        setMessage('Payment was cancelled. You can try again when ready.')
+            setStatus('cancelled')
+            setMessage('Payment window closed. Your details and confirmed total are still here.')
           }
         },
       },
       handler: async (response: RazorpaySuccessResponse) => {
         paymentStarted = true
-        setStatus('loading')
+        setStatus('confirming')
         setMessage('Confirming your payment...')
 
         try {
@@ -276,6 +299,8 @@ function CheckoutPage() {
     })
 
     checkout.open()
+    setStatus('payment-open')
+    setMessage('Complete payment in the Razorpay window. We will confirm the order here.')
   }
 
   if (confirmation) {
@@ -456,40 +481,50 @@ function CheckoutPage() {
             <div className="mt-5 rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
                 <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
-                Secure payment
+                Razorpay secure checkout
               </p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                Pay with UPI, cards, wallets, and more. Payment details are handled by our payment
-                partner.
+                Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
+                from this page so the payment step stays quick.
               </p>
+              <div className="mt-4 grid gap-2 text-xs font-semibold text-[var(--color-muted)] sm:grid-cols-3">
+                {['Review details', 'Pay in Razorpay', 'Instant confirmation'].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
+            {status !== 'idle' || message ? (
+              <CheckoutNotice status={status} message={message} total={summaryTotals.total} />
+            ) : null}
           </section>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={clearCart}
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)]"
+              disabled={isCheckoutBusy}
+              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
             >
               Clear bag
             </button>
             <Button
               type="submit"
-              disabled={status === 'loading'}
+              disabled={isCheckoutBusy}
               className="fashion-button-primary h-12 min-w-52 gap-2 px-6"
             >
-              {status === 'loading' ? (
+              {isCheckoutBusy ? (
                 <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
               ) : (
                 <CreditCard className="size-4" aria-hidden="true" />
               )}
-              {activePendingOrder ? `Pay ${formatPrice(activePendingOrder.totals.total)}` : 'Pay now'}
+              {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
             </Button>
           </div>
-
-          {message ? (
-            <StatusMessage status={status} message={message} />
-          ) : null}
         </form>
 
         <aside className="fashion-surface self-start rounded-[1.25rem] p-5 lg:sticky lg:top-24">
@@ -528,10 +563,7 @@ function CheckoutPage() {
             {savings > 0 && !activePendingOrder ? (
               <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
             ) : null}
-            <SummaryLine
-              label="Shipping"
-              value={summaryTotals.shipping === 0 ? 'Free' : formatPrice(summaryTotals.shipping)}
-            />
+            <SummaryLine label="Shipping" value={formatPrice(summaryTotals.shipping)} />
             <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
               <span>Total</span>
               <span>{formatPrice(summaryTotals.total)}</span>
@@ -606,20 +638,60 @@ function CheckoutField({
   )
 }
 
-function StatusMessage({ status, message }: { status: CheckoutStatus; message: string }) {
+function CheckoutNotice({
+  status,
+  message,
+  total,
+}: {
+  status: CheckoutStatus
+  message: string
+  total: number
+}) {
+  const isError = status === 'error'
+  const isCancelled = status === 'cancelled'
+  const isReady = status === 'ready'
+  const title =
+    status === 'preparing'
+      ? 'Preparing payment'
+      : status === 'opening'
+        ? 'Opening Razorpay'
+        : status === 'payment-open'
+          ? 'Payment window is open'
+          : status === 'confirming'
+            ? 'Confirming payment'
+            : isReady
+              ? 'Total refreshed'
+              : isCancelled
+                ? 'Payment paused'
+                : isError
+                  ? 'Check details'
+                  : 'Checkout'
+  const copy =
+    message ||
+    (status === 'preparing'
+      ? 'We are checking stock and creating your secure payment order.'
+      : status === 'opening'
+        ? 'Razorpay will open in a moment.'
+        : status === 'payment-open'
+          ? 'Complete payment in the Razorpay window. You can return here if you close it.'
+          : status === 'confirming'
+            ? 'Do not refresh. We are verifying your payment and order.'
+            : `Payable total: ${formatPrice(total)}`)
+
   return (
-    <p
-      className={
-        status === 'error'
-          ? 'rounded-[1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
-          : status === 'success'
-            ? 'rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800'
-            : 'rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-muted)]'
-      }
+    <div
+      className={`mt-4 rounded-[1rem] border px-4 py-3 text-sm ${
+        isError
+          ? 'border-red-200 bg-red-50 text-red-800'
+          : isCancelled
+            ? 'border-amber-200 bg-amber-50 text-amber-900'
+            : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-muted)]'
+      }`}
       aria-live="polite"
     >
-      {message}
-    </p>
+      <p className="font-semibold text-[var(--color-ink)]">{title}</p>
+      <p className="mt-1 leading-6">{copy}</p>
+    </div>
   )
 }
 
@@ -657,6 +729,27 @@ function SummaryLine({
   )
 }
 
+function isBusyCheckoutStatus(status: CheckoutStatus) {
+  return (
+    status === 'preparing' ||
+    status === 'opening' ||
+    status === 'payment-open' ||
+    status === 'confirming'
+  )
+}
+
+function getPayButtonLabel(status: CheckoutStatus, total: number) {
+  if (status === 'preparing') return 'Preparing order'
+  if (status === 'opening') return 'Opening Razorpay'
+  if (status === 'payment-open') return 'Payment window open'
+  if (status === 'confirming') return 'Confirming payment'
+  if (status === 'ready') return `Pay ${formatPrice(total)}`
+  if (status === 'cancelled') return 'Try payment again'
+  if (status === 'error') return 'Try again'
+
+  return `Pay ${formatPrice(total)}`
+}
+
 function validateCheckoutForm(form: CheckoutForm) {
   const requiredFields = [
     form.email,
@@ -680,13 +773,35 @@ function validateCheckoutForm(form: CheckoutForm) {
     return 'Enter a valid 6 digit pincode.'
   }
 
+  if (!normalizePhoneForPayment(form.phone)) {
+    return 'Enter a valid 10 digit phone number.'
+  }
+
   return ''
 }
 
-function normalizeFormForFingerprint(form: CheckoutForm) {
-  return Object.fromEntries(
-    Object.entries(form).map(([key, value]) => [key, value.trim()]),
-  )
+function normalizeCheckoutForm(form: CheckoutForm): CheckoutForm {
+  return {
+    email: form.email.trim(),
+    fullName: form.fullName.trim(),
+    phone: normalizePhoneForPayment(form.phone) || form.phone.trim(),
+    addressLine: form.addressLine.trim(),
+    landmark: form.landmark.trim(),
+    city: form.city.trim(),
+    state: form.state.trim(),
+    pincode: form.pincode.trim(),
+  }
+}
+
+function normalizePhoneForPayment(phone: string) {
+  const trimmedPhone = phone.trim()
+  const digits = trimmedPhone.replace(/\D/g, '')
+
+  if (/^\+\d{10,15}$/.test(trimmedPhone)) return trimmedPhone
+  if (/^\d{10}$/.test(digits)) return `+91${digits}`
+  if (/^91\d{10}$/.test(digits)) return `+${digits}`
+
+  return ''
 }
 
 function createSuccessMessage(verification: VerifyPaymentResponse) {

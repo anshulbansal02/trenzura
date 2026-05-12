@@ -2,6 +2,7 @@
   "name": "trenzura",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.0.9",
   "imports": {
     "#/*": "./src/*",
     "#shared/*": "./shared/*"
@@ -16,7 +17,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "pnpm build:ci && wrangler deploy",
-    "deploy:qa": "CLOUDFLARE_ENV=qa pnpm build:ci && CLOUDFLARE_ENV=qa wrangler deploy",
+    "deploy:qa": "CLOUDFLARE_ENV=qa pnpm build:ci && wrangler deploy --env qa",
+    "deploy:coming-soon": "wrangler deploy --config wrangler.coming-soon.jsonc",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
@@ -24,8 +26,8 @@
     "@orama/orama": "^3.1.18",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-start": "latest",
+    "@tanstack/react-router": "1.169.2",
+    "@tanstack/react-start": "1.167.65",
     "googleapis": "^171.4.0",
     "jose": "^6.2.3",
     "lucide-react": "^1.14.0",

@@ -48,6 +48,9 @@ OPS_SERVICE_ROLE_KEY
 ```
 
 For local development only, set `ADMIN_DEV_EMAIL` to one of the emails in `ADMIN_EMAILS`.
+The local fallback is disabled unless `ADMIN_DEV_BYPASS=true`; never set that variable in
+Cloudflare QA or production. Production builds also ignore the fallback even if that variable is
+accidentally present.
 Use the full Cloudflare Access team domain for `CF_ACCESS_TEAM_DOMAIN`, for example
 `https://team-name.cloudflareaccess.com`.
 
@@ -97,3 +100,6 @@ Use Google as the only login method, and keep the Access allowlist in sync with 
 The app also validates the Cloudflare Access JWT and rejects emails outside `ADMIN_EMAILS`.
 The `_serverFn` paths are needed because TanStack Start calls admin server functions through those
 endpoints after the page loads.
+While admin is the only feature using `createServerFn`, treat `/_serverFn/*` as admin-only. If a
+future public feature needs server-side logic, use a TanStack server route or revisit the server
+function base path before deploying it.

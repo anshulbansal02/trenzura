@@ -11,6 +11,11 @@ export type RazorpayOptions = {
   name: string
   description: string
   order_id: string
+  readonly?: {
+    name?: boolean
+    email?: boolean
+    contact?: boolean
+  }
   prefill?: {
     name?: string
     email?: string
@@ -19,8 +24,13 @@ export type RazorpayOptions = {
   notes?: Record<string, string>
   theme?: {
     color: string
+    backdrop_color?: string
   }
   modal?: {
+    backdropclose?: boolean
+    confirm_close?: boolean
+    escape?: boolean
+    handleback?: boolean
     ondismiss?: () => void
   }
   handler: (response: RazorpaySuccessResponse) => void

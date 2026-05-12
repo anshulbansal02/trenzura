@@ -1,11 +1,12 @@
 import { Button } from '@base-ui/react/button'
-import { Link } from '@tanstack/react-router'
-import { BadgeCheck, Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
 import type { Product } from '../../data/products'
-import { formatPrice, joinClasses } from '../../lib/format'
+import { formatPrice, joinClasses, standardShippingPaise } from '../../lib/format'
+import { FitConfidenceHelper } from './FitConfidenceHelper'
 
 type ProductPurchasePanelProps = {
   product: Product
@@ -26,6 +27,7 @@ export function ProductPurchasePanel({
   const [selectedSize, setSelectedSize] = useState(availableSizes[0]?.label ?? '')
   const [quantity, setQuantity] = useState(1)
   const { addItem } = useCart()
+  const navigate = useNavigate()
   const selectedInventory = availableSizes.find((size) => size.label === selectedSize)
   const maxQuantity = selectedInventory?.stockAvailable ?? 0
   const canAddToCart = Boolean(selectedInventory && quantity >= 1 && quantity <= maxQuantity)
@@ -42,10 +44,21 @@ export function ProductPurchasePanel({
     setQuantity((value) => Math.min(Math.max(value, 1), maxQuantity))
   }, [availableSizes, maxQuantity, selectedSize])
 
+  useEffect(() => {
+    setSelectedSize(availableSizes[0]?.label ?? '')
+    setQuantity(1)
+  }, [availableSizes, product.productId])
+
   function addCurrentSelection() {
     if (!canAddToCart) return
     addItem({ product, size: selectedSize, quantity })
     onAdded?.()
+  }
+
+  function buyCurrentSelection() {
+    if (!canAddToCart) return
+    addItem({ product, size: selectedSize, quantity })
+    void navigate({ to: '/checkout' })
   }
 
   return (
@@ -72,27 +85,20 @@ export function ProductPurchasePanel({
           {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
         </p>
       </div>
-      {!isQuickLook ? (
-        <div className="mt-4 grid gap-2 text-xs font-medium text-[var(--color-muted)] sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-          {['Tax included', 'Ready to ship', 'Secure payment'].map((label) => (
-            <p key={label} className="flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-2">
-              <BadgeCheck className="size-3.5 text-[var(--color-sage)]" aria-hidden="true" />
-              {label}
-            </p>
-          ))}
-        </div>
-      ) : null}
-
       <div className="mt-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Select size</p>
           {product.sizeChart.length > 0 && !isQuickLook ? (
-            <a
-              href="#size-chart"
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)]"
-            >
-              Size chart
-            </a>
+            <div className="ml-auto flex shrink-0 items-center gap-2 text-right">
+              <FitConfidenceHelper product={product} onSelectSize={setSelectedSize} />
+              <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
+              <a
+                href="#size-chart"
+                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+              >
+                Size chart
+              </a>
+            </div>
           ) : null}
         </div>
         <div className="mt-3 grid grid-cols-5 gap-2">
@@ -138,15 +144,15 @@ export function ProductPurchasePanel({
       {!isQuickLook ? (
         <div className="mt-6">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
-          <div className="mt-3 inline-flex h-11 items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
+          <div className="mt-3 inline-flex h-11 items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
             <button
               type="button"
               disabled={quantity <= 1}
               aria-label="Decrease quantity"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+              className="grid h-full w-11 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
             >
-              <Minus className="mx-auto size-4" aria-hidden="true" />
+              <Minus className="size-4" aria-hidden="true" />
             </button>
             <span className="w-10 text-center text-sm font-semibold text-[var(--color-ink)]">
               {quantity}
@@ -156,9 +162,9 @@ export function ProductPurchasePanel({
               disabled={!selectedInventory || quantity >= maxQuantity}
               aria-label="Increase quantity"
               onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-              className="size-11 rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
+              className="grid h-full w-11 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
             >
-              <Plus className="mx-auto size-4" aria-hidden="true" />
+              <Plus className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -180,19 +186,10 @@ export function ProductPurchasePanel({
         </Button>
         {!isQuickLook ? (
           <Button
-            nativeButton={false}
-            render={
-              <Link
-                to="/checkout"
-                onClick={addCurrentSelection}
-                className={joinClasses(
-                  'fashion-button-secondary h-12 px-5',
-                  canAddToCart
-                    ? ''
-                    : 'pointer-events-none border-stone-200 bg-stone-100 text-stone-500 shadow-none',
-                )}
-              />
-            }
+            type="button"
+            disabled={!canAddToCart}
+            onClick={buyCurrentSelection}
+            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
           >
             Buy now
           </Button>
@@ -213,7 +210,7 @@ export function ProductPurchasePanel({
           <>
             <p className="flex gap-3">
               <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-              <span>Free shipping over {formatPrice(250000)} and easy 7-day exchanges.</span>
+              <span>Flat {formatPrice(standardShippingPaise)} shipping and easy 7-day exchanges.</span>
             </p>
             <p className="flex gap-3">
               <ShieldCheck

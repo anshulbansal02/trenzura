@@ -46,12 +46,21 @@ const retryAdminShipment = createServerFn({ method: 'POST' })
   })
 
 export const Route = createFileRoute('/admin')({
-  head: () =>
-    createPageMeta({
+  head: () => {
+    const pageMeta = createPageMeta({
       title: 'Admin | Trenzura',
       description: 'Operational dashboard for Trenzura order and shipment management.',
       path: '/admin',
-    }),
+    })
+
+    return {
+      ...pageMeta,
+      meta: [
+        ...pageMeta.meta,
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
+    }
+  },
   loader: () => getAdminDashboard(),
   component: AdminPage,
 })
@@ -89,10 +98,10 @@ function AdminPage() {
   const [retryMessage, setRetryMessage] = useState('')
   const activeRows = dashboard.views[activeView]
   const criticalCount =
-    dashboard.counts.shipmentPendingOrders +
-    dashboard.counts.paymentReviewOrders +
-    dashboard.counts.failedPayments +
-    dashboard.counts.integrationErrors
+    dashboard.shownCounts.shipmentPendingOrders +
+    dashboard.shownCounts.paymentReviewOrders +
+    dashboard.shownCounts.failedPayments +
+    dashboard.shownCounts.integrationErrors
 
   async function refreshDashboard() {
     await router.invalidate()
@@ -152,20 +161,20 @@ function AdminPage() {
         />
         <MetricCard
           label="Shipment pending"
-          value={dashboard.counts.shipmentPendingOrders}
-          tone={dashboard.counts.shipmentPendingOrders > 0 ? 'alert' : 'normal'}
+          value={dashboard.shownCounts.shipmentPendingOrders}
+          tone={dashboard.shownCounts.shipmentPendingOrders > 0 ? 'alert' : 'normal'}
           Icon={Truck}
         />
         <MetricCard
           label="Payment review"
-          value={dashboard.counts.paymentReviewOrders}
-          tone={dashboard.counts.paymentReviewOrders > 0 ? 'alert' : 'normal'}
+          value={dashboard.shownCounts.paymentReviewOrders}
+          tone={dashboard.shownCounts.paymentReviewOrders > 0 ? 'alert' : 'normal'}
           Icon={CreditCard}
         />
         <MetricCard
           label="Low stock"
-          value={dashboard.counts.lowStockVariants}
-          tone={dashboard.counts.lowStockVariants > 0 ? 'alert' : 'normal'}
+          value={dashboard.shownCounts.lowStockVariants}
+          tone={dashboard.shownCounts.lowStockVariants > 0 ? 'alert' : 'normal'}
           Icon={Boxes}
         />
       </section>
@@ -188,7 +197,7 @@ function AdminPage() {
                   <Icon className="size-4" aria-hidden="true" />
                   {label}
                   <span className="rounded-full bg-current/10 px-2 py-0.5 text-xs">
-                    {dashboard.counts[key]}
+                    {dashboard.shownCounts[key]}
                   </span>
                 </button>
               ))}
@@ -302,7 +311,7 @@ function AdminTable({
           <p className="mt-1 text-sm text-[var(--color-muted)]">{description}</p>
         </div>
         <p className="text-xs font-semibold text-[var(--color-muted)]">
-          {dashboard.counts[activeView]} rows
+          {dashboard.shownCounts[activeView]} shown
         </p>
       </div>
       {rows.length === 0 ? (

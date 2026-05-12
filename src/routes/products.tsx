@@ -9,8 +9,10 @@ import {
   type ProductSearchState,
 } from '../components/product/ProductFilters'
 import { ProductGrid } from '../components/product/ProductGrid'
+import { StyleFinder } from '../components/product/StyleFinder'
 import {
   getCategoryCounts,
+  getSmartSearchLabels,
   searchProducts,
   type ProductSort,
 } from '../data/product-search'
@@ -96,6 +98,7 @@ function ProductsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const selectedSizesKey = resolvedSearch.sizes.join('|')
   const activeFilters = createActiveFilters(resolvedSearch)
+  const smartSearchLabels = resolvedSearch.q ? getSmartSearchLabels(resolvedSearch.q) : []
   const updateSearch = useCallback(
     (nextSearch: Partial<ProductSearchState>) =>
       navigate({
@@ -120,17 +123,23 @@ function ProductsPage() {
 
   return (
     <main className="fashion-container py-10 lg:py-14">
-      <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
+      <div className="mb-10 flex flex-col gap-5 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="fashion-eyebrow">Shop</p>
           <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
             Kurtis and sets
           </h1>
         </div>
-        <p className="fashion-copy max-w-xl">
-          Find everyday kurtis, coordinated sets, and occasion-ready pieces by size, price, and
-          availability.
-        </p>
+        <div className="max-w-xl">
+          <p className="fashion-copy">
+            Find everyday kurtis, coordinated sets, and occasion-ready pieces by size, price, and
+            availability.
+          </p>
+          <StyleFinder
+            triggerLabel="Help me choose"
+            triggerClassName="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-ink)] shadow-sm shadow-stone-950/5 transition hover:border-[#b58b91] hover:bg-white hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+          />
+        </div>
       </div>
 
       <Dialog.Root open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -160,6 +169,19 @@ function ProductsPage() {
                   Filters update instantly
                 </div>
               </div>
+              {smartSearchLabels.length > 0 ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-semibold text-[var(--color-muted)]">Understood as</span>
+                  {smartSearchLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full bg-[var(--color-canvas)] px-2.5 py-1 font-semibold text-[var(--color-ink)]"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               {activeFilters.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {activeFilters.map((filter) => (
