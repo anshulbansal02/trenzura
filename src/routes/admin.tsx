@@ -1,5 +1,5 @@
 import { Button } from '@base-ui/react/button'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn, useServerFn } from '@tanstack/react-start'
 import {
   AlertTriangle,
@@ -90,7 +90,6 @@ const adminTabs: Array<{
 
 function AdminPage() {
   const dashboard = Route.useLoaderData()
-  const router = useRouter()
   const retryShipment = useServerFn(retryAdminShipment)
   const [activeView, setActiveView] = useState<AdminViewKey>('recentOrders')
   const [orderNumber, setOrderNumber] = useState('')
@@ -104,7 +103,7 @@ function AdminPage() {
     dashboard.shownCounts.integrationErrors
 
   async function refreshDashboard() {
-    await router.invalidate()
+    window.location.reload()
   }
 
   async function submitRetry(event: FormEvent<HTMLFormElement>) {
@@ -117,7 +116,6 @@ function AdminPage() {
       setRetryStatus('success')
       setRetryMessage(`Shipment retry requested for ${result.orderNumber}.`)
       setOrderNumber('')
-      await router.invalidate()
     } catch (error) {
       setRetryStatus('error')
       setRetryMessage(error instanceof Error ? error.message : 'Unable to retry shipment')
