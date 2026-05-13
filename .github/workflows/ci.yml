@@ -2,8 +2,13 @@ name: CI
 
 on:
   pull_request:
+    branches:
+      - qa
+      - main
   push:
     branches:
+      - dev
+      - qa
       - main
 
 jobs:
@@ -23,6 +28,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm sync:products
+      - name: Sync products
+        if: env.GOOGLE_SERVICE_ACCOUNT_JSON != ''
+        run: pnpm sync:products
+      - name: Use checked-in products
+        if: env.GOOGLE_SERVICE_ACCOUNT_JSON == ''
+        run: echo "GOOGLE_SERVICE_ACCOUNT_JSON is not configured; using checked-in generated product data."
       - run: pnpm exec tsc --noEmit
       - run: pnpm build

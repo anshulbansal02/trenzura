@@ -46,6 +46,14 @@ TELEGRAM_CHAT_ID=
 Use test mode Razorpay keys locally. Deploy the Edge Functions and set the same secrets with the
 Supabase CLI or dashboard before testing hosted checkout.
 
+For QA, create the Razorpay webhook in Test mode:
+
+```text
+https://qxbzplfcjkjibsrndlbh.supabase.co/functions/v1/razorpay-webhook
+```
+
+Select `payment.captured` and use the same `RAZORPAY_WEBHOOK_SECRET` configured for QA.
+
 Checkout delivery details use this address shape:
 
 ```json

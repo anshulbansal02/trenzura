@@ -29,7 +29,9 @@ type CartContextValue = {
   mrpTotal: number
   savings: number
   isOpen: boolean
+  addedItem: AddedCartItem | null
   addItem: (input: AddCartItemInput) => void
+  dismissAddedItem: () => void
   updateQuantity: (id: string, quantity: number) => void
   removeItem: (id: string) => void
   clearCart: () => void
@@ -38,17 +40,28 @@ type CartContextValue = {
   setCartOpen: (open: boolean) => void
 }
 
+export type AddedCartItem = {
+  product: Product
+  quantity: number
+  size: string
+}
+
 const cartStorageKey = 'trenzura-cart'
 const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartLines, setCartLines] = useState<CartLine[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [addedItem, setAddedItem] = useState<AddedCartItem | null>(null)
+  const [hasLoadedCart, setHasLoadedCart] = useState(false)
 
   useEffect(() => {
     try {
       const savedCart = window.localStorage.getItem(cartStorageKey)
-      if (!savedCart) return
+      if (!savedCart) {
+        setHasLoadedCart(true)
+        return
+      }
 
       const parsedCart = JSON.parse(savedCart) as CartLine[]
       if (Array.isArray(parsedCart)) {
@@ -56,12 +69,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       setCartLines([])
+    } finally {
+      setHasLoadedCart(true)
     }
   }, [])
 
   useEffect(() => {
+    if (!hasLoadedCart) return
+
     window.localStorage.setItem(cartStorageKey, JSON.stringify(cartLines))
-  }, [cartLines])
+  }, [cartLines, hasLoadedCart])
 
   const lines = useMemo(
     () =>
@@ -107,6 +124,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       mrpTotal: totals.mrpTotal,
       savings: Math.max(0, totals.mrpTotal - totals.subtotal),
       isOpen,
+      addedItem,
       addItem: ({ product, size, quantity = 1 }) => {
         const sizeInventory = product.sizes.find((item) => item.label === size)
         if (!sizeInventory || sizeInventory.stockAvailable < 1) return
@@ -140,8 +158,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               : line,
           )
         })
-        setIsOpen(true)
+        setAddedItem({ product, size, quantity: safeQuantity })
       },
+      dismissAddedItem: () => setAddedItem(null),
       updateQuantity: (id, quantity) => {
         setCartLines((currentLines) =>
           currentLines
@@ -164,11 +183,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCartLines((currentLines) => currentLines.filter((line) => line.id !== id))
       },
       clearCart: () => setCartLines([]),
-      openCart: () => setIsOpen(true),
+      openCart: () => {
+        setAddedItem(null)
+        setIsOpen(true)
+      },
       closeCart: () => setIsOpen(false),
       setCartOpen: setIsOpen,
     }),
-    [isOpen, lines, totals.itemCount, totals.mrpTotal, totals.subtotal],
+    [addedItem, isOpen, lines, totals.itemCount, totals.mrpTotal, totals.subtotal],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

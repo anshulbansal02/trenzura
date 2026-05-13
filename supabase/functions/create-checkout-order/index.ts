@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
@@ -41,7 +41,6 @@ type VariantRow = {
 }
 
 const currency = 'INR'
-const freeShippingThresholdPaise = 250000
 const standardShippingPaise = 14900
 const maxCheckoutQuantity = 20
 
@@ -133,7 +132,7 @@ Deno.serve(async (request) => {
       }
     })
     const subtotal = orderItems.reduce((total, item) => total + item.line_total_paise, 0)
-    const shipping = subtotal >= freeShippingThresholdPaise ? 0 : standardShippingPaise
+    const shipping = standardShippingPaise
     const total = subtotal + shipping
 
     if (total < 100) {

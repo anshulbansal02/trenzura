@@ -1,0 +1,205 @@
+# Platform Setup
+
+Goal: zero-cost, simple CI/CD, with clear QA and production separation.
+
+## GitHub
+
+Best setup:
+
+- Branches: `dev`, `qa`, `main`.
+- Work starts on `dev`.
+- Merge `dev` into `qa` to deploy QA.
+- Merge `qa` into `main` to deploy production.
+- Protect `qa` and `main`: no direct pushes, require CI.
+
+Current repo setup:
+
+- CI runs on `dev`, `qa`, and `main`.
+- QA deploy runs when `qa` changes.
+- Prod deploy runs when `main` changes.
+- GitHub CLI auth is currently broken, so branch protection is not applied yet.
+- Workflows use standard GitHub environments. Missing secrets fail naturally in the relevant build, deploy,
+  or CLI command.
+
+Important GitHub secret rule:
+
+- Environment secrets override repo secrets.
+- If an environment secret is missing, GitHub can still expose a repo secret with the same name.
+- To avoid QA accidentally using prod values, move runtime secrets from repo-level to environment-level, then
+  delete the repo-level copies.
+
+Keep repo-level only:
+
+```text
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_API_TOKEN
+GOOGLE_SHEETS_SPREADSHEET_ID
+GOOGLE_SERVICE_ACCOUNT_JSON
+```
+
+Put these in both `qa` and `prod` environments:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_PROJECT_REF
+SUPABASE_DB_PASSWORD
+RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET
+RAZORPAY_WEBHOOK_SECRET
+```
+
+After environment secrets are set, remove these repo-level secrets:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+Need from you:
+
+```bash
+gh auth login -h github.com
+```
+
+Then I can apply branch protection.
+
+## Supabase
+
+Best zero-cost setup:
+
+- Use two Supabase projects:
+  - prod: existing `trenzura-shop`
+  - qa: `trenzura-shop-qa`
+- This fits Supabase Free only if you stay within the free active-project limit.
+- Use the same migrations and same Google Sheet for both.
+- QA uses Razorpay test secrets.
+- Prod uses Razorpay live secrets.
+
+Do not use one Supabase project with “different DBs”:
+
+- Hosted Supabase projects have one main Postgres database.
+- Separate schemas are possible, but messy for Auth, Storage, Edge Functions, API keys, and secrets.
+- Supabase Branching is not the best fit for a zero-cost setup because Branching is not included in Free.
+
+Need from you:
+
+- Razorpay QA test keys before checkout can be fully tested.
+
+Current status:
+
+- Prod project: `trenzura-shop`, ref `tvrrgphxdifrxirtcoou`.
+- QA project: `trenzura-shop-qa`, ref `qxbzplfcjkjibsrndlbh`.
+- QA migrations are applied.
+- QA Edge Functions are deployed.
+- QA GitHub environment has Supabase URL, anon key, service role key, project ref, DB password, and access token.
+- QA product tables are seeded with current generated catalog data.
+- QA Storage image upload partially completed but failed on `TZ-002/2.jpg`; rerun product image sync later.
+
+## Cloudflare
+
+Best setup:
+
+- One Worker script for prod: `trenzura`.
+- One Worker environment for QA: `trenzura-qa`.
+- Prod domains: `trenzura.in`, `www.trenzura.in`.
+- QA domain: `qa.trenzura.in`.
+- Stay on Workers Free. Avoid KV, D1, Queues, Images, or paid add-ons unless needed.
+
+Current repo setup:
+
+- `wrangler.jsonc` is configured for prod and QA domains.
+- Cloudflare CLI is logged in.
+
+Need first:
+
+- `trenzura.in` must be active in Cloudflare DNS.
+
+## GoDaddy
+
+Best setup:
+
+- Use GoDaddy only as registrar.
+- Use Cloudflare for DNS.
+
+Need from you:
+
+1. Add `trenzura.in` to Cloudflare.
+2. Copy existing DNS records from GoDaddy to Cloudflare if any.
+3. In GoDaddy, change nameservers to the two Cloudflare nameservers.
+4. Wait for Cloudflare to show the zone as active.
+
+## Razorpay
+
+Best setup:
+
+- QA uses Razorpay test mode keys.
+- Prod uses Razorpay live mode keys.
+- Separate webhook secrets:
+  - QA webhook points to QA Supabase function URL.
+  - Prod webhook points to prod Supabase function URL.
+
+Current status:
+
+- QA GitHub environment has Razorpay test secrets.
+- QA Supabase project has Razorpay test secrets.
+- Prod is intentionally not configured because current local Razorpay keys are test keys.
+
+Need from you:
+
+- Razorpay live key ID/secret.
+- Razorpay dashboard webhook setup.
+
+QA webhook:
+
+```text
+URL: https://qxbzplfcjkjibsrndlbh.supabase.co/functions/v1/razorpay-webhook
+Mode: Test
+Events: payment.captured
+Secret: use RAZORPAY_WEBHOOK_SECRET from local .env
+```
+
+Prod webhook, later:
+
+```text
+URL: https://<prod-project-ref>.supabase.co/functions/v1/razorpay-webhook
+Mode: Live
+Events: payment.captured
+Secret: separate live webhook secret
+```
+
+## Delhivery
+
+Best zero-cost/safe setup:
+
+- QA: `DELHIVERY_ENABLED=false`.
+- Prod: `DELHIVERY_ENABLED=false` until ready to create real shipments.
+- Avoid sandbox unless Delhivery provides it for free and it is actually useful.
+
+Current status:
+
+- QA GitHub environment has Delhivery disabled and package dimension variables.
+- Prod GitHub environment has Delhivery disabled and package dimension variables.
+- QA Supabase project has Delhivery disabled and package dimension secrets.
+
+Need later before enabling prod:
+
+- Prod Delhivery token and pickup config.
+- Prod create-shipment API URL from Delhivery.
+- Pickup location name exactly as Delhivery expects it.
+- Optional seller GST and HSN code.
+- Confirmation before enabling real shipments.
+
+## Setup Order
+
+1. GitHub branch protection.
+2. GoDaddy to Cloudflare DNS.
+3. Cloudflare prod/QA domains.
+4. Supabase QA project.
+5. GitHub environment secrets.
+6. Razorpay test/prod webhooks.
+7. Delhivery prod enablement.

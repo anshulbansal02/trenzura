@@ -18,7 +18,11 @@ package has shipped.
 
 ## Manual Retry
 
-Use the GitHub Actions workflow `Retry shipment`.
+Use `/admin` for owner-facing shipment retries, or the GitHub Actions workflow `Retry shipment`
+as the fallback developer path.
+
+The admin page is protected by Cloudflare Access and the app-side `ADMIN_EMAILS` allowlist. V1 only
+allows viewing ops data and retrying shipment creation.
 
 Input:
 
@@ -81,3 +85,6 @@ DELHIVERY_HSN_CODE=
 
 Until Delhivery account-specific details are confirmed, keep `DELHIVERY_ENABLED=false` and fulfill
 from `shipment_pending` orders manually.
+
+Current setup keeps Delhivery disabled for both QA and prod environments. Do not enable prod until
+the live token, create-shipment URL, and pickup location are confirmed in Delhivery.
