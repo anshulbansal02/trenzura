@@ -23,6 +23,7 @@ const html = `<!doctype html>
         --rouge: #72343d;
         --sage: #71816d;
         --marigold: #d9a441;
+        --blush: #f2d6cf;
       }
 
       * {
@@ -47,41 +48,32 @@ const html = `<!doctype html>
 
       main {
         position: relative;
-        isolation: isolate;
-        display: grid;
+        display: flex;
+        align-items: center;
         min-height: 100svh;
         overflow: hidden;
-      }
-
-      .hero-image {
-        position: absolute;
-        inset: 0;
-        z-index: -2;
-        background:
-          linear-gradient(90deg, rgba(255, 250, 244, 0.98) 0%, rgba(255, 250, 244, 0.9) 42%, rgba(255, 250, 244, 0.18) 100%),
-          url("${PRODUCT_IMAGE}") right center / min(58vw, 720px) auto no-repeat,
-          var(--paper);
       }
 
       .grain {
         position: absolute;
         inset: 0;
-        z-index: -1;
         background-image:
           linear-gradient(rgba(23, 19, 16, 0.035) 1px, transparent 1px),
           linear-gradient(90deg, rgba(23, 19, 16, 0.03) 1px, transparent 1px);
         background-size: 42px 42px;
-        mask-image: linear-gradient(90deg, #000 0%, transparent 82%);
+        opacity: 0.55;
         pointer-events: none;
       }
 
       .wrap {
+        position: relative;
         display: grid;
-        align-content: center;
-        width: min(100%, 1180px);
-        min-height: 100svh;
+        grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.78fr);
+        align-items: center;
+        gap: clamp(34px, 7vw, 92px);
+        width: min(100%, 1220px);
         margin: 0 auto;
-        padding: 40px clamp(20px, 6vw, 72px);
+        padding: clamp(42px, 7vw, 86px) clamp(20px, 6vw, 72px);
       }
 
       .content {
@@ -113,21 +105,82 @@ const html = `<!doctype html>
         line-height: 1.75;
       }
 
-      .status {
+      .notes {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
         margin-top: 34px;
       }
 
-      .pill {
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(255, 250, 244, 0.72);
-        padding: 10px 14px;
+      .note {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
         color: var(--ink);
-        font-size: 0.86rem;
+        font-size: 0.9rem;
         font-weight: 700;
+      }
+
+      .note::before {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--sage);
+        content: "";
+      }
+
+      .visual {
+        position: relative;
+        justify-self: end;
+        width: min(100%, 430px);
+      }
+
+      .visual::before {
+        position: absolute;
+        inset: 22px -22px -22px 22px;
+        border: 1px solid rgba(114, 52, 61, 0.2);
+        background: var(--blush);
+        content: "";
+      }
+
+      .visual::after {
+        position: absolute;
+        right: -34px;
+        top: -34px;
+        width: 132px;
+        height: 132px;
+        border: 1px solid rgba(23, 19, 16, 0.18);
+        border-radius: 50%;
+        background: var(--paper);
+        content: "";
+      }
+
+      .visual img {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border: 1px solid rgba(23, 19, 16, 0.12);
+        object-fit: cover;
+        object-position: center 35%;
+        box-shadow: 0 30px 70px rgba(23, 19, 16, 0.18);
+      }
+
+      .caption {
+        position: absolute;
+        z-index: 2;
+        left: -28px;
+        bottom: 28px;
+        max-width: 230px;
+        border: 1px solid rgba(23, 19, 16, 0.12);
+        background: rgba(255, 250, 244, 0.94);
+        padding: 14px 16px;
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 700;
+        line-height: 1.55;
+        box-shadow: 0 18px 45px rgba(23, 19, 16, 0.1);
       }
 
       .footer {
@@ -152,21 +205,37 @@ const html = `<!doctype html>
       }
 
       @media (max-width: 760px) {
-        .hero-image {
-          background:
-            linear-gradient(180deg, rgba(255, 250, 244, 0.96) 0%, rgba(255, 250, 244, 0.9) 48%, rgba(255, 250, 244, 0.68) 100%),
-            url("${PRODUCT_IMAGE}") center bottom / min(92vw, 430px) auto no-repeat,
-            var(--paper);
-        }
-
         .wrap {
-          align-content: start;
+          grid-template-columns: 1fr;
           padding-top: 48px;
-          padding-bottom: 260px;
+          padding-bottom: 108px;
         }
 
         h1 {
           font-size: clamp(3.6rem, 18vw, 5.8rem);
+        }
+
+        .visual {
+          justify-self: start;
+          width: min(100%, 360px);
+        }
+
+        .visual::before {
+          inset: 16px -12px -16px 16px;
+        }
+
+        .visual::after {
+          right: -18px;
+          top: -22px;
+          width: 88px;
+          height: 88px;
+        }
+
+        .caption {
+          left: 14px;
+          right: 14px;
+          bottom: 14px;
+          max-width: none;
         }
 
         .footer {
@@ -178,23 +247,26 @@ const html = `<!doctype html>
   </head>
   <body>
     <main>
-      <div class="hero-image" aria-hidden="true"></div>
       <div class="grain" aria-hidden="true"></div>
       <section class="wrap" aria-label="Trenzura opening soon">
         <div class="content">
           <p class="eyebrow">Opening soon</p>
           <h1>Trenzura</h1>
           <p class="copy">
-            Curated Indian wear for easy everyday dressing. The shop is being
-            tested now and will open once checkout, inventory, and delivery are
-            ready end to end.
+            Curated Indian wear for easy everyday dressing. A small first
+            collection is being prepared with thoughtful fits, graceful prints,
+            and a shopping experience made to feel simple.
           </p>
-          <div class="status" aria-label="Launch status">
-            <span class="pill">QA in progress</span>
-            <span class="pill">Secure checkout testing</span>
-            <span class="pill">Launch soon</span>
+          <div class="notes" aria-label="Brand notes">
+            <span class="note">Everyday festive</span>
+            <span class="note">Limited first drop</span>
+            <span class="note">Opening soon</span>
           </div>
         </div>
+        <figure class="visual">
+          <img src="${PRODUCT_IMAGE}" alt="Yellow kurti and pant set from Trenzura" />
+          <figcaption class="caption">Soft color, relaxed tailoring, and pieces made for repeat wear.</figcaption>
+        </figure>
       </section>
       <div class="footer" aria-label="Brand mark">
         <span class="mark" aria-hidden="true"></span>
@@ -212,6 +284,7 @@ const securityHeaders = {
   "Permissions-Policy":
     "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
   "Referrer-Policy": "no-referrer",
+  "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };
