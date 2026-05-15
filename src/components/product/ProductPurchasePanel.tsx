@@ -65,24 +65,24 @@ export function ProductPurchasePanel({
     <>
       <div
         className={joinClasses(
-          isQuickLook ? '' : 'fashion-surface rounded-[1.25rem] p-4 lg:p-5',
+          isQuickLook ? '' : 'fashion-surface rounded-lg bg-[var(--color-paper)] p-4 lg:p-5',
         )}
       >
       <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-2xl font-semibold text-[var(--color-ink)]">
+          <p className="text-2xl font-semibold text-[var(--color-rouge)]">
             {formatPrice(product.sellingPricePaise)}
           </p>
           {product.discountPercent > 0 ? (
             <p className="mt-1 text-sm text-[var(--color-muted)]">
               <span className="line-through">{formatPrice(product.mrpPaise)}</span>
-              <span className="ml-2 text-[var(--color-rouge)]">
+              <span className="ml-2 font-bold text-[var(--color-rouge)]">
                 {product.discountPercent}% off
               </span>
             </p>
           ) : null}
         </div>
-        <p className="rounded-full bg-[var(--color-canvas)] px-3 py-1 text-xs font-semibold text-[var(--color-sage)]">
+        <p className="rounded-full bg-[var(--color-mist)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-sage)]">
           {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
         </p>
       </div>
@@ -118,7 +118,7 @@ export function ProductPurchasePanel({
                   setQuantity(1)
                 }}
                 className={joinClasses(
-                  'h-11 rounded-full border text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
                   isSelected
                     ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
@@ -226,7 +226,7 @@ export function ProductPurchasePanel({
       </div>
 
       {!isQuickLook ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-2xl shadow-stone-950/12 backdrop-blur-xl sm:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-sm backdrop-blur-xl sm:hidden">
           <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-[var(--color-ink)]">

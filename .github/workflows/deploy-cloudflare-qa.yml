@@ -2,9 +2,6 @@ name: Deploy storefront QA
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - qa
 
 jobs:
   deploy:
@@ -12,11 +9,11 @@ jobs:
     environment: qa
     env:
       CLOUDFLARE_ENV: qa
-      GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
-      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      GOOGLE_SHEETS_RANGE: ${{ vars.GOOGLE_SHEETS_RANGE }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      PRODUCT_IMAGE_PUBLIC_BASE_URL: ${{ vars.PRODUCT_IMAGE_PUBLIC_BASE_URL }}
+      CLOUDFLARE_WORKER_NAME: ${{ vars.CLOUDFLARE_WORKER_NAME }}
+      CLOUDFLARE_DOMAIN: ${{ vars.CLOUDFLARE_DOMAIN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,13 +29,30 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Sync products
-        if: env.GOOGLE_SERVICE_ACCOUNT_JSON != ''
-        run: pnpm sync:products
+      - name: Validate QA deployment config
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          required() {
+            test -n "${!1}" || { echo "$1 is required"; exit 1; }
+          }
 
-      - name: Use checked-in products
-        if: env.GOOGLE_SERVICE_ACCOUNT_JSON == ''
-        run: echo "GOOGLE_SERVICE_ACCOUNT_JSON is not configured; using checked-in generated product data."
+          required SUPABASE_URL
+          required SUPABASE_SERVICE_ROLE_KEY
+          required EXPECTED_SUPABASE_PROJECT_REF
+          required VITE_SUPABASE_URL
+          required VITE_SUPABASE_ANON_KEY
+          required PRODUCT_IMAGE_PUBLIC_BASE_URL
+          required CLOUDFLARE_ACCOUNT_ID
+          required CLOUDFLARE_API_TOKEN
+          required CLOUDFLARE_WORKER_NAME
+          required CLOUDFLARE_DOMAIN
+
+      - run: pnpm validate:catalog-assets
 
       - run: pnpm build
 
@@ -46,4 +60,4 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 import type { Product } from '../../data/products'
 import { getProductReasons } from '../../lib/product-insights'
@@ -25,12 +25,12 @@ export function ProductReasons({
   return (
     <div
       className={joinClasses(
-        'rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)]',
+        'rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)]',
         compact ? 'p-3' : 'p-4',
       )}
     >
       <p className="flex items-center gap-2 text-xs font-semibold uppercase text-[var(--color-rouge)]">
-        <Sparkles className="size-3.5" aria-hidden="true" />
+        <Check className="size-3.5" aria-hidden="true" />
         Why this piece
       </p>
       <ul className={joinClasses('grid gap-2', compact ? 'mt-3 text-xs' : 'mt-4 text-sm')}>

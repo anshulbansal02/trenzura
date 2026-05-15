@@ -28,9 +28,9 @@ import { createPageMeta } from '../lib/seo'
 export const Route = createFileRoute('/products')({
   head: () =>
     createPageMeta({
-      title: 'Shop Kurtis and Sets | Trenzura',
+      title: 'Shop Short Tops, Kurtis and Co-ord Sets | Trenzura',
       description:
-        'Browse Trenzura kurtis and coordinated sets by size, price, availability, and offers.',
+        'Browse Trenzura short tops, kurtis, and coordinated sets by size, price, availability, and offers.',
       path: '/products',
     }),
   validateSearch: (search: Record<string, unknown>): ProductSearchState => ({
@@ -125,19 +125,19 @@ function ProductsPage() {
     <main className="fashion-container pb-32 pt-10 lg:py-14">
       <div className="mb-10 flex flex-col gap-5 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="fashion-eyebrow">Shop</p>
-          <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
-            Kurtis and sets
+          <p className="fashion-eyebrow">Fresh drops, every week</p>
+          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+            Shop the collection
           </h1>
         </div>
         <div className="max-w-xl">
           <p className="fashion-copy">
-            Find everyday kurtis, coordinated sets, and occasion-ready pieces by size, price, and
-            availability.
+            Find short tops, everyday kurtis, coordinated sets, and occasion-ready pieces by size,
+            price, and availability.
           </p>
           <StyleFinder
-            triggerLabel="Help me choose"
-            triggerClassName="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-ink)] shadow-sm shadow-stone-950/5 transition hover:border-[#b58b91] hover:bg-white hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+            triggerLabel="Find my style"
+            triggerClassName="fashion-button-secondary mt-4 h-10 gap-2 px-4"
           />
         </div>
       </div>
@@ -145,7 +145,7 @@ function ProductsPage() {
       <Dialog.Root open={filtersOpen} onOpenChange={setFiltersOpen}>
         <div className="grid min-w-0 gap-8 lg:grid-cols-[280px_1fr]">
           <section className="min-w-0 lg:order-2">
-            <div className="mb-5 rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+            <div className="mb-6 border-b border-[var(--color-line)] pb-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--color-ink)]">
@@ -160,11 +160,11 @@ function ProductsPage() {
                         </span>
                       </>
                     ) : (
-                      'Browse ready-to-ship kurtis and coordinated sets.'
+                      'Browse ready-to-ship short tops, kurtis, and coordinated sets.'
                     )}
                   </p>
                 </div>
-                <div className="hidden items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-2 text-xs font-semibold text-[var(--color-muted)] lg:inline-flex">
+                <div className="hidden items-center gap-2 rounded-full bg-[var(--color-surface)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] lg:inline-flex">
                   <SlidersHorizontal className="size-4" aria-hidden="true" />
                   Filters update instantly
                 </div>
@@ -175,7 +175,7 @@ function ProductsPage() {
                   {smartSearchLabels.map((label) => (
                     <span
                       key={label}
-                      className="rounded-full bg-[var(--color-canvas)] px-2.5 py-1 font-semibold text-[var(--color-ink)]"
+                      className="rounded-full bg-[var(--color-surface)] px-2.5 py-1 font-bold text-[var(--color-ink)]"
                     >
                       {label}
                     </span>
@@ -189,7 +189,7 @@ function ProductsPage() {
                       key={filter.key}
                       type="button"
                       onClick={() => updateSearch(filter.clear)}
-                      className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm font-bold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
                     >
                       {filter.label}
                       <X className="size-3.5" aria-hidden="true" />
@@ -230,7 +230,7 @@ function ProductsPage() {
           render={
             <button
               type="button"
-              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#b58b91] bg-[var(--color-ink)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-xl shadow-stone-950/20 transition duration-150 ease-out hover:bg-[var(--color-rouge-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
+              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-rouge)] bg-[var(--color-rouge)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-sm transition duration-150 ease-out hover:bg-[var(--color-rouge-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
               aria-label="Open product filters"
             />
           }
@@ -246,7 +246,7 @@ function ProductsPage() {
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 lg:hidden" />
           <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center lg:hidden">
-            <Dialog.Popup className="max-h-[92svh] w-full overflow-hidden rounded-t-[1.35rem] border border-[var(--color-line)] bg-[var(--color-paper)] shadow-2xl shadow-stone-950/25 outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0">
+            <Dialog.Popup className="max-h-[92svh] w-full overflow-hidden rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0">
               <div className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4">
                 <div>
                   <Dialog.Title className="text-lg font-semibold text-[var(--color-ink)]">

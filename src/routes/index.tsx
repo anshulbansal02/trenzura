@@ -6,7 +6,6 @@ import {
   Ruler,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Truck,
 } from 'lucide-react'
 
@@ -17,6 +16,7 @@ import {
   categoryLabels,
   featuredProducts,
   productCategories,
+  productPriceRange,
   products,
 } from '../data/products'
 import { formatPrice } from '../lib/format'
@@ -25,9 +25,9 @@ import { createPageMeta } from '../lib/seo'
 export const Route = createFileRoute('/')({
   head: () =>
     createPageMeta({
-      title: 'Trenzura | Printed Kurtis and Sets',
+      title: 'Trenzura | Short Tops, Kurtis and Co-ord Sets',
       description:
-        'Shop printed kurtis and coordinated sets for everyday plans, festive lunches, and easy occasion wear.',
+        'Shop printed short tops, kurtis, and coordinated sets for everyday plans, festive lunches, and easy occasion wear.',
       path: '/',
       image: products[0]?.images[0],
     }),
@@ -41,12 +41,12 @@ function Home() {
     return { category, product }
   })
   const newArrivals = products.slice(0, 3)
+  const imageStoryProducts = products.slice(3, 7)
   const heroGallery = [
     products[1] ?? heroProduct,
     heroProduct,
     products[3] ?? products[2] ?? heroProduct,
   ]
-  const heroPrice = formatPrice(heroProduct.sellingPricePaise)
   const trustSignals = [
     { Icon: Truck, label: 'Ships in 1-2 days' },
     { Icon: Ruler, label: 'Size chart on every product' },
@@ -78,21 +78,17 @@ function Home() {
 
   return (
     <main className="pb-24 sm:pb-0">
-      <section className="relative overflow-hidden bg-[var(--color-ink)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgb(114_52_61_/_0.26),transparent_30%),linear-gradient(115deg,#171310_0%,#171310_52%,#2b211d_100%)]" />
-        <div className="fashion-container relative grid min-h-[82svh] gap-8 py-10 lg:grid-cols-[minmax(0,0.84fr)_minmax(520px,0.86fr)] lg:items-end lg:py-12">
-          <div className="flex min-h-[54svh] items-end pb-4 pt-24 text-[var(--color-paper)] lg:min-h-[72svh] lg:pb-12">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase text-[var(--color-paper)]/80">
-                The festive everyday edit
-              </p>
-              <h1 className="mt-4 font-serif text-6xl font-normal leading-[0.95] text-[var(--color-paper)] sm:text-8xl lg:text-9xl">
+      <section className="relative overflow-hidden border-b border-[var(--color-line)] bg-[var(--color-paper)]">
+        <div className="fashion-container grid min-h-[82svh] gap-8 py-7 lg:grid-cols-[minmax(0,0.72fr)_minmax(540px,1fr)] lg:items-stretch lg:py-10">
+          <div className="flex items-center py-10 lg:py-16">
+            <div className="max-w-xl">
+              <p className="fashion-eyebrow">Fresh drops, every week</p>
+              <h1 className="fashion-display mt-4 text-4xl leading-[1.04] sm:text-5xl lg:text-6xl">
                 Trenzura
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-7 text-[var(--color-paper)]/86 sm:text-lg">
-                Printed kurtis and coordinated sets for bright mornings, family lunches, and easy
-                festive evenings. Comfortable silhouettes, polished details, and pieces you will
-                reach for often.
+              <p className="mt-6 max-w-lg text-base leading-7 text-[var(--color-muted)] sm:text-lg">
+                Easy short tops, kurtis, and coordinated sets with happy color, clean fits, and
+                prices made for repeat shopping.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button
@@ -100,103 +96,60 @@ function Home() {
                   render={
                     <Link
                       to="/products"
-                      className="fashion-button-primary h-12 bg-[var(--color-paper)] px-6 text-[var(--color-ink)] hover:bg-white"
+                      search={{ sort: 'newest' }}
+                      className="fashion-button-primary h-12 px-6"
                     />
                   }
                 >
                   Shop new arrivals
                 </Button>
                 <StyleFinder
-                  triggerLabel="Help me choose"
-                  triggerClassName="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-paper)]/70 px-6 text-sm font-semibold text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-paper)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-paper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)] active:scale-[0.99]"
+                  triggerLabel="Find my style"
+                  triggerClassName="fashion-button-secondary h-12 gap-2 px-6"
                 />
               </div>
-              <div className="mt-8 flex flex-wrap gap-5 text-sm font-semibold text-[var(--color-paper)]/86">
-                {categoryTiles.map(({ category }) => (
-                  <Link
-                    key={category}
-                    to="/products"
-                    search={{ category }}
-                    className="border-b border-[var(--color-paper)]/35 pb-1 transition hover:border-[var(--color-paper)] hover:text-white"
-                  >
-                    Shop {categoryLabels[category]}
-                  </Link>
-                ))}
-                <Link
-                  to="/products"
-                  search={{ sort: 'newest' }}
-                  className="border-b border-[var(--color-paper)]/35 pb-1 transition hover:border-[var(--color-paper)] hover:text-white"
-                >
-                  New arrivals
-                </Link>
+              <div className="mt-9 grid grid-cols-3 gap-3 text-center">
+                <div className="border-y border-[var(--color-line)] py-3">
+                  <p className="text-lg font-semibold text-[var(--color-ink)]">
+                    {formatPrice(productPriceRange.min)}+
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Easy buys</p>
+                </div>
+                <div className="border-y border-[var(--color-line)] py-3">
+                  <p className="text-lg font-semibold text-[var(--color-ink)]">7 days</p>
+                  <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Exchanges</p>
+                </div>
+                <div className="border-y border-[var(--color-line)] py-3">
+                  <p className="text-lg font-semibold text-[var(--color-ink)]">1-2 days</p>
+                  <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Ships fast</p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="relative mx-auto h-[560px] w-full max-w-[620px] self-end sm:h-[640px] lg:mx-0 lg:h-[720px] lg:justify-self-end">
-            <Link
-              to="/products/$slug"
-              params={{ slug: heroGallery[0].slug }}
-              className="group absolute bottom-4 left-0 hidden w-[42%] overflow-hidden rounded-[1rem] bg-[var(--color-line)] shadow-2xl shadow-stone-950/35 sm:block"
-            >
-              <img
-                src={heroGallery[0].images[0]}
-                alt={heroGallery[0].imageAlt}
-                loading="lazy"
-                decoding="async"
-                className="aspect-[3/4] w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
-              />
-            </Link>
-            <Link
-              to="/products/$slug"
-              params={{ slug: heroProduct.slug }}
-              className="group absolute bottom-0 left-1/2 z-10 w-[62%] -translate-x-1/2 overflow-hidden rounded-[1.25rem] bg-[var(--color-line)] shadow-2xl shadow-stone-950/40"
-            >
-              <img
-                src={heroProduct.images[0]}
-                alt={heroProduct.imageAlt}
-                decoding="async"
-                fetchPriority="high"
-                className="aspect-[3/4] w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
-              />
-            </Link>
-            <Link
-              to="/products/$slug"
-              params={{ slug: heroGallery[2].slug }}
-              className="group absolute right-0 top-10 hidden w-[38%] overflow-hidden rounded-[1rem] bg-[var(--color-line)] shadow-2xl shadow-stone-950/30 md:block"
-            >
-              <img
-                src={heroGallery[2].images[0]}
-                alt={heroGallery[2].imageAlt}
-                loading="lazy"
-                decoding="async"
-                className="aspect-[3/4] w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
-              />
-            </Link>
-            <Link
-              to="/products/$slug"
-              params={{ slug: heroProduct.slug }}
-              className="absolute bottom-5 left-1/2 z-20 w-[min(360px,calc(100%-2.5rem))] -translate-x-1/2 rounded-[1rem] border border-[var(--color-paper)]/60 bg-[var(--color-paper)]/94 p-4 text-[var(--color-ink)] shadow-xl shadow-stone-950/20 backdrop-blur transition duration-200 ease-out hover:-translate-y-1 hover:bg-[var(--color-paper)]"
-            >
-              <div className="flex gap-4">
+          <div className="grid min-h-[520px] gap-3 sm:grid-cols-[0.7fr_1fr_0.7fr] lg:min-h-[680px]">
+            {heroGallery.map((product, index) => (
+              <Link
+                key={product.productId}
+                to="/products/$slug"
+                params={{ slug: product.slug }}
+                className={`group relative overflow-hidden rounded-lg bg-[var(--color-line)] ${
+                  index === 1 ? 'sm:my-0' : 'hidden sm:block sm:my-10'
+                }`}
+              >
                 <img
-                  src={heroProduct.images[1] ?? heroProduct.images[0]}
-                  alt={heroProduct.imageAlt}
-                  loading="lazy"
+                  src={product.images[0]}
+                  alt={product.imageAlt}
+                  loading={index === 1 ? undefined : 'lazy'}
                   decoding="async"
-                  className="aspect-[4/5] w-28 rounded-[0.75rem] object-cover"
+                  fetchPriority={index === 1 ? 'high' : undefined}
+                  className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
                 />
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase text-[var(--color-rouge)]">
-                    Featured now
-                  </p>
-                  <h2 className="mt-2 text-base font-semibold">{heroProduct.title}</h2>
-                  <p className="mt-1 text-sm text-[var(--color-muted)]">
-                    {heroProduct.categoryLabel}
-                  </p>
-                  <p className="mt-4 text-sm font-semibold">{heroPrice}</p>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(77_16_16_/_0.72)] to-transparent p-4 text-white">
+                  <p className="text-xs font-semibold">{index === 1 ? 'Most wanted' : 'New in'}</p>
+                  <p className="mt-1 text-sm font-medium">{product.title}</p>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -204,7 +157,7 @@ function Home() {
       <section className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
         <div className="fashion-container grid gap-4 py-4 text-sm text-[var(--color-ink)] sm:grid-cols-2 lg:grid-cols-4">
           {trustSignals.map(({ Icon, label }) => (
-            <div key={label} className="flex items-center gap-3">
+            <div key={label} className="flex items-center gap-3 font-bold">
               <Icon className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
               <span>{label}</span>
             </div>
@@ -215,8 +168,8 @@ function Home() {
       <section className="fashion-container py-12 lg:py-16">
         <div className="mb-7 flex items-end justify-between gap-6">
           <div>
-            <p className="fashion-eyebrow">Shop by mood</p>
-            <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">Freshly picked</h2>
+            <p className="fashion-eyebrow">Kurtis crafted for every mood</p>
+            <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">Shop by style</h2>
           </div>
           <Link
             to="/products"
@@ -231,7 +184,7 @@ function Home() {
               key={category}
               to="/products"
               search={{ category }}
-              className="group relative overflow-hidden rounded-[1.25rem] bg-[var(--color-line)] shadow-sm"
+              className="group relative overflow-hidden rounded-lg bg-[var(--color-line)] shadow-sm"
             >
               <img
                 src={product.images[0]}
@@ -240,10 +193,10 @@ function Home() {
                 decoding="async"
                 className="aspect-[3/4] h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.03]"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgb(23_19_16_/_0.7))]" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgb(77_16_16_/_0.7))]" />
               <div className="absolute inset-x-0 bottom-0 p-6 text-[var(--color-paper)]">
-                <p className="text-xs font-semibold uppercase text-[var(--color-paper)]/76">Shop</p>
-                <h2 className="mt-2 font-serif text-3xl font-normal">
+                <p className="text-xs font-semibold uppercase text-[var(--color-paper)]/82">Shop</p>
+                <h2 className="mt-2 text-xl font-medium">
                   {categoryLabels[category]}
                 </h2>
               </div>
@@ -257,9 +210,9 @@ function Home() {
       <section className="fashion-container py-8 lg:py-12">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="fashion-eyebrow">This week</p>
-            <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">
-              New favourites
+            <p className="fashion-eyebrow">Loved by shoppers</p>
+            <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">
+              Best sellers
             </h2>
           </div>
           <Link
@@ -273,50 +226,66 @@ function Home() {
       </section>
 
       <section className="fashion-container py-10 lg:py-16">
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            {
-              title: 'Real outfit context',
-              copy: 'Every style shows multiple photos so shoppers can inspect shape, length, and drape before opening the product page.',
-            },
-            {
-              title: 'No surprise stock',
-              copy: 'Available sizes and low-stock cues are visible before add-to-bag, reducing dead ends during shopping.',
-            },
-            {
-              title: 'Made for repeat wear',
-              copy: 'Soft occasion pieces with clear prices, discounts, shipping, and exchange details surfaced early.',
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="border-t border-[var(--color-line)] pt-5"
+        <div className="mb-7 flex items-end justify-between gap-6">
+          <div>
+            <p className="fashion-eyebrow">The cotton edit</p>
+            <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">Color, print, repeat</h2>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {imageStoryProducts.map((product, index) => (
+            <Link
+              key={product.productId}
+              to="/products/$slug"
+              params={{ slug: product.slug }}
+              className={`group relative min-h-80 overflow-hidden rounded-lg bg-[var(--color-line)] ${
+                index % 2 === 0 ? 'lg:mt-8' : ''
+              }`}
             >
-              <Sparkles className="size-5 text-[var(--color-rouge)]" aria-hidden="true" />
-              <h2 className="mt-4 font-serif text-2xl text-[var(--color-ink)]">{item.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">{item.copy}</p>
-            </div>
+              <img
+                src={product.images[index % product.images.length] ?? product.images[0]}
+                alt={product.imageAlt}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(77_16_16_/_0.72)] to-transparent p-4 text-white">
+                <p className="text-xs font-semibold uppercase">{product.categoryLabel}</p>
+                <h2 className="mt-1 text-base font-medium">{product.title}</h2>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
       <section className="fashion-container py-10 lg:py-16">
-        <div className="fashion-surface grid overflow-hidden rounded-[1.5rem] lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="min-h-96 bg-[var(--color-line)]">
-            <img
-              src={newArrivals[0]?.images[1] ?? heroProduct.images[0]}
-              alt={newArrivals[0]?.imageAlt ?? heroProduct.imageAlt}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
+        <div className="grid gap-8 border-y border-[var(--color-line)] py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="grid grid-cols-2 gap-3">
+            {newArrivals.concat(products.slice(7, 8)).slice(0, 4).map((product, index) => (
+              <Link
+                key={product.productId}
+                to="/products/$slug"
+                params={{ slug: product.slug }}
+                className={`group overflow-hidden rounded-lg bg-[var(--color-line)] ${
+                  index === 0 ? 'row-span-2' : ''
+                }`}
+              >
+                <img
+                  src={product.images[index % product.images.length] ?? product.images[0]}
+                  alt={product.imageAlt}
+                  loading="lazy"
+                  decoding="async"
+                  className={`${index === 0 ? 'h-full min-h-[520px]' : 'aspect-[4/5]'} w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]`}
+                />
+              </Link>
+            ))}
           </div>
-          <div className="p-6 sm:p-8 lg:p-10">
+          <div>
             <p className="fashion-eyebrow">Latest arrivals</p>
-            <h2 className="fashion-display mt-2 text-4xl sm:text-5xl">
-              Easy outfits, ready to wear
+            <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">
+              New arrivals, ready to wear
             </h2>
-            <div className="mt-8 divide-y divide-[var(--color-line)]">
+            <div className="mt-8 divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
               {newArrivals.map((product) => (
                 <Link
                   key={product.productId}
@@ -344,7 +313,7 @@ function Home() {
                 <Link
                   to="/products"
                   search={{ sort: 'discount-desc' }}
-                  className="fashion-button-primary mt-8 h-12 px-6"
+              className="fashion-button-primary mt-8 h-12 px-6"
                 />
               }
             >
@@ -354,15 +323,15 @@ function Home() {
         </div>
       </section>
 
-      <section className="border-y border-[var(--color-line)] bg-[var(--color-surface)]">
+      <section className="border-y border-[var(--color-line)] bg-[var(--color-paper)]">
         <div className="fashion-container grid gap-8 py-12 md:grid-cols-4">
           {footerBenefits.map(({ Icon, title, copy }) => (
             <div key={title} className="flex gap-4">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-rouge)] shadow-sm">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-rouge)] shadow-sm">
                 <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
               </span>
               <div>
-                <h3 className="font-serif text-xl text-[var(--color-ink)]">{title}</h3>
+                <h3 className="text-base font-medium text-[var(--color-ink)]">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{copy}</p>
               </div>
             </div>

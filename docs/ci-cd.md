@@ -22,7 +22,7 @@ The repository uses three long-lived Git branches:
 - `CI` runs on pull requests targeting `qa` and `main`.
 - `Deploy storefront QA` runs on pushes to `qa`.
 - `Deploy storefront` runs on pushes to `main`.
-- `Deploy Supabase` and `Sync products` are manual workflows with an environment selector.
+- `Deploy Supabase` and `Publish catalog` are manual workflows with an environment selector.
 
 ## Secret Layout
 
@@ -31,8 +31,6 @@ Keep shared, non-environment-specific secrets at repo level:
 ```text
 CLOUDFLARE_ACCOUNT_ID
 CLOUDFLARE_API_TOKEN
-GOOGLE_SHEETS_SPREADSHEET_ID
-GOOGLE_SERVICE_ACCOUNT_JSON
 ```
 
 Keep runtime secrets only inside GitHub environments `qa` and `prod`:
@@ -47,6 +45,13 @@ SUPABASE_DB_PASSWORD
 RAZORPAY_KEY_ID
 RAZORPAY_KEY_SECRET
 RAZORPAY_WEBHOOK_SECRET
+GOOGLE_SHEETS_SPREADSHEET_ID
+GOOGLE_SERVICE_ACCOUNT_JSON
+GOOGLE_DRIVE_IMAGE_FOLDER_ID
+R2_PRODUCT_IMAGES_BUCKET
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+PRODUCT_IMAGE_PUBLIC_BASE_URL
 ```
 
 Do not keep runtime Supabase or Razorpay secrets at repo level after `qa` and `prod` environment secrets are set.

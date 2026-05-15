@@ -1,6 +1,6 @@
 import { Dialog } from '@base-ui/react/dialog'
 import { Link } from '@tanstack/react-router'
-import { Sparkles, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { productSizes } from '../../data/products'
@@ -79,13 +79,13 @@ export function StyleFinder({
           <button type="button" className={triggerClasses} />
         }
       >
-        <Sparkles className="size-4" aria-hidden="true" />
+        <Search className="size-4" aria-hidden="true" />
         {triggerLabel}
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto rounded-t-[1.35rem] border border-[var(--color-line)] bg-[var(--color-paper)] shadow-2xl shadow-stone-950/25 outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:rounded-[1.35rem] sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-start justify-between gap-5 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
               <div>
                 <Dialog.Title className="font-serif text-2xl text-[var(--color-ink)]">
@@ -161,7 +161,7 @@ export function StyleFinder({
                       to="/products/$slug"
                       params={{ slug: product.slug }}
                       onClick={() => setOpen(false)}
-                      className="group rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition hover:shadow-lg hover:shadow-stone-950/10"
+                      className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-rouge)] hover:shadow-sm"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
                       <div className="mt-3">

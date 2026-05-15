@@ -28,7 +28,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
 
   return (
     <main className="fashion-container grid min-h-[55svh] place-items-center py-16">
-      <section className="max-w-xl rounded-[1.25rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-6 text-center shadow-sm">
+      <section className="max-w-xl rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-6 text-center shadow-sm">
         <span className="mx-auto grid size-12 place-items-center rounded-full bg-red-50 text-red-700">
           <AlertTriangle className="size-5" aria-hidden="true" />
         </span>

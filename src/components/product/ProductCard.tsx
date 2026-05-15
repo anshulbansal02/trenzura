@@ -16,7 +16,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group/card transition duration-300 ease-out">
-      <div className="relative overflow-hidden rounded-[1.1rem] bg-[var(--color-line)]">
+      <div className="relative overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-line)]">
         <Link
           to="/products/$slug"
           params={{ slug: product.slug }}
@@ -24,11 +24,16 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
           {product.featured ? (
-            <span className="absolute left-0 top-4 bg-[var(--color-paper)]/94 px-3 py-1.5 text-[0.68rem] font-semibold uppercase text-[var(--color-rouge)] shadow-sm backdrop-blur">
-              Editor's pick
+            <span className="absolute left-3 top-3 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-ink)] backdrop-blur">
+              Most wanted
             </span>
           ) : null}
-          <div className="absolute bottom-3 left-3 rounded-full bg-[var(--color-paper)]/92 px-3 py-2 text-xs font-semibold text-[var(--color-ink)] opacity-0 shadow-sm backdrop-blur transition duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100">
+          {product.discountPercent > 0 ? (
+            <span className="absolute right-3 top-3 rounded-full bg-[var(--color-sage)] px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-paper)]">
+              Save {product.discountPercent}%
+            </span>
+          ) : null}
+          <div className="absolute bottom-3 left-3 rounded-full bg-[var(--color-paper)]/94 px-3 py-2 text-xs font-medium text-[var(--color-ink)] opacity-0 backdrop-blur transition duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100">
             <span>View details</span>
           </div>
         </Link>
@@ -36,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={() => setQuickLookOpen(true)}
           aria-label={`Quick look at ${product.title}`}
-          className="absolute bottom-3 right-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 text-xs font-semibold text-[var(--color-ink)] shadow-sm backdrop-blur transition duration-150 ease-out hover:border-[#b58b91] hover:bg-white hover:text-[var(--color-rouge)] active:scale-[0.98]"
+          className="absolute bottom-3 right-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 text-xs font-medium text-[var(--color-ink)] backdrop-blur transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:bg-white hover:text-[var(--color-rouge)] active:scale-[0.98]"
         >
           <Eye className="size-3.5" aria-hidden="true" />
           Quick look
@@ -50,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="mt-3 grid gap-2">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[var(--color-ink)] group-focus-visible:underline">
+              <h3 className="text-sm font-medium text-[var(--color-ink)] group-focus-visible:underline">
                 {product.title}
               </h3>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -58,7 +63,7 @@ export function ProductCard({ product }: ProductCardProps) {
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <p className="text-sm font-semibold text-[var(--color-ink)]">
+              <p className="text-sm font-medium text-[var(--color-ink)]">
                 {formatPrice(product.sellingPricePaise)}
               </p>
               {product.discountPercent > 0 ? (
@@ -69,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           {product.discountPercent > 0 ? (
-            <p className="text-xs font-semibold text-[var(--color-rouge)]">
+            <p className="text-xs font-medium text-[var(--color-sage)]">
               Save {formatPrice(product.mrpPaise - product.sellingPricePaise)} today
             </p>
           ) : null}

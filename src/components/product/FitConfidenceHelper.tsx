@@ -52,7 +52,7 @@ export function FitConfidenceHelper({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="w-full max-w-lg rounded-t-[1.35rem] border border-[var(--color-line)] bg-[var(--color-paper)] shadow-2xl shadow-stone-950/25 outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:rounded-[1.35rem] sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="w-full max-w-lg rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="flex items-start justify-between gap-5 border-b border-[var(--color-line)] px-5 py-4 sm:px-6">
               <div>
                 <Dialog.Title className="font-serif text-2xl text-[var(--color-ink)]">
@@ -96,7 +96,7 @@ export function FitConfidenceHelper({
                 </div>
               </label>
 
-              <div className="mt-5 rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+              <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-4">
                 {canCompare && recommendation ? (
                   <>
                     <p className="text-xs font-semibold uppercase text-[var(--color-rouge)]">

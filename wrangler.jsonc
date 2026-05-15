@@ -4,27 +4,23 @@
   "compatibility_date": "2026-05-11",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
-  "routes": [
-    {
-      "pattern": "trenzura.in",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.trenzura.in",
-      "custom_domain": true
-    }
-  ],
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "GITHUB_REPOSITORY": "anshulbansal02/trenzura",
+    "CATALOG_PUBLISH_WORKFLOW_FILE": "publish-catalog.yml",
+    "CATALOG_PUBLISH_QA_REF": "qa",
+    "CATALOG_PUBLISH_PROD_REF": "main"
+  },
   "env": {
     "qa": {
-      "routes": [
-        {
-          "pattern": "qa.trenzura.in",
-          "custom_domain": true
-        }
-      ]
+      "vars": {
+        "GITHUB_REPOSITORY": "anshulbansal02/trenzura",
+        "CATALOG_PUBLISH_WORKFLOW_FILE": "publish-catalog.yml",
+        "CATALOG_PUBLISH_QA_REF": "qa",
+        "CATALOG_PUBLISH_PROD_REF": "main"
+      }
     }
   }
 }

@@ -11,7 +11,14 @@ const config = defineConfig({
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        failOnError: true,
+        filter: ({ path }) => path === '/' || path.startsWith('/products'),
+      },
+    }),
     viteReact(),
   ],
 })

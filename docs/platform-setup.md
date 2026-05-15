@@ -17,7 +17,6 @@ Current repo setup:
 - CI runs on `dev`, `qa`, and `main`.
 - QA deploy runs when `qa` changes.
 - Prod deploy runs when `main` changes.
-- GitHub CLI auth is currently broken, so branch protection is not applied yet.
 - Workflows use standard GitHub environments. Missing secrets fail naturally in the relevant build, deploy,
   or CLI command.
 
@@ -33,8 +32,6 @@ Keep repo-level only:
 ```text
 CLOUDFLARE_ACCOUNT_ID
 CLOUDFLARE_API_TOKEN
-GOOGLE_SHEETS_SPREADSHEET_ID
-GOOGLE_SERVICE_ACCOUNT_JSON
 ```
 
 Put these in both `qa` and `prod` environments:
@@ -49,6 +46,13 @@ SUPABASE_DB_PASSWORD
 RAZORPAY_KEY_ID
 RAZORPAY_KEY_SECRET
 RAZORPAY_WEBHOOK_SECRET
+GOOGLE_SHEETS_SPREADSHEET_ID
+GOOGLE_SERVICE_ACCOUNT_JSON
+GOOGLE_DRIVE_IMAGE_FOLDER_ID
+R2_PRODUCT_IMAGES_BUCKET
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+PRODUCT_IMAGE_PUBLIC_BASE_URL
 ```
 
 After environment secrets are set, remove these repo-level secrets:
@@ -58,6 +62,7 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
+GOOGLE_SHEETS_SPREADSHEET_ID
 ```
 
 Need from you:
@@ -76,7 +81,9 @@ Best zero-cost setup:
   - prod: existing `trenzura-shop`
   - qa: `trenzura-shop-qa`
 - This fits Supabase Free only if you stay within the free active-project limit.
-- Use the same migrations and same Google Sheet for both.
+- Use the same migrations for both.
+- Keep Google Sheet IDs configurable per environment. QA and production may use separate sheets, or the
+  same spreadsheet if the owner intentionally wants one source.
 - QA uses Razorpay test secrets.
 - Prod uses Razorpay live secrets.
 
@@ -97,8 +104,8 @@ Current status:
 - QA migrations are applied.
 - QA Edge Functions are deployed.
 - QA GitHub environment has Supabase URL, anon key, service role key, project ref, DB password, and access token.
-- QA product tables are seeded with current generated catalog data.
-- QA Storage image upload partially completed but failed on `TZ-002/2.jpg`; rerun product image sync later.
+- QA catalog publishing now runs through the `Publish catalog` workflow after Google Sheets, Google Drive,
+  R2, and environment secrets are configured.
 
 ## Cloudflare
 

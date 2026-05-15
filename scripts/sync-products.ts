@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,6 +9,21 @@ import { productCatalogSchema, type Product, type ProductSize } from '../src/dat
 type SheetRow = Record<string, string>
 
 type SlugManifest = Record<string, string>
+
+type ImageManifest = {
+  products: Record<string, ImageManifestEntry[]>
+}
+
+type ImageManifestEntry = {
+  storagePath: string
+  publicUrl: string
+  sourceFileName?: string
+}
+
+type ResolvedProductImage = {
+  storagePath: string
+  publicUrl: string
+}
 
 type ProductSyncRecord = {
   productId: string
@@ -33,12 +48,12 @@ type ProductSyncRecord = {
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(dirname, '..')
-const seedPath = path.join(projectRoot, 'scripts/seed-products.json')
 const slugsPath = path.join(projectRoot, 'scripts/product-slugs.json')
 const outputPath = path.join(projectRoot, 'src/generated/products.json')
 const syncOutputPath = path.join(projectRoot, 'src/generated/products-sync.json')
-const imageSourceDir = path.join(projectRoot, process.env.PRODUCT_IMAGE_SOURCE_DIR ?? 'product-images')
-const storageBucket = 'product-images'
+
+let productImageManifestPath: string | undefined
+let imageManifest: ImageManifest | undefined
 
 const requiredColumns = [
   'product_id',
@@ -58,13 +73,20 @@ const requiredColumns = [
 
 async function main() {
   await loadEnvFile()
+  loadRuntimeConfig()
+  imageManifest = await readImageManifest()
 
   const rows = await loadRows()
+  assertUniqueProductIds(rows)
   const slugs = await readSlugManifest()
   const normalizedProducts = await Promise.all(
     rows.map((row, index) => normalizeProduct(row, index + 2, slugs)),
   )
-  const products = productCatalogSchema.parse(normalizedProducts.map(({ product }) => product))
+  const products = productCatalogSchema.parse(
+    normalizedProducts
+      .map(({ product }) => product)
+      .filter((product): product is Product => Boolean(product)),
+  )
   const syncRecords = normalizedProducts.map(({ sync }) => sync)
 
   await mkdir(path.dirname(outputPath), { recursive: true })
@@ -75,28 +97,37 @@ async function main() {
   console.log(`Synced ${products.length} products to ${path.relative(projectRoot, outputPath)}`)
 }
 
+function loadRuntimeConfig() {
+  productImageManifestPath = process.env.PRODUCT_IMAGE_MANIFEST_PATH
+}
+
+async function readImageManifest() {
+  if (!productImageManifestPath) return undefined
+
+  const manifestPath = path.resolve(projectRoot, productImageManifestPath)
+  const content = await readFile(manifestPath, 'utf8')
+  const parsed = JSON.parse(content) as ImageManifest
+
+  if (!parsed || typeof parsed !== 'object' || !parsed.products || typeof parsed.products !== 'object') {
+    throw new Error(`Invalid product image manifest at ${path.relative(projectRoot, manifestPath)}`)
+  }
+
+  return parsed
+}
+
 async function loadRows() {
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 
   if (!spreadsheetId) {
-    console.log('GOOGLE_SHEETS_SPREADSHEET_ID not set; using scripts/seed-products.json')
-    return readSeedRows()
+    throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID is required')
   }
 
   return readGoogleSheetRows(spreadsheetId)
 }
 
-async function readSeedRows() {
-  const content = await readFile(seedPath, 'utf8')
-  const rows = JSON.parse(content) as SheetRow[]
-  assertRequiredColumns(rows[0] ?? {})
-  return rows.map(normalizeRowKeys)
-}
-
 async function readGoogleSheetRows(spreadsheetId: string) {
   const auth = new google.auth.GoogleAuth({
     credentials: getInlineCredentials(),
-    keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   })
   const sheets = google.sheets({ version: 'v4', auth })
@@ -130,7 +161,8 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
   assertStableProductId(productId, rowNumber)
 
   const active = parseBoolean(pick(row, ['active'], rowNumber))
-  const title = pick(row, ['title'], rowNumber)
+  const rawTitle = pick(row, ['title'], rowNumber)
+  const title = createDisplayTitle(rawTitle, productId)
   const categoryLabel = pick(row, ['category'], rowNumber)
   const category = slugify(categoryLabel)
   const mrpPaise = parseMoneyToPaise(pick(row, ['mrp'], rowNumber), `mrp on row ${rowNumber}`)
@@ -138,7 +170,12 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
     pick(row, ['selling_price'], rowNumber),
     `selling_price on row ${rowNumber}`,
   )
-  const imageStoragePaths = splitList(pick(row, ['images'], rowNumber))
+  const resolvedImages = await resolveProductImages(
+    productId,
+    pickOptional(row, ['images']) ?? '',
+    rowNumber,
+    active,
+  )
   const sizes = splitList(pick(row, ['sizes'], rowNumber))
   const stockBySize = parseSizeQuantityMap(
     sizes,
@@ -180,47 +217,48 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
       active: true,
     }
   })
-  const publicImages = imageStoragePaths.map(createPublicImageUrl)
+  const imageStoragePaths = resolvedImages.map((image) => image.storagePath)
+  const publicImages = resolvedImages.map((image) => image.publicUrl)
 
-  for (const imagePath of imageStoragePaths) {
-    assertSafeStoragePath(imagePath, rowNumber)
-    await access(path.join(imageSourceDir, imagePath)).catch(() => {
-      throw new Error(`Image "${imagePath}" on row ${rowNumber} was not found in product-images`)
-    })
-  }
+  for (const { storagePath: imagePath } of resolvedImages) assertSafeStoragePath(imagePath, rowNumber)
 
-  const product: Product = {
-    productId,
-    slug,
-    title,
-    images: publicImages,
-    imageStoragePaths,
-    mrpPaise,
-    sellingPricePaise,
-    discountPercent: deriveDiscountPercent(mrpPaise, sellingPricePaise),
-    sizes: variants,
-    stockAvailable: variants.reduce((total, size) => total + size.stockAvailable, 0),
-    description: pick(row, ['description'], rowNumber),
-    sizeChart: parseSizeChart(pick(row, ['size_chart'], rowNumber), rowNumber),
-    category,
-    categoryLabel,
-    imageAlt: title,
-    featured: parseBoolean(pick(row, ['featured'], rowNumber)),
-    active,
-  }
+  const description = pick(row, ['description'], rowNumber)
+  const sizeChart = parseSizeChart(pickOptional(row, ['size_chart']) ?? '', rowNumber)
+  const featured = parseBoolean(pick(row, ['featured'], rowNumber))
+  const product: Product | undefined = active
+    ? {
+        productId,
+        slug,
+        title,
+        images: publicImages,
+        imageStoragePaths,
+        mrpPaise,
+        sellingPricePaise,
+        discountPercent: deriveDiscountPercent(mrpPaise, sellingPricePaise),
+        sizes: variants,
+        stockAvailable: variants.reduce((total, size) => total + size.stockAvailable, 0),
+        description,
+        sizeChart,
+        category,
+        categoryLabel,
+        imageAlt: title,
+        featured,
+        active,
+      }
+    : undefined
 
   const sync: ProductSyncRecord = {
     productId,
-    slug: product.slug,
+    slug,
     title,
     category,
-    description: product.description,
+    description,
     images: publicImages,
     mrpPaise,
     sellingPricePaise,
-    sizeChart: product.sizeChart,
+    sizeChart,
     active,
-    featured: product.featured,
+    featured,
     variants: variants.map((variant) => ({
       variantId: variant.variantId,
       sizeLabel: variant.label,
@@ -233,10 +271,65 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
   return { product, sync }
 }
 
+async function resolveProductImages(
+  productId: string,
+  value: string,
+  rowNumber: number,
+  active: boolean,
+): Promise<ResolvedProductImage[]> {
+  const explicitPaths = splitList(value)
+
+  if (!imageManifest) throw new Error('PRODUCT_IMAGE_MANIFEST_PATH is required for product images')
+
+  const manifestImages = imageManifest.products[productId]
+  if (!manifestImages || manifestImages.length === 0) {
+    if (!active) return []
+
+    throw new Error(`No image manifest entries found for ${productId} on row ${rowNumber}`)
+  }
+
+  const resolvedManifestImages = explicitPaths.length > 0
+    ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
+    : manifestImages
+
+  return resolvedManifestImages.map((image) => ({
+    storagePath: image.storagePath,
+    publicUrl: image.publicUrl,
+  }))
+}
+
+function orderManifestImages(
+  productId: string,
+  explicitPaths: string[],
+  manifestImages: ImageManifestEntry[],
+  rowNumber: number,
+) {
+  const byName = new Map<string, ImageManifestEntry>()
+
+  for (const image of manifestImages) {
+    const fileName = image.storagePath.split('/').pop() ?? image.storagePath
+    byName.set(fileName.toLowerCase(), image)
+    byName.set(image.storagePath.toLowerCase(), image)
+    byName.set(image.publicUrl.toLowerCase(), image)
+    if (image.sourceFileName) byName.set(image.sourceFileName.toLowerCase(), image)
+  }
+
+  return explicitPaths.map((explicitPath) => {
+    const match = byName.get(explicitPath.toLowerCase())
+    if (!match) {
+      throw new Error(
+        `Image "${explicitPath}" on row ${rowNumber} was not found in the ${productId} image manifest`,
+      )
+    }
+
+    return match
+  })
+}
+
 function getInlineCredentials() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
 
-  if (!raw) return undefined
+  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is required')
 
   return JSON.parse(raw) as Record<string, unknown>
 }
@@ -260,6 +353,23 @@ function assertRequiredColumns(row: SheetRow) {
   if (missing.length > 0) {
     throw new Error(`Missing required product column(s): ${missing.join(', ')}`)
   }
+}
+
+function assertUniqueProductIds(rows: SheetRow[]) {
+  const seen = new Map<string, number>()
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2
+    const productId = pick(row, ['product_id'], rowNumber)
+    const normalizedProductId = productId.toLowerCase()
+    const existingRowNumber = seen.get(normalizedProductId)
+
+    if (existingRowNumber !== undefined) {
+      throw new Error(`Duplicate product_id "${productId}" on rows ${existingRowNumber} and ${rowNumber}`)
+    }
+
+    seen.set(normalizedProductId, rowNumber)
+  })
 }
 
 function pick(row: SheetRow, aliases: string[], rowNumber: number) {
@@ -417,19 +527,53 @@ function createVariantId(productId: string, size: string) {
   return `${productId}:${size.trim().toLowerCase()}`
 }
 
-function createPublicImageUrl(imagePath: string) {
-  const supabaseUrl = requiredSupabaseUrl()
-  return `${supabaseUrl}/storage/v1/object/public/${storageBucket}/${encodeStoragePath(imagePath)}`
+function createDisplayTitle(title: string, productId: string) {
+  const firstSegment = title.split(/\||–|—/)[0]?.trim() ?? title.trim()
+  let displayTitle = firstSegment
+    .replace(/^women'?s?\s+/i, '')
+    .replace(/\s+for women$/i, '')
+    .replace(/\s+in pure cotton flex\b/i, '')
+    .replace(/\bpure cotton flex\b/i, '')
+    .replace(/\bcotton flex\b/i, '')
+    .replace(/\s+with\b.*$/i, '')
+    .replace(/\s+3\/4 sleeve.*$/i, '')
+    .replace(/\s+collared kurta.*$/i, '')
+    .replace(/\s+&\s*printed pants.*$/i, '')
+    .replace(/\s+&\s*matching pants.*$/i, '')
+    .replace(/\s+&\s*straight pants.*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const color = inferProductColor(productId)
+  const hasColor = /\b(blue|pink|purple|yellow|green|olive|maroon|black|mauve|orange|beige|navy)\b/i
+    .test(displayTitle)
+
+  if (color && !hasColor) {
+    displayTitle = `${color} ${displayTitle}`
+  }
+
+  return displayTitle
+    .replace(/\bCo-Ord\b/g, 'Co-ord')
+    .replace(/\bCo-Ord Set\b/g, 'Co-ord Set')
 }
 
-function requiredSupabaseUrl() {
-  const value = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
-  if (!value) throw new Error('SUPABASE_URL or VITE_SUPABASE_URL is required for product image URLs')
-  return value.replace(/\/$/, '')
-}
-
-function encodeStoragePath(imagePath: string) {
-  return imagePath.split('/').map(encodeURIComponent).join('/')
+function inferProductColor(productId: string) {
+  const normalized = productId.toUpperCase()
+  const colorByCode: Record<string, string> = {
+    BLU: 'Blue',
+    PNK: 'Pink',
+    POP: 'Purple',
+    PRP: 'Purple',
+    YLW: 'Yellow',
+    OLV: 'Olive',
+    GRN: 'Green',
+    MLT: '',
+    MRN: 'Maroon',
+    BLK: 'Black',
+    ORG: 'Orange',
+  }
+  const code = Object.keys(colorByCode).find((key) => normalized.includes(`-${key}-`))
+  return code ? colorByCode[code] : ''
 }
 
 function assertStableProductId(productId: string, rowNumber: number) {
