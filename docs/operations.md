@@ -75,6 +75,8 @@ DELHIVERY_ENABLED=true
 DELHIVERY_API_TOKEN=...
 DELHIVERY_CREATE_SHIPMENT_URL=...
 DELHIVERY_PICKUP_LOCATION=...
+DELHIVERY_SELLER_GST=...
+DELHIVERY_HSN_CODE=...
 ```
 
 Use Delhivery's staging shipment URL in QA:
@@ -92,13 +94,10 @@ https://track.delhivery.com/api/cmu/create.json
 Default package configuration:
 
 ```text
-DELHIVERY_PICKUP_LOCATION=
 DELHIVERY_PACKAGE_WEIGHT_GRAMS=500
 DELHIVERY_PACKAGE_LENGTH_CM=30
 DELHIVERY_PACKAGE_BREADTH_CM=25
 DELHIVERY_PACKAGE_HEIGHT_CM=5
-DELHIVERY_SELLER_GST=
-DELHIVERY_HSN_CODE=
 ```
 
 The pickup location must match the registered Delhivery warehouse name exactly, including case.

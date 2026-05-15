@@ -201,6 +201,8 @@ DELHIVERY_ENABLED=true
 DELHIVERY_API_TOKEN=<staging token>
 DELHIVERY_CREATE_SHIPMENT_URL=https://staging-express.delhivery.com/api/cmu/create.json
 DELHIVERY_PICKUP_LOCATION=<staging warehouse name, exact case>
+DELHIVERY_SELLER_GST=<seller GSTIN>
+DELHIVERY_HSN_CODE=<catalog HSN code>
 ```
 
 Prod Delhivery values:
@@ -210,6 +212,8 @@ DELHIVERY_ENABLED=true
 DELHIVERY_API_TOKEN=<live token>
 DELHIVERY_CREATE_SHIPMENT_URL=https://track.delhivery.com/api/cmu/create.json
 DELHIVERY_PICKUP_LOCATION=<live warehouse name, exact case>
+DELHIVERY_SELLER_GST=<seller GSTIN>
+DELHIVERY_HSN_CODE=<catalog HSN code>
 ```
 
 Need later before enabling prod:
