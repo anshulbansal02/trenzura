@@ -91,9 +91,9 @@ Separate prod folders are cleaner for launch control.
 
 ### Done
 
-- Code is merged through `dev`, `qa`, and `main`.
+- Code is merged through `dev` and `main`.
 - CI is passing on `main`.
-- Storefront deploy workflows are manual-only.
+- Storefront deploy workflows run automatically on `dev` and `main` pushes and can still be run manually.
 - Catalog publish workflow exists.
 - Admin publish button support exists.
 - R2 buckets and media domains are configured.

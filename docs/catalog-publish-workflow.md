@@ -322,6 +322,6 @@ Recommended values:
 ```text
 GITHUB_REPOSITORY=anshulbansal02/trenzura
 CATALOG_PUBLISH_WORKFLOW_FILE=publish-catalog.yml
-CATALOG_PUBLISH_QA_REF=qa
+CATALOG_PUBLISH_QA_REF=dev
 CATALOG_PUBLISH_PROD_REF=main
 ```

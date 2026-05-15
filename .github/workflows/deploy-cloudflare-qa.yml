@@ -2,6 +2,9 @@ name: Deploy storefront QA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - dev
 
 jobs:
   deploy:

@@ -5,9 +5,9 @@ This storefront deploys to Cloudflare Workers via Wrangler.
 ## What is already configured
 
 - `main` deploys the production Worker, using `trenzura.in` and `www.trenzura.in`.
-- `qa` deploys the Worker environment `qa`, using `qa.trenzura.in`.
+- `dev` deploys the Worker environment `qa`, using `qa.trenzura.in`.
 - `.github/workflows/deploy-cloudflare.yml` deploys production when `main` is pushed, or when run manually.
-- `.github/workflows/deploy-cloudflare-qa.yml` deploys QA when the `qa` branch is pushed, or when run manually.
+- `.github/workflows/deploy-cloudflare-qa.yml` deploys QA when the `dev` branch is pushed, or when run manually.
 - The workflows use GitHub environments named `prod` and `qa`, so environment-specific secrets can override
   repository secrets if you create them.
 
@@ -36,7 +36,8 @@ After the zone is active, run the GitHub Actions deploy workflows. Wrangler shou
 
 ## Git branches
 
-Create the branches once. `dev` is only a Git branch; it does not have a Cloudflare or Supabase environment.
+Create the branches once. `dev` is the QA deployment branch; `qa` is a GitHub/Cloudflare/Supabase
+environment name, not a Git branch.
 
 ```bash
 git switch main
@@ -46,17 +47,12 @@ git switch -c dev
 git push -u origin dev
 
 git switch main
-git switch -c qa
-git push -u origin qa
-
-git switch main
 ```
 
 After that:
 
-- Pushing to `dev` runs CI only.
+- Pushing to `dev` deploys QA.
 - Merging to `main` deploys production.
-- Pushing to `qa` deploys QA.
 
 ## Secrets
 

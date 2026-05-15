@@ -1,26 +1,24 @@
 # CI/CD
 
-The repository uses three long-lived Git branches:
+The repository uses two long-lived Git branches:
 
-- `dev`: day-to-day work branch. Pushes run CI only.
-- `qa`: QA branch. Merge into this branch to deploy `qa.trenzura.in`.
+- `dev`: QA branch. Merge feature work here to deploy `qa.trenzura.in`.
 - `main`: production branch. Merge into this branch to deploy `trenzura.in` and `www.trenzura.in`.
 
 ## Flow
 
 1. Branch from `dev` for feature work.
-2. Open a pull request into `dev`, or push directly to `dev` for small changes.
-3. Open a pull request from `dev` to `qa`.
-4. When merged, QA deploys automatically.
-5. Test `https://qa.trenzura.in`.
-6. Open a pull request from `qa` to `main`.
-7. When merged, production deploys automatically.
+2. Open a pull request into `dev`.
+3. When merged, QA deploys automatically.
+4. Test `https://qa.trenzura.in`.
+5. Open a pull request from `dev` to `main`.
+6. When merged, production deploys automatically.
 
 ## Automation
 
-- `CI` runs on pushes to `dev`, `qa`, and `main`.
-- `CI` runs on pull requests targeting `qa` and `main`.
-- `Deploy storefront QA` runs on pushes to `qa`.
+- `CI` runs on pushes to `dev` and `main`.
+- `CI` runs on pull requests targeting `dev` and `main`.
+- `Deploy storefront QA` runs on pushes to `dev`.
 - `Deploy storefront` runs on pushes to `main`.
 - `Deploy Supabase` and `Publish catalog` are manual workflows with an environment selector.
 
@@ -58,12 +56,12 @@ Do not keep runtime Supabase or Razorpay secrets at repo level after `qa` and `p
 
 ## Branch Protection
 
-After `gh auth login -h github.com`, protect `qa` and `main` so they only change through pull requests.
+After `gh auth login -h github.com`, protect `dev` and `main` so they only change through pull requests.
 
 ```bash
 gh api \
   --method PUT \
-  repos/anshulbansal02/trenzura/branches/qa/protection \
+  repos/anshulbansal02/trenzura/branches/dev/protection \
   --field required_status_checks[strict]=true \
   --field required_status_checks[contexts][]=build \
   --field enforce_admins=true \

@@ -441,7 +441,7 @@ function readAdminEnv(): AdminEnv {
     githubActionsToken: readEnv('GITHUB_ACTIONS_TOKEN'),
     githubRepository: readEnv('GITHUB_REPOSITORY'),
     catalogPublishWorkflowFile: readEnv('CATALOG_PUBLISH_WORKFLOW_FILE') ?? 'publish-catalog.yml',
-    catalogPublishQaRef: readEnv('CATALOG_PUBLISH_QA_REF') ?? 'qa',
+    catalogPublishQaRef: readEnv('CATALOG_PUBLISH_QA_REF') ?? 'dev',
     catalogPublishProdRef: readEnv('CATALOG_PUBLISH_PROD_REF') ?? 'main',
   }
 }
