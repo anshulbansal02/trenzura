@@ -181,17 +181,36 @@ Secret: separate live webhook secret
 
 ## Delhivery
 
-Best zero-cost/safe setup:
+Best setup:
 
-- QA: `DELHIVERY_ENABLED=false`.
-- Prod: `DELHIVERY_ENABLED=false` until ready to create real shipments.
-- Avoid sandbox unless Delhivery provides it for free and it is actually useful.
+- QA uses Delhivery staging credentials and staging shipment URL.
+- Prod uses Delhivery live credentials and production shipment URL.
+- Keep prod disabled until live pickup and billing details are confirmed.
 
 Current status:
 
-- QA GitHub environment has Delhivery disabled and package dimension variables.
+- QA GitHub environment has package dimension variables.
 - Prod GitHub environment has Delhivery disabled and package dimension variables.
-- QA Supabase project has Delhivery disabled and package dimension secrets.
+- QA Supabase project has package dimension secrets, but is still disabled until staging token and
+  pickup location are provided.
+
+QA Delhivery values:
+
+```text
+DELHIVERY_ENABLED=true
+DELHIVERY_API_TOKEN=<staging token>
+DELHIVERY_CREATE_SHIPMENT_URL=https://staging-express.delhivery.com/api/cmu/create.json
+DELHIVERY_PICKUP_LOCATION=<staging warehouse name, exact case>
+```
+
+Prod Delhivery values:
+
+```text
+DELHIVERY_ENABLED=true
+DELHIVERY_API_TOKEN=<live token>
+DELHIVERY_CREATE_SHIPMENT_URL=https://track.delhivery.com/api/cmu/create.json
+DELHIVERY_PICKUP_LOCATION=<live warehouse name, exact case>
+```
 
 Need later before enabling prod:
 

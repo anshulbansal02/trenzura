@@ -36,14 +36,17 @@ export async function createDelhiveryShipment(input: {
     }
   }
 
-  const payload = buildShipmentPayload(input.order, input.shipment)
+  const payloadResult = buildShipmentPayload(input.order, input.shipment)
+  if (!payloadResult.ok) return payloadResult
+
+  const payload = payloadResult.payload
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       Authorization: `Token ${apiToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: `format=json&data=${JSON.stringify(payload)}`,
   })
   const responsePayload = await response.json().catch(() => null)
 
@@ -74,44 +77,99 @@ export async function createDelhiveryShipment(input: {
   }
 }
 
-function buildShipmentPayload(order: OrderForShipment, shipment: ShipmentRow) {
+function buildShipmentPayload(
+  order: OrderForShipment,
+  shipment: ShipmentRow,
+): { ok: true; payload: Record<string, unknown> } | Extract<DelhiveryShipmentResult, { ok: false }> {
   const address = order.shipping_address
+  const pickupLocationName = Deno.env.get('DELHIVERY_PICKUP_LOCATION')
 
-  return {
-    shipment_id: shipment.id,
-    order_id: order.id,
-    order_number: order.order_number,
-    payment_mode: 'Prepaid',
-    total_amount_paise: order.total_amount_paise,
-    currency: order.currency,
-    consignee: {
-      name: order.customer_name,
-      phone: order.customer_phone,
-      email: order.customer_email,
-      address: String(address.address ?? address.addressLine ?? ''),
-      city: String(address.city ?? ''),
-      state: String(address.state ?? ''),
-      pincode: String(address.pincode ?? address.postalCode ?? ''),
-      landmark: String(address.landmark ?? ''),
-    },
-    package: {
-      weight_grams: readNumberEnv('DELHIVERY_PACKAGE_WEIGHT_GRAMS', 500),
-      length_cm: readNumberEnv('DELHIVERY_PACKAGE_LENGTH_CM', 30),
-      breadth_cm: readNumberEnv('DELHIVERY_PACKAGE_BREADTH_CM', 25),
-      height_cm: readNumberEnv('DELHIVERY_PACKAGE_HEIGHT_CM', 5),
-    },
-    pickup_location: Deno.env.get('DELHIVERY_PICKUP_LOCATION') ?? '',
-    seller_gst: Deno.env.get('DELHIVERY_SELLER_GST') ?? '',
-    hsn_code: Deno.env.get('DELHIVERY_HSN_CODE') ?? '',
-    items: order.order_items.map((item) => ({
-      name: item.title,
-      sku: item.product_id,
-      variant_id: item.variant_id,
-      size: item.size_label,
-      quantity: item.quantity,
-      unit_price_paise: item.unit_selling_price_paise,
-    })),
+  if (!pickupLocationName) {
+    return { ok: false, reason: 'delhivery_pickup_location_missing' }
   }
+
+  try {
+    return {
+      ok: true,
+      payload: {
+        shipments: [
+          {
+            order: order.order_number,
+            waybill: '',
+            name: order.customer_name,
+            phone: order.customer_phone,
+            add: formatAddress(address),
+            city: requiredAddressPart(address, 'city'),
+            state: requiredAddressPart(address, 'state'),
+            pin: requiredAddressPart(address, 'pincode', 'postalCode'),
+            country: 'India',
+            payment_mode: 'Prepaid',
+            cod_amount: '0',
+            total_amount: paiseToRupees(order.total_amount_paise),
+            quantity: String(totalQuantity(order)),
+            products_desc: productDescription(order),
+            weight: readNumberEnv('DELHIVERY_PACKAGE_WEIGHT_GRAMS', 500),
+            shipment_length: readNumberEnv('DELHIVERY_PACKAGE_LENGTH_CM', 30),
+            shipment_width: readNumberEnv('DELHIVERY_PACKAGE_BREADTH_CM', 25),
+            shipment_height: readNumberEnv('DELHIVERY_PACKAGE_HEIGHT_CM', 5),
+            seller_gst_tin: Deno.env.get('DELHIVERY_SELLER_GST') ?? '',
+            hsn_code: Deno.env.get('DELHIVERY_HSN_CODE') ?? '',
+            extra_parameters: {
+              trenzuraOrderId: order.id,
+              trenzuraShipmentId: shipment.id,
+              customerEmail: order.customer_email,
+              currency: order.currency,
+            },
+          },
+        ],
+        pickup_location: {
+          name: pickupLocationName,
+        },
+      },
+    }
+  } catch (error) {
+    if (error instanceof DelhiveryConfigError) {
+      return { ok: false, reason: error.message }
+    }
+
+    throw error
+  }
+}
+
+function requiredAddressPart(address: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = address[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+    if (typeof value === 'number') return String(value)
+  }
+
+  throw new DelhiveryConfigError(`Order shipping address is missing ${keys.join('/')}`)
+}
+
+function formatAddress(address: Record<string, unknown>) {
+  const addressLine = requiredAddressPart(address, 'address', 'addressLine')
+  const landmark = address.landmark
+
+  if (typeof landmark === 'string' && landmark.trim()) {
+    return `${addressLine}, ${landmark.trim()}`
+  }
+
+  return addressLine
+}
+
+function paiseToRupees(value: number) {
+  return String(Math.round(value) / 100)
+}
+
+function totalQuantity(order: OrderForShipment) {
+  return order.order_items.reduce((total, item) => total + item.quantity, 0)
+}
+
+function productDescription(order: OrderForShipment) {
+  return order.order_items
+    .map((item) => `${item.title} ${item.size_label}`.trim())
+    .join(', ')
+    .slice(0, 250)
 }
 
 function readNumberEnv(name: string, fallback: number) {
@@ -156,3 +214,5 @@ function findNestedValue(value: Record<string, unknown>, key: string): unknown {
 function readProviderError(value: unknown) {
   return pickString(value, ['error', 'message', 'description', 'remark'])
 }
+
+class DelhiveryConfigError extends Error {}
