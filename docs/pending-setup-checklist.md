@@ -9,8 +9,8 @@ validated.
 
 - Confirm the Google Sheet tab is named exactly `Products`.
 - Create the QA Drive image root folder, for example `Trenzura Product Images - QA`.
-- Share the QA Drive image folder with:
-  `trenzura-sheets-sync@trenzura.iam.gserviceaccount.com`
+- Share the QA Drive image folder with the Google service account email configured for the QA
+  catalog sync. Do not commit that email or the service account JSON to the repo.
 - Send the QA Drive folder URL or folder ID.
 
 Image folder structure:
@@ -47,7 +47,7 @@ case.
 - QA webhook URL:
 
 ```text
-https://qxbzplfcjkjibsrndlbh.supabase.co/functions/v1/razorpay-webhook
+https://<qa-supabase-project-ref>.supabase.co/functions/v1/razorpay-webhook
 ```
 
 - Event: `payment.captured`
@@ -117,4 +117,3 @@ Separate prod folders are cleaner for launch control.
 - Rotate the local Supabase service role key that was printed in tool output earlier before relying
   on it in shared environments.
 - Prefer a fine-grained GitHub token for `GITHUB_ACTIONS_TOKEN` long term.
-
