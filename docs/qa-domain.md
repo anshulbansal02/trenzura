@@ -104,8 +104,9 @@ prod should use Razorpay live keys.
 
 Use two Supabase projects:
 
-- Prod: existing project `trenzura-shop`, ref `tvrrgphxdifrxirtcoou`.
-- QA: create a new project, for example `trenzura-shop-qa`.
+- Prod: existing production Supabase project. Keep its project ref in GitHub/Supabase config, not
+  in docs.
+- QA: create a separate QA Supabase project, for example `trenzura-shop-qa`.
 
 Create QA with the Supabase CLI:
 
@@ -114,7 +115,7 @@ set -a
 source .env
 set +a
 supabase projects create trenzura-shop-qa \
-  --org-id ktpclqljmlndfccqznyh \
+  --org-id '<supabase-org-id>' \
   --region ap-southeast-1 \
   --db-password '<new-qa-db-password>'
 ```
