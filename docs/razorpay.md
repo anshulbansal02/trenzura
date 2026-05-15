@@ -49,7 +49,7 @@ Supabase CLI or dashboard before testing hosted checkout.
 For QA, create the Razorpay webhook in Test mode:
 
 ```text
-https://qxbzplfcjkjibsrndlbh.supabase.co/functions/v1/razorpay-webhook
+https://<qa-supabase-project-ref>.supabase.co/functions/v1/razorpay-webhook
 ```
 
 Select `payment.captured` and use the same `RAZORPAY_WEBHOOK_SECRET` configured for QA.

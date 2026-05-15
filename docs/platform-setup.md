@@ -99,8 +99,8 @@ Need from you:
 
 Current status:
 
-- Prod project: `trenzura-shop`, ref `tvrrgphxdifrxirtcoou`.
-- QA project: `trenzura-shop-qa`, ref `qxbzplfcjkjibsrndlbh`.
+- Prod Supabase project exists; keep the project ref in GitHub/Supabase config, not in docs.
+- QA Supabase project exists; keep the project ref in GitHub/Supabase config, not in docs.
 - QA migrations are applied.
 - QA Edge Functions are deployed.
 - QA GitHub environment has Supabase URL, anon key, service role key, project ref, DB password, and access token.
@@ -164,10 +164,10 @@ Need from you:
 QA webhook:
 
 ```text
-URL: https://qxbzplfcjkjibsrndlbh.supabase.co/functions/v1/razorpay-webhook
+URL: https://<qa-supabase-project-ref>.supabase.co/functions/v1/razorpay-webhook
 Mode: Test
 Events: payment.captured
-Secret: use RAZORPAY_WEBHOOK_SECRET from local .env
+Secret: use the configured QA RAZORPAY_WEBHOOK_SECRET
 ```
 
 Prod webhook, later:
