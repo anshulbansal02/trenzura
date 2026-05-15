@@ -83,8 +83,8 @@ jobs:
             required CLOUDFLARE_WWW_DOMAIN
           fi
 
-          if [ "$TARGET_ENVIRONMENT" = "qa" ] && [ "$GITHUB_REF_NAME" != "qa" ]; then
-            echo "QA catalog publish must run from the qa branch"
+          if [ "$TARGET_ENVIRONMENT" = "qa" ] && [ "$GITHUB_REF_NAME" != "dev" ]; then
+            echo "QA catalog publish must run from the dev branch"
             exit 1
           fi
 

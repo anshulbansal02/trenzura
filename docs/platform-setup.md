@@ -6,16 +6,16 @@ Goal: zero-cost, simple CI/CD, with clear QA and production separation.
 
 Best setup:
 
-- Branches: `dev`, `qa`, `main`.
-- Work starts on `dev`.
-- Merge `dev` into `qa` to deploy QA.
-- Merge `qa` into `main` to deploy production.
-- Protect `qa` and `main`: no direct pushes, require CI.
+- Branches: `dev`, `main`.
+- Work starts from `dev` on feature branches.
+- Merge feature branches into `dev` to deploy QA.
+- Merge `dev` into `main` to deploy production.
+- Protect `dev` and `main`: no direct pushes, require CI.
 
 Current repo setup:
 
-- CI runs on `dev`, `qa`, and `main`.
-- QA deploy runs when `qa` changes.
+- CI runs on `dev` and `main`.
+- QA deploy runs when `dev` changes.
 - Prod deploy runs when `main` changes.
 - Workflows use standard GitHub environments. Missing secrets fail naturally in the relevant build, deploy,
   or CLI command.
