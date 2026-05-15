@@ -6,8 +6,10 @@ import {
   Boxes,
   Clock3,
   CreditCard,
+  ExternalLink,
   LoaderCircle,
   PackageCheck,
+  Rocket,
   RefreshCw,
   RotateCw,
   ShieldCheck,
@@ -20,6 +22,8 @@ import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
 import type {
   AdminDashboard,
+  CatalogPublishEnvironment,
+  CatalogPublishRun,
   AdminIntegrationErrorRow,
   AdminLowStockVariantRow,
   AdminOrderRow,
@@ -44,6 +48,29 @@ const retryAdminShipment = createServerFn({ method: 'POST' })
     const { retryShipmentFromAdmin } = await import('../lib/admin.server')
     return retryShipmentFromAdmin(data.orderNumber)
   })
+
+const publishCatalog = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Publish environment is required')
+    }
+
+    const environment = String((data as { environment?: unknown }).environment ?? '')
+    if (environment !== 'qa' && environment !== 'prod') {
+      throw new Error('Publish environment must be qa or prod')
+    }
+
+    return { environment: environment as CatalogPublishEnvironment }
+  })
+  .handler(async ({ data }) => {
+    const { publishCatalogFromAdmin } = await import('../lib/admin.server')
+    return publishCatalogFromAdmin(data.environment)
+  })
+
+const getCatalogPublishStatus = createServerFn({ method: 'GET' }).handler(async () => {
+  const { loadCatalogPublishStatus } = await import('../lib/admin.server')
+  return loadCatalogPublishStatus()
+})
 
 export const Route = createFileRoute('/admin')({
   head: () => {
@@ -74,6 +101,8 @@ type AdminViewKey =
   | 'lowStockVariants'
 
 type RetryStatus = 'idle' | 'loading' | 'success' | 'error'
+type PublishStatus = RetryStatus
+type PublishEnvironment = 'qa' | 'prod'
 
 const adminTabs: Array<{
   key: AdminViewKey
@@ -91,10 +120,17 @@ const adminTabs: Array<{
 function AdminPage() {
   const dashboard = Route.useLoaderData()
   const retryShipment = useServerFn(retryAdminShipment)
+  const dispatchCatalogPublish = useServerFn(publishCatalog)
+  const loadPublishStatus = useServerFn(getCatalogPublishStatus)
   const [activeView, setActiveView] = useState<AdminViewKey>('recentOrders')
   const [orderNumber, setOrderNumber] = useState('')
   const [retryStatus, setRetryStatus] = useState<RetryStatus>('idle')
   const [retryMessage, setRetryMessage] = useState('')
+  const [publishEnvironment, setPublishEnvironment] = useState<PublishEnvironment>('qa')
+  const [publishConfirmation, setPublishConfirmation] = useState('')
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle')
+  const [publishMessage, setPublishMessage] = useState('')
+  const [publishRuns, setPublishRuns] = useState<CatalogPublishRun[]>([])
   const activeRows = dashboard.views[activeView]
   const criticalCount =
     dashboard.shownCounts.shipmentPendingOrders +
@@ -119,6 +155,47 @@ function AdminPage() {
     } catch (error) {
       setRetryStatus('error')
       setRetryMessage(error instanceof Error ? error.message : 'Unable to retry shipment')
+    }
+  }
+
+  async function refreshPublishStatus() {
+    setPublishStatus('loading')
+    setPublishMessage('Loading publish status...')
+
+    try {
+      const status = await loadPublishStatus()
+      setPublishRuns(status.runs)
+      setPublishStatus('idle')
+      setPublishMessage(status.runs.length > 0 ? 'Latest publish runs loaded.' : 'No publish runs found.')
+    } catch (error) {
+      setPublishStatus('error')
+      setPublishMessage(error instanceof Error ? error.message : 'Unable to load publish status')
+    }
+  }
+
+  async function submitPublishCatalog(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (publishEnvironment === 'prod' && publishConfirmation.trim().toUpperCase() !== 'PUBLISH PROD') {
+      setPublishStatus('error')
+      setPublishMessage('Type PUBLISH PROD before publishing production.')
+      return
+    }
+
+    setPublishStatus('loading')
+    setPublishMessage(`Dispatching ${publishEnvironment.toUpperCase()} catalog publish...`)
+
+    try {
+      const result = await dispatchCatalogPublish({ data: { environment: publishEnvironment } })
+      setPublishStatus('success')
+      setPublishMessage(
+        `Catalog publish dispatched for ${result.environment.toUpperCase()} from ${result.ref}.`,
+      )
+      setPublishConfirmation('')
+      await refreshPublishStatus()
+    } catch (error) {
+      setPublishStatus('error')
+      setPublishMessage(error instanceof Error ? error.message : 'Unable to publish catalog')
     }
   }
 
@@ -206,8 +283,122 @@ function AdminPage() {
 
         <aside className="xl:sticky xl:top-[calc(var(--site-header-height)+1rem)] xl:self-start">
           <form
-            onSubmit={submitRetry}
+            onSubmit={submitPublishCatalog}
             className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[var(--color-paper)]">
+                <Rocket className="size-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--color-ink)]">
+                  Publish catalog
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Runs the GitHub Actions catalog publish workflow for products, images, build, and
+                  deployment.
+                </p>
+              </div>
+            </div>
+
+            <fieldset className="mt-5">
+              <legend className="text-sm font-semibold text-[var(--color-ink)]">
+                Target
+              </legend>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(['qa', 'prod'] as const).map((environment) => (
+                  <button
+                    key={environment}
+                    type="button"
+                    onClick={() => setPublishEnvironment(environment)}
+                    className={`h-10 rounded-lg border px-3 text-sm font-semibold uppercase transition ${
+                      publishEnvironment === environment
+                        ? 'border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]'
+                        : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-muted)] hover:text-[var(--color-ink)]'
+                    }`}
+                  >
+                    {environment}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            {publishEnvironment === 'prod' ? (
+              <label className="mt-4 block text-sm font-semibold text-[var(--color-ink)]">
+                Type PUBLISH PROD
+                <input
+                  value={publishConfirmation}
+                  onChange={(event) => setPublishConfirmation(event.target.value)}
+                  className="mt-2 h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-rouge)] focus:ring-2 focus:ring-[var(--color-rouge)]/20"
+                />
+              </label>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={publishStatus === 'loading'}
+              className="fashion-button-primary mt-4 h-11 w-full gap-2"
+            >
+              {publishStatus === 'loading' ? (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Rocket className="size-4" aria-hidden="true" />
+              )}
+              Publish catalog
+            </Button>
+
+            <Button
+              type="button"
+              onClick={refreshPublishStatus}
+              disabled={publishStatus === 'loading'}
+              className="fashion-button-secondary mt-3 h-10 w-full gap-2"
+            >
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Refresh publish status
+            </Button>
+
+            {publishMessage ? (
+              <p
+                className={`mt-3 rounded-lg px-3 py-2 text-sm leading-6 ${
+                  publishStatus === 'error'
+                    ? 'bg-red-50 text-red-800'
+                    : publishStatus === 'success'
+                      ? 'bg-emerald-50 text-emerald-800'
+                      : 'bg-[var(--color-paper)] text-[var(--color-muted)]'
+                }`}
+              >
+                {publishMessage}
+              </p>
+            ) : null}
+
+            {publishRuns.length > 0 ? (
+              <div className="mt-4 divide-y divide-[var(--color-line)] rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)]">
+                {publishRuns.map((run) => (
+                  <a
+                    key={run.id}
+                    href={run.htmlUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-start justify-between gap-3 px-3 py-3 text-sm transition hover:bg-[var(--color-surface)]"
+                  >
+                    <span>
+                      <span className="font-semibold text-[var(--color-ink)]">
+                        {run.branch || 'workflow'}
+                      </span>
+                      <span className="mt-1 block text-xs text-[var(--color-muted)]">
+                        {formatPublishRunStatus(run)} · {formatDateTime(run.createdAt)}
+                      </span>
+                    </span>
+                    <ExternalLink className="mt-0.5 size-4 shrink-0 text-[var(--color-muted)]" aria-hidden="true" />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </form>
+
+          <form
+            onSubmit={submitRetry}
+            className="mt-6 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-sm"
           >
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[var(--color-paper)]">
@@ -504,4 +695,9 @@ function formatDateTime(value: string) {
     timeStyle: 'short',
     timeZone: 'Asia/Kolkata',
   }).format(date)
+}
+
+function formatPublishRunStatus(run: CatalogPublishRun) {
+  if (run.status === 'completed') return run.conclusion ?? 'completed'
+  return run.status || 'queued'
 }

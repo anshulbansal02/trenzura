@@ -1,0 +1,109 @@
+name: Publish catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        default: qa
+        options:
+          - qa
+          - prod
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: publish-catalog-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      TARGET_ENVIRONMENT: ${{ inputs.environment }}
+      GOOGLE_SHEETS_SPREADSHEET_ID: ${{ vars.GOOGLE_SHEETS_SPREADSHEET_ID }}
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      GOOGLE_SHEETS_RANGE: ${{ vars.GOOGLE_SHEETS_RANGE }}
+      GOOGLE_DRIVE_IMAGE_FOLDER_ID: ${{ vars.GOOGLE_DRIVE_IMAGE_FOLDER_ID }}
+      PRODUCT_IMAGE_MANIFEST_PATH: src/generated/product-image-manifest.json
+      PRODUCT_IMAGE_PUBLIC_BASE_URL: ${{ vars.PRODUCT_IMAGE_PUBLIC_BASE_URL }}
+      R2_PRODUCT_IMAGES_BUCKET: ${{ vars.R2_PRODUCT_IMAGES_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_WORKER_NAME: ${{ vars.CLOUDFLARE_WORKER_NAME }}
+      CLOUDFLARE_DOMAIN: ${{ vars.CLOUDFLARE_DOMAIN }}
+      CLOUDFLARE_WWW_DOMAIN: ${{ vars.CLOUDFLARE_WWW_DOMAIN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate catalog publish config
+        run: |
+          required() {
+            test -n "${!1}" || { echo "$1 is required"; exit 1; }
+          }
+
+          required GOOGLE_SHEETS_SPREADSHEET_ID
+          required GOOGLE_SERVICE_ACCOUNT_JSON
+          required GOOGLE_SHEETS_RANGE
+          required GOOGLE_DRIVE_IMAGE_FOLDER_ID
+          required PRODUCT_IMAGE_PUBLIC_BASE_URL
+          required R2_PRODUCT_IMAGES_BUCKET
+          required R2_ACCESS_KEY_ID
+          required R2_SECRET_ACCESS_KEY
+          required VITE_SUPABASE_URL
+          required VITE_SUPABASE_ANON_KEY
+          required SUPABASE_URL
+          required SUPABASE_SERVICE_ROLE_KEY
+          required EXPECTED_SUPABASE_PROJECT_REF
+          required CLOUDFLARE_ACCOUNT_ID
+          required CLOUDFLARE_API_TOKEN
+          required CLOUDFLARE_WORKER_NAME
+          required CLOUDFLARE_DOMAIN
+
+          if [ "$TARGET_ENVIRONMENT" = "prod" ]; then
+            required CLOUDFLARE_WWW_DOMAIN
+          fi
+
+          if [ "$TARGET_ENVIRONMENT" = "qa" ] && [ "$GITHUB_REF_NAME" != "qa" ]; then
+            echo "QA catalog publish must run from the qa branch"
+            exit 1
+          fi
+
+          if [ "$TARGET_ENVIRONMENT" = "prod" ] && [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "Production catalog publish must run from the main branch"
+            exit 1
+          fi
+
+      - name: Publish catalog data and images
+        run: pnpm publish:catalog
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+      - name: Deploy QA to Cloudflare Workers
+        if: inputs.environment == 'qa'
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"
+
+      - name: Deploy production to Cloudflare Workers
+        if: inputs.environment == 'prod'
+        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN" --domain "$CLOUDFLARE_WWW_DOMAIN"

@@ -89,8 +89,9 @@ Store product images as an ordered `text[]` on `products` for v1.
 
 Behavior:
 
-- Google Sheets stores image filenames/paths/URLs as a list.
-- Image sync resolves them to public Supabase Storage URLs.
+- Google Sheets stores product data.
+- Google Drive stores owner-managed product image folders.
+- Catalog publish resolves Drive images to public Cloudflare R2 URLs.
 - `products.images` stores those ordered URLs.
 - The first image is treated as the primary image unless a later field is added.
 
@@ -777,22 +778,24 @@ Rationale:
 
 ### Product Images
 
-Use Supabase Storage for v1 product images.
+Use Cloudflare R2 for product images.
 
-Google Sheets stores image paths or public URLs. The product sync normalizes those values into the
+Google Sheets stores product data. Google Drive stores image folders named by `product_id`. The
+catalog publish workflow uploads new or changed images to R2 and writes public R2 URLs into the
 product catalog used by Supabase and the storefront.
 
 Recommended workflow:
 
-- Create a public Supabase Storage bucket for product images.
-- Upload optimized product images there.
-- Store public image URLs or stable storage paths in Google Sheets.
+- Create separate R2 buckets for QA and production.
+- Attach separate media hostnames to those buckets.
+- Share the Google Drive image root folders with the Google service account.
+- Keep the `images` sheet column blank for the normal folder-based workflow.
 - Keep the storefront decoupled from the upload workflow by reading image URLs from product data.
 
 Scale expectation:
 
 - Around 1000 product images is acceptable if images are compressed and sized for storefront use.
-- Supabase free tier includes limited storage, so avoid uploading original full-resolution photos.
+- Keep uploaded photos web-ready; avoid original full-resolution camera files.
 - A practical target is web-ready images, for example roughly 150-400 KB each where quality allows.
 
 Deferred for later:
@@ -800,51 +803,48 @@ Deferred for later:
 - owner upload UI
 - automatic image resizing pipeline
 - paid image transformation service
-- migration to Cloudinary/Cloudflare Images if traffic or image operations grow
+- Cloudflare Images transformations if traffic or image operations grow
 
 Rationale:
 
 - Keeps image management outside git.
-- Uses the backend platform already selected.
-- Lets the shop owner manage image references in the same spreadsheet as product data.
+- Uses the same Cloudflare platform as the storefront.
+- Lets the shop owner manage images in Google Drive without a product edit UI.
 
 ### Product Image Upload Workflow
 
-Use a script-managed image upload and validation workflow.
+Use a CI/CD-managed image upload and validation workflow.
 
 Recommended workflow:
 
-- The owner/developer places optimized images in a local folder such as `product-images/`.
-- Images are grouped by product ID.
-- Google Sheets references stable image relative paths.
-- A sync script uploads missing/changed images to the Supabase Storage product image bucket.
-- The same script validates that every image referenced by the sheet exists in storage.
-- Product sync writes public image URLs into the generated storefront catalog and Supabase product
-  rows.
+- The owner places optimized images in Google Drive folders grouped by product ID.
+- The `Publish catalog` workflow validates image availability.
+- The image sync computes content hashes and skips unchanged R2 objects.
+- Product sync writes public R2 URLs into the generated storefront catalog and Supabase product rows.
 
-Recommended local layout:
+Recommended Google Drive layout:
 
 ```text
-product-images/
+Trenzura Product Images - QA/
   KURTI-001/
-    1.jpg
-    2.jpg
-    3.jpg
+    01-front.jpg
+    02-close.jpg
+    03-side.jpg
   KURTI-002/
-    1.jpg
-    2.jpg
+    01-front.jpg
+    02-close.jpg
 ```
 
-Recommended Google Sheets `images` cell:
+Normal Google Sheets `images` cell:
 
 ```text
-KURTI-001/1.jpg, KURTI-001/2.jpg
+blank
 ```
 
-Recommended Supabase Storage path:
+Recommended R2 object key:
 
 ```text
-product-images/KURTI-001/1.jpg
+products/KURTI-001/<content_hash>-01-front.jpg
 ```
 
 Rationale:
@@ -853,23 +853,23 @@ Rationale:
 - Reduces broken image links.
 - Keeps the owner-facing spreadsheet simple.
 - Does not require building an admin upload UI.
-- Product ID folders keep local image management predictable.
+- Product ID folders keep owner image management predictable.
 
 ### Catalog And Image Sync Trigger
 
-Use manual sync commands for v1.
+Use one manual `Publish catalog` workflow for v1.
 
-Example commands:
+Workflow behavior:
 
-```bash
-pnpm sync:products
-pnpm sync:images
-pnpm sync:products:supabase
-```
+- The owner can dispatch it from `/admin`.
+- Developers can dispatch it from GitHub Actions.
+- It reads Google Sheets and Google Drive, validates product data and image availability, uploads
+  changed images to R2, syncs Supabase, builds, prerenders public catalog pages, and deploys through
+  Cloudflare Workers.
 
 Operational behavior:
 
-- The owner/developer runs sync after changing the spreadsheet or image folder.
+- The owner/developer runs publish after changing the spreadsheet or image folder.
 - Sync validates data before writing to Supabase.
 - CI automation can be added later once the workflow is stable.
 
@@ -1208,17 +1208,17 @@ Rationale:
 
 - Faster storefront.
 - Lower backend cost.
-- Works well with Cloudflare Pages/static deployment.
+- Works well with Cloudflare Workers deployment with prerendered public catalog routes.
 - Protects Supabase free tier from browse traffic.
 - Keeps checkout safe because payment amounts are still backend-authoritative.
 
 ### Hosting Target
 
-Target Cloudflare Pages for v1 storefront hosting.
+Target Cloudflare Workers for v1 storefront hosting.
 
 Deployment shape:
 
-- TanStack Start app hosted on Cloudflare Pages.
+- TanStack Start app hosted on Cloudflare Workers.
 - Supabase hosts backend state and Edge Functions.
 - Product browsing uses generated/static data.
 - Checkout calls Supabase Edge Functions directly.
@@ -1232,15 +1232,15 @@ Rationale:
 
 ### Deployment And Sync Flow
 
-Keep catalog/image sync separate from storefront deployment.
+Keep catalog/image publishing explicit and push-based. The catalog publish workflow owns image sync,
+product sync, build/prerender, and storefront deployment for product content changes.
 
 Recommended flow:
 
 ```text
-1. Owner/developer updates Google Sheet and image folder.
-2. Run catalog/image sync validation.
-3. Sync products/images to Supabase.
-4. Build and deploy the storefront.
+1. Owner/developer updates Google Sheet and Google Drive image folder.
+2. Run the Publish catalog workflow.
+3. Publish catalog validates data/images, uploads changed images to R2, syncs Supabase, builds, and deploys.
 ```
 
 GitHub Actions can be used for this, but as an explicit/manual workflow rather than automatically
@@ -1719,7 +1719,7 @@ Rate/abuse posture:
 ### Secrets And Environments
 
 Use separate environment scopes for local development, Supabase Edge Functions, GitHub Actions, and
-Cloudflare Pages.
+Cloudflare Workers.
 
 Local `.env`:
 
@@ -1758,13 +1758,19 @@ SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 GOOGLE_SERVICE_ACCOUNT_JSON
 GOOGLE_SHEETS_SPREADSHEET_ID
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_API_TOKEN
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
 ```
 
-Cloudflare Pages environment variables:
+Cloudflare Workers environment variables:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
+GITHUB_REPOSITORY
+CATALOG_PUBLISH_WORKFLOW_FILE
 ```
 
 Security rules:

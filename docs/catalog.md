@@ -1,53 +1,111 @@
-# Product Catalog Sync
+# Product Catalog
 
-Products are edited in Google Sheets, fetched during CI, validated, and written to `src/generated/products.json`.
+Products are managed by the shop owner in Google Sheets. Product images are managed in Google
+Drive folders. The storefront catalog is published through the `Publish catalog` GitHub Actions
+workflow or through the `/admin` page action that dispatches that workflow.
 
-The app imports catalog data through `src/data/products.ts`. Do not edit `src/generated/products.json` by hand; run:
+Do not edit `src/generated/products.json` by hand.
 
-```bash
-pnpm sync:products
+## Owner Sources
+
+Catalog data:
+
+```text
+Google Sheets -> Products tab
 ```
 
-If Google Sheets env vars are missing, the script uses `scripts/seed-products.json`.
+Product images:
+
+```text
+Google Drive root folder
+  product_id/
+    01-front.jpg
+    02-close.jpg
+    03-side.jpg
+```
+
+The Google Drive root folder ID is environment-specific and belongs in GitHub environment variable
+`GOOGLE_DRIVE_IMAGE_FOLDER_ID`.
 
 ## Required Sheet Columns
 
-| Column | Format |
-| --- | --- |
-| `Images` | One or more image URLs, separated by comma, pipe, or new line |
-| `Title` | Product display title |
-| `Product Id` | Stable product id or slug |
-| `MRP` | Number, in INR |
-| `Discount (percent)` | Number from `0` to `100` |
-| `Size` | Size labels, such as `M, L, XL` |
-| `Max Quantity` | Either one number, a size list like `2, 4, 3`, or keyed values like `M:2, L:4, XL:3` |
-| `Description` | Product description |
-| `Size Charts` | Semicolon rows like `M: Chest=40 in, Length=27 in; L: Chest=42 in, Length=28 in` |
-
-## Optional Columns
-
-| Column | Use |
-| --- | --- |
-| `Category` | Listing filter group. Defaults to `Apparel` |
-| `Color` | Secondary product label |
-| `Details` | Pipe, comma, or new-line separated detail bullets |
-| `Image Alt` | Image alt text. Defaults to product title |
-| `Badge` | Small product badge |
-| `Featured` | `true`, `yes`, `1`, or `featured` marks the product for the home page |
-
-## CI Secrets
-
-Create a Google Cloud service account with read-only Sheets access, then share the Google Sheet with the service account email.
-
-Set these repository secrets:
-
-```bash
-GOOGLE_SHEETS_SPREADSHEET_ID=<sheet id>
-GOOGLE_SERVICE_ACCOUNT_JSON=<full service account JSON>
+```text
+product_id
+active
+title
+category
+description
+mrp
+selling_price
+images
+sizes
+stock
+restock
+size_chart
+featured
 ```
 
-Optional repository variable:
+Column notes:
+
+- `product_id`: stable owner-managed product ID. It must not change after publishing.
+- `active`: `yes`, `true`, or `1` makes the product visible and purchasable when stock allows it.
+- `images`: optional for the normal workflow. Leave it blank to use the matching Google Drive
+  product folder. Fill it only when a product needs explicit image ordering by filename.
+- `sizes`: comma-separated sizes, such as `S, M, L, XL`.
+- `stock`: stock map, such as `S:2, M:4, L:1`.
+- `restock`: exact replacement stock map for existing variants, such as `M:8`.
+- `size_chart`: semicolon-separated rows such as
+  `M: Bust=38 in, Length=27 in; L: Bust=40 in, Length=28 in`.
+- `featured`: `yes`, `true`, or `1` marks the product for homepage merchandising.
+
+## Image Rules
+
+- Product image folder name must exactly match `product_id`.
+- Active products must have at least one supported image.
+- Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
+- Filename order controls gallery order. Prefer `01-front.jpg`, `02-close.jpg`, and so on.
+- Image sync computes a content hash and uploads only new or changed files to Cloudflare R2.
+- Storefront image URLs are generated from the environment's `PRODUCT_IMAGE_PUBLIC_BASE_URL`.
+
+## Publishing
+
+Use one action for owner catalog updates:
+
+```text
+Publish catalog
+```
+
+It performs:
+
+```text
+read Google Sheets
+read Google Drive images
+generate catalog JSON
+validate generated image URLs against the configured media host
+upload new/changed images to R2
+sync Supabase products and variants
+build/prerender public storefront pages
+deploy through Cloudflare Workers
+```
+
+This is push-based. There is no scheduled sync and no interval-based regeneration.
+
+## Developer Commands
+
+These commands are for validation and CI/CD jobs. They are not local deployment commands.
 
 ```bash
-GOOGLE_SHEETS_RANGE=Products!A1:Z
+pnpm sync:images:manifest
+pnpm sync:images:r2
+pnpm sync:images:r2:upload
+pnpm sync:products
+pnpm validate:catalog-assets
+pnpm publish:catalog
 ```
+
+`pnpm publish:catalog` requires environment-specific Google, R2, Supabase, and Cloudflare
+configuration. It should normally run inside GitHub Actions.
+
+## More Detail
+
+See [Catalog Publish Workflow](./catalog-publish-workflow.md).

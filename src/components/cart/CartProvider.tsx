@@ -206,6 +206,10 @@ export function useCart() {
   return cart
 }
 
+export function useOptionalCart() {
+  return useContext(CartContext)
+}
+
 export function createCartLineId(productId: string, variantId: string) {
   return `${productId}:${variantId}`
 }

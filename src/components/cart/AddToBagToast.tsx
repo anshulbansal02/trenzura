@@ -4,29 +4,29 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { formatPrice } from '../../lib/format'
 import { ProductMedia } from '../product/ProductMedia'
-import { type AddedCartItem, useCart } from './CartProvider'
+import { type AddedCartItem, useOptionalCart } from './CartProvider'
 
 export function AddToBagToast() {
-  const { addedItem, dismissAddedItem, openCart } = useCart()
+  const cart = useOptionalCart()
   const [visibleItem, setVisibleItem] = useState<AddedCartItem | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   const closeToast = useCallback(() => {
     setIsVisible(false)
     window.setTimeout(() => {
-      dismissAddedItem()
+      cart?.dismissAddedItem()
       setVisibleItem(null)
     }, 180)
-  }, [dismissAddedItem])
+  }, [cart])
 
   useEffect(() => {
-    if (!addedItem) return
+    if (!cart?.addedItem) return
 
-    setVisibleItem(addedItem)
+    setVisibleItem(cart.addedItem)
     const frame = window.requestAnimationFrame(() => setIsVisible(true))
 
     return () => window.cancelAnimationFrame(frame)
-  }, [addedItem])
+  }, [cart?.addedItem])
 
   useEffect(() => {
     if (!visibleItem || !isVisible) return
@@ -35,19 +35,19 @@ export function AddToBagToast() {
     return () => window.clearTimeout(timeout)
   }, [closeToast, isVisible, visibleItem])
 
-  if (!visibleItem) return null
+  if (!cart || !visibleItem) return null
 
   return (
     <div
       aria-live="polite"
-      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-[1.1rem] border border-[var(--color-line)] bg-[var(--color-paper)] p-3 shadow-2xl shadow-stone-950/20 transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
+      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 shadow-sm transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
         isVisible
           ? 'translate-y-0 opacity-100 sm:translate-y-0'
           : 'translate-y-2 opacity-0 sm:translate-y-2'
       }`}
     >
       <div className="grid grid-cols-[64px_1fr_auto] gap-3">
-        <ProductMedia product={visibleItem.product} className="aspect-[4/5] rounded-[0.8rem]" />
+        <ProductMedia product={visibleItem.product} className="aspect-[4/5] rounded-lg" />
         <div className="min-w-0 py-1">
           <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-[var(--color-rouge)]">
             <ShoppingBag className="size-3.5" aria-hidden="true" />
@@ -75,7 +75,7 @@ export function AddToBagToast() {
           type="button"
           onClick={() => {
             closeToast()
-            openCart()
+            cart.openCart()
           }}
           className="h-10 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)]"
         >

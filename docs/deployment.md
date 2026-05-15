@@ -1,7 +1,8 @@
 # Deployment
 
-The storefront deploys as a TanStack Start SSR app on Cloudflare Workers. The runtime backend stays
-on Supabase Edge Functions.
+The storefront deploys as a TanStack Start app on Cloudflare Workers. Public catalog routes are
+prerendered during catalog publish/build where possible; admin, checkout, payment, and ops flows
+remain runtime Worker behavior. The runtime backend stays on Supabase Edge Functions.
 
 ## Cloudflare Workers
 
@@ -18,12 +19,7 @@ Cloudflare files:
 - `wrangler.jsonc` declares the Worker entrypoint as `@tanstack/react-start/server-entry`.
 - `.github/workflows/deploy-cloudflare.yml` builds and deploys with Wrangler.
 
-Local commands:
-
-```bash
-pnpm build:ci
-pnpm deploy
-```
+Local deploy commands are intentionally not provided. Deployment runs through GitHub Actions.
 
 ## GitHub Secrets
 
@@ -45,7 +41,11 @@ CF_ACCESS_AUD
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 OPS_SERVICE_ROLE_KEY
+GITHUB_ACTIONS_TOKEN
 ```
+
+`GITHUB_REPOSITORY`, `CATALOG_PUBLISH_WORKFLOW_FILE`, `CATALOG_PUBLISH_QA_REF`, and
+`CATALOG_PUBLISH_PROD_REF` are non-secret Worker variables tracked in `wrangler.jsonc`.
 
 For local development only, set `ADMIN_DEV_EMAIL` to one of the emails in `ADMIN_EMAILS`.
 The local fallback is disabled unless `ADMIN_DEV_BYPASS=true`; never set that variable in
@@ -54,11 +54,17 @@ accidentally present.
 Use the full Cloudflare Access team domain for `CF_ACCESS_TEAM_DOMAIN`, for example
 `https://team-name.cloudflareaccess.com`.
 
-Required when CI should fetch products from Google Sheets:
+Required when `Publish catalog` should fetch products from Google Sheets and images from Google
+Drive:
 
 ```text
 GOOGLE_SHEETS_SPREADSHEET_ID
 GOOGLE_SERVICE_ACCOUNT_JSON
+GOOGLE_DRIVE_IMAGE_FOLDER_ID
+R2_PRODUCT_IMAGES_BUCKET
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+PRODUCT_IMAGE_PUBLIC_BASE_URL
 ```
 
 Optional GitHub variable:

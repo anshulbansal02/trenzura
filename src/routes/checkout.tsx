@@ -315,7 +315,7 @@ function CheckoutPage() {
             )}
           </span>
           <p className="fashion-eyebrow mt-6">Order {confirmation.orderNumber}</p>
-          <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
+          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
             {confirmation.needsReview ? 'Payment received' : 'Order confirmed'}
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--color-muted)]">
@@ -323,7 +323,7 @@ function CheckoutPage() {
           </p>
         </section>
 
-        <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-[1.25rem] p-5">
+        <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-lg bg-[var(--color-paper)] p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <ConfirmationLine label="Order number" value={confirmation.orderNumber} />
             <ConfirmationLine label="Payment reference" value={confirmation.paymentId ?? 'Recorded'} />
@@ -363,7 +363,7 @@ function CheckoutPage() {
       <main className="mx-auto flex min-h-[70svh] max-w-3xl items-center justify-center px-5 py-16 text-center sm:px-8">
         <div>
           <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-5xl">Your bag is empty</h1>
+          <h1 className="fashion-display mt-2 text-3xl">Your bag is empty</h1>
           <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
             Choose a style and size to begin your order.
           </p>
@@ -388,7 +388,7 @@ function CheckoutPage() {
       <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
+          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
             Delivery and payment
           </h1>
         </div>
@@ -399,7 +399,7 @@ function CheckoutPage() {
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <form id="checkout-form" onSubmit={submitCheckout} className="space-y-8">
-          <section className="fashion-surface rounded-[1.25rem] p-5">
+          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
             <h2 className="font-serif text-2xl text-[var(--color-ink)]">Contact</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <CheckoutField
@@ -423,7 +423,7 @@ function CheckoutPage() {
             </div>
           </section>
 
-          <section className="fashion-surface rounded-[1.25rem] p-5">
+          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
             <h2 className="font-serif text-2xl text-[var(--color-ink)]">Delivery</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <CheckoutField
@@ -479,14 +479,14 @@ function CheckoutPage() {
             </div>
           </section>
 
-          <section className="fashion-surface rounded-[1.25rem] p-5">
+          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
             <div className="flex items-center gap-3">
               <span className="grid size-10 place-items-center rounded-full bg-[var(--color-ink)] text-[var(--color-paper)]">
                 <CreditCard className="size-4" aria-hidden="true" />
               </span>
               <h2 className="font-serif text-2xl text-[var(--color-ink)]">Payment</h2>
             </div>
-            <div className="mt-5 rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
+            <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
                 <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
                 Razorpay secure checkout
@@ -534,7 +534,7 @@ function CheckoutPage() {
             </Button>
           </div>
 
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-2xl shadow-stone-950/12 backdrop-blur-xl sm:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-sm backdrop-blur-xl sm:hidden">
             <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase text-[var(--color-muted)]">
@@ -560,7 +560,7 @@ function CheckoutPage() {
           </div>
         </form>
 
-        <aside className="fashion-surface order-first self-start rounded-[1.25rem] p-5 lg:order-none lg:sticky lg:top-24">
+        <aside className="fashion-surface order-first self-start rounded-lg bg-[var(--color-paper)] p-5 lg:order-none lg:sticky lg:top-24">
           <div className="flex items-center justify-between gap-4">
             <h2 className="font-serif text-2xl text-[var(--color-ink)]">Order summary</h2>
             <p className="text-sm text-[var(--color-muted)]">
@@ -716,7 +716,7 @@ function CheckoutNotice({
 
   return (
     <div
-      className={`mt-4 rounded-[1rem] border px-4 py-3 text-sm ${
+      className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
         isError
           ? 'border-red-200 bg-red-50 text-red-800'
           : isCancelled
@@ -733,7 +733,7 @@ function CheckoutNotice({
 
 function ConfirmationLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-canvas)] p-4 text-left">
+    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-left">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
         {label}
       </p>

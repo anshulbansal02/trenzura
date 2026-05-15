@@ -44,6 +44,7 @@ async function main() {
 
   const supabaseUrl = requiredEnv('SUPABASE_URL')
   const serviceRoleKey = requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
+  assertExpectedSupabaseProject(supabaseUrl)
   const records = JSON.parse(await readFile(syncPath, 'utf8')) as ProductSyncRecord[]
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
@@ -159,6 +160,20 @@ function requiredEnv(name: string) {
   const value = process.env[name]
   if (!value) throw new Error(`${name} is required`)
   return value
+}
+
+function assertExpectedSupabaseProject(supabaseUrl: string) {
+  const expectedRef = process.env.EXPECTED_SUPABASE_PROJECT_REF
+  if (!expectedRef) {
+    throw new Error('EXPECTED_SUPABASE_PROJECT_REF is required before syncing products')
+  }
+
+  const actualRef = new URL(supabaseUrl).hostname.split('.')[0]
+  if (actualRef !== expectedRef) {
+    throw new Error(
+      `SUPABASE_URL points to ${actualRef}; expected ${expectedRef}. Refusing to sync products.`,
+    )
+  }
 }
 
 async function loadEnvFile() {

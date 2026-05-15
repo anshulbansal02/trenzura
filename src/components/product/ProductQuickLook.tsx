@@ -20,7 +20,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/45 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="relative max-h-[100svh] w-full overflow-y-auto rounded-t-[1.35rem] border border-[var(--color-line)] bg-[var(--color-paper)] shadow-2xl shadow-stone-950/25 outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-6xl sm:rounded-[1.35rem] sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="relative max-h-[100svh] w-full overflow-y-auto rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-6xl sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
               <div className="min-w-0">
                 <Dialog.Title className="truncate font-serif text-2xl text-[var(--color-ink)]">
@@ -54,7 +54,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                 <ProductGallery product={product} imageFit="contain" variant="quickLook" />
               </div>
 
-              <section className="rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-24 lg:self-start lg:p-5">
+              <section className="rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-4 lg:sticky lg:top-24 lg:self-start lg:p-5">
                 <ProductPurchasePanel
                   product={product}
                   variant="quickLook"

@@ -93,7 +93,7 @@ export function ProductFilters({
       className={joinClasses(
         'w-full min-w-0 self-start overflow-x-hidden',
         variant === 'panel'
-          ? 'fashion-surface space-y-7 rounded-[1.25rem] p-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
+          ? 'fashion-surface space-y-7 rounded-lg bg-[var(--color-paper)] p-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
           : 'space-y-6',
       )}
     >
@@ -118,7 +118,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="shrink-0 text-sm font-semibold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
+                className="shrink-0 text-sm font-bold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
             >
               Reset
             </button>
@@ -196,7 +196,7 @@ export function ProductFilters({
             <button
               type="button"
               onClick={() => onSearchChange({ sizes: [] })}
-              className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-rouge)]"
+              className="text-xs font-bold text-[var(--color-muted)] transition hover:text-[var(--color-rouge)]"
             >
               Clear
             </button>
@@ -217,7 +217,7 @@ export function ProductFilters({
                   })
                 }
                 className={joinClasses(
-                  'h-9 rounded-full border text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-9 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
                   isSelected
                     ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)]',
@@ -294,7 +294,7 @@ export function ProductFilters({
           </Select.Trigger>
           <Select.Portal>
             <Select.Positioner sideOffset={6}>
-              <Select.Popup className="min-w-[var(--anchor-width)] rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-1 shadow-xl shadow-stone-950/10 outline-none transition duration-150 ease-out data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
+              <Select.Popup className="min-w-[var(--anchor-width)] rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-1 shadow-sm outline-none transition duration-150 ease-out data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
                 {Object.entries(sortLabels).map(([value, label]) => (
                   <Select.Item
                     key={value}

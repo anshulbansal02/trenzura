@@ -1,5 +1,6 @@
 node_modules
 .DS_Store
+Thumbs.db
 dist
 dist-ssr
 *.local
@@ -13,3 +14,5 @@ supabase/.temp
 .vinxi
 __unconfig*
 todos.json
+public/Photo/
+public/data.xlsx

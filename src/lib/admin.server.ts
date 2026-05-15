@@ -87,6 +87,34 @@ export type RetryShipmentResult = {
   }
 }
 
+export type CatalogPublishEnvironment = 'qa' | 'prod'
+
+export type CatalogPublishDispatchResult = {
+  adminEmail: string
+  environment: CatalogPublishEnvironment
+  workflowFile: string
+  ref: string
+  actionsUrl: string
+}
+
+export type CatalogPublishStatus = {
+  adminEmail: string
+  workflowFile: string
+  runs: CatalogPublishRun[]
+}
+
+export type CatalogPublishRun = {
+  id: number
+  name: string
+  status: string
+  conclusion: string | null
+  branch: string
+  event: string
+  htmlUrl: string
+  createdAt: string
+  updatedAt: string
+}
+
 type AdminEnv = {
   adminEmails: string[]
   accessTeamDomain?: string
@@ -96,6 +124,11 @@ type AdminEnv = {
   supabaseUrl: string
   supabaseServiceRoleKey: string
   opsServiceRoleKey: string
+  githubActionsToken?: string
+  githubRepository?: string
+  catalogPublishWorkflowFile: string
+  catalogPublishQaRef: string
+  catalogPublishProdRef: string
 }
 
 export async function loadAdminDashboard(): Promise<AdminDashboard> {
@@ -201,6 +234,91 @@ export async function retryShipmentFromAdmin(orderNumber: string): Promise<Retry
   }
 }
 
+export async function publishCatalogFromAdmin(
+  environment: CatalogPublishEnvironment,
+): Promise<CatalogPublishDispatchResult> {
+  setAdminResponseHeaders()
+
+  try {
+    requireSameOriginMutation()
+
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const githubToken = requireOptionalAdminEnv(env.githubActionsToken, 'GITHUB_ACTIONS_TOKEN')
+    const repository = requireOptionalAdminEnv(env.githubRepository, 'GITHUB_REPOSITORY')
+    const ref = environment === 'prod' ? env.catalogPublishProdRef : env.catalogPublishQaRef
+    const response = await fetch(
+      `https://api.github.com/repos/${repository}/actions/workflows/${env.catalogPublishWorkflowFile}/dispatches`,
+      {
+        method: 'POST',
+        headers: githubHeaders(githubToken),
+        body: JSON.stringify({
+          ref,
+          inputs: { environment },
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      const message = await readGitHubError(response)
+      throw new AdminError(message, response.status, response.status < 500)
+    }
+
+    console.log('admin publish-catalog dispatch', {
+      adminEmail,
+      environment,
+      workflowFile: env.catalogPublishWorkflowFile,
+      ref,
+    })
+
+    return {
+      adminEmail,
+      environment,
+      workflowFile: env.catalogPublishWorkflowFile,
+      ref,
+      actionsUrl: `https://github.com/${repository}/actions/workflows/${env.catalogPublishWorkflowFile}`,
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to publish catalog')
+  }
+}
+
+export async function loadCatalogPublishStatus(): Promise<CatalogPublishStatus> {
+  setAdminResponseHeaders()
+
+  try {
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const githubToken = requireOptionalAdminEnv(env.githubActionsToken, 'GITHUB_ACTIONS_TOKEN')
+    const repository = requireOptionalAdminEnv(env.githubRepository, 'GITHUB_REPOSITORY')
+    const url = new URL(
+      `https://api.github.com/repos/${repository}/actions/workflows/${env.catalogPublishWorkflowFile}/runs`,
+    )
+
+    url.searchParams.set('event', 'workflow_dispatch')
+    url.searchParams.set('per_page', '5')
+
+    const response = await fetch(url, {
+      headers: githubHeaders(githubToken),
+    })
+
+    if (!response.ok) {
+      const message = await readGitHubError(response)
+      throw new AdminError(message, response.status, response.status < 500)
+    }
+
+    const payload = await response.json() as { workflow_runs?: unknown[] }
+
+    return {
+      adminEmail,
+      workflowFile: env.catalogPublishWorkflowFile,
+      runs: (payload.workflow_runs ?? []).map(normalizeCatalogPublishRun),
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to load catalog publish status')
+  }
+}
+
 function normalizeRetryResult(value: unknown): RetryShipmentResult['result'] {
   if (!value || typeof value !== 'object') {
     throw new AdminError('Shipment retry returned an invalid response', 502, false)
@@ -228,6 +346,31 @@ function readString(value: unknown) {
 
 function readNullableString(value: unknown) {
   return typeof value === 'string' ? value : null
+}
+
+function normalizeCatalogPublishRun(value: unknown): CatalogPublishRun {
+  if (!value || typeof value !== 'object') {
+    throw new AdminError('GitHub Actions returned an invalid workflow run', 502, false)
+  }
+
+  const run = value as Record<string, unknown>
+  const headBranch = readString(run.head_branch)
+
+  return {
+    id: readNumber(run.id),
+    name: readString(run.name),
+    status: readString(run.status),
+    conclusion: readNullableString(run.conclusion),
+    branch: headBranch,
+    event: readString(run.event),
+    htmlUrl: readString(run.html_url),
+    createdAt: readString(run.created_at),
+    updatedAt: readString(run.updated_at),
+  }
+}
+
+function readNumber(value: unknown) {
+  return typeof value === 'number' ? value : 0
 }
 
 async function requireAdminEmail() {
@@ -295,6 +438,11 @@ function readAdminEnv(): AdminEnv {
     supabaseUrl,
     supabaseServiceRoleKey,
     opsServiceRoleKey,
+    githubActionsToken: readEnv('GITHUB_ACTIONS_TOKEN'),
+    githubRepository: readEnv('GITHUB_REPOSITORY'),
+    catalogPublishWorkflowFile: readEnv('CATALOG_PUBLISH_WORKFLOW_FILE') ?? 'publish-catalog.yml',
+    catalogPublishQaRef: readEnv('CATALOG_PUBLISH_QA_REF') ?? 'qa',
+    catalogPublishProdRef: readEnv('CATALOG_PUBLISH_PROD_REF') ?? 'main',
   }
 }
 
@@ -310,6 +458,37 @@ function requireEnv(name: string) {
   }
 
   return value
+}
+
+function requireOptionalAdminEnv(value: string | undefined, name: string) {
+  if (!value) {
+    throw new AdminError(`${name} is not configured`, 503, false)
+  }
+
+  return value
+}
+
+function githubHeaders(token: string) {
+  return {
+    Accept: 'application/vnd.github+json',
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'User-Agent': 'trenzura-admin',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+}
+
+async function readGitHubError(response: Response) {
+  const body = await response.json().catch(() => null)
+  const message =
+    body &&
+    typeof body === 'object' &&
+    'message' in body &&
+    typeof body.message === 'string'
+      ? body.message
+      : 'GitHub Actions request failed'
+
+  return `GitHub Actions request failed: ${message}`
 }
 
 function parseAdminEmails(value: string | undefined) {
