@@ -37,18 +37,23 @@ value as the service-role key used by GitHub Actions.
 
 ## Product Sync
 
-Use the GitHub Actions workflow `Sync products` when the owner has updated Google Sheets or product
-images and the runtime Supabase catalog needs to be refreshed.
+Use the GitHub Actions workflow `Publish catalog` when the owner has updated Google Sheets or
+product images.
 
 The workflow:
 
-1. generates `src/generated/products.json` and `src/generated/products-sync.json`;
-2. uploads referenced images to Supabase Storage;
-3. syncs products and variants to Supabase;
-4. runs TypeScript typechecking.
+1. reads products from Google Sheets;
+2. reads product image folders from Google Drive;
+3. generates and validates the product image manifest;
+4. generates `src/generated/products.json` and `src/generated/products-sync.json`;
+5. validates generated image URLs against the configured media host;
+6. uploads only new or changed images to Cloudflare R2;
+7. syncs products and variants to Supabase;
+8. builds/prerenders the public storefront catalog;
+9. deploys through Cloudflare Workers.
 
-It does not deploy the storefront. A storefront deployment should run after catalog changes when
-the public static product JSON needs to be refreshed.
+The `/admin` page may dispatch this workflow, but the workflow still runs in CI/CD. There is no
+local deployment path and no scheduled product sync.
 
 ## Optional Telegram Alerts
 

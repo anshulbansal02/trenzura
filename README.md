@@ -1,6 +1,6 @@
 # Trenzura
 
-Minimal server-rendered storefront foundation built with TanStack Start, Tailwind CSS v4, and Base UI.
+Fashion storefront built with TanStack Start, Tailwind CSS v4, Base UI, Supabase, and Cloudflare.
 
 ## Getting Started
 
@@ -11,35 +11,28 @@ pnpm install
 pnpm dev
 ```
 
-## Building For Production
+## Building
 
-To build this application for production:
+To build this application:
 
 ```bash
 pnpm build
 ```
 
-To fetch products before building in CI:
-
-```bash
-pnpm build:ci
-```
-
 ## Deployment
 
-The storefront deploys as a TanStack Start SSR app on Cloudflare Workers.
+The storefront deploys through GitHub Actions to Cloudflare Workers. Public catalog pages are
+prerendered during build where possible; admin, checkout, payment, and ops flows stay runtime.
 
 See `docs/deployment.md` for Wrangler config, GitHub Actions, and secret boundaries.
 
-## Product Data
+## Catalog Publishing
 
-Product data is generated from Google Sheets into `src/generated/products.json`.
+Products are managed in Google Sheets. Product images are managed in Google Drive and published to
+Cloudflare R2. Use the GitHub Actions `Publish catalog` workflow, or the protected `/admin`
+`Publish catalog` action, to publish product changes.
 
-```bash
-pnpm sync:products
-```
-
-See `docs/catalog.md` for the sheet columns, local seed fallback, and CI secrets.
+See `docs/catalog.md` and `docs/catalog-publish-workflow.md`.
 
 ## Search
 

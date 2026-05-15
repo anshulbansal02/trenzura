@@ -9,7 +9,7 @@ type SeoInput = {
 }
 
 export const siteName = 'Trenzura'
-export const siteDescription = 'Printed kurtis and coordinated sets from Trenzura.'
+export const siteDescription = 'Printed short tops, kurtis, and coordinated sets from Trenzura.'
 export const siteUrl = 'https://trenzura.com'
 
 export function createPageMeta({

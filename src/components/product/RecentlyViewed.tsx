@@ -88,7 +88,7 @@ export function RecentlyViewedRail({
           <p className="fashion-eyebrow">
             {recentProducts.length > 0 ? 'Continue browsing' : 'From the edit'}
           </p>
-          <h2 className={joinClasses('fashion-display mt-2', compact ? 'text-3xl' : 'text-4xl')}>
+          <h2 className={joinClasses('fashion-display mt-2', compact ? 'text-2xl' : 'text-3xl')}>
             {heading}
           </h2>
         </div>

@@ -11,9 +11,9 @@ type ProductGridProps = {
 export function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="rounded-[1.25rem] border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-10">
+      <div className="rounded-lg border border-dashed border-[var(--color-line)] bg-[var(--color-paper)] px-6 py-10">
         <div className="mx-auto max-w-xl text-center">
-          <p className="font-serif text-2xl text-[var(--color-ink)]">No styles match this</p>
+          <p className="text-xl font-medium text-[var(--color-ink)]">No styles match this</p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
             Clear a filter or jump into one of the main edits. We keep the catalog small, so the
             right piece is usually only a step away.

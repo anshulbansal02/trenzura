@@ -10,15 +10,15 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "sync:products": "tsx scripts/sync-products.ts",
-    "sync:images": "tsx scripts/sync-images.ts",
-    "sync:products:supabase": "pnpm sync:products && pnpm sync:images && tsx scripts/sync-products-to-supabase.ts",
+    "sync:images:r2": "tsx scripts/sync-drive-images-to-r2.ts",
+    "sync:images:manifest": "tsx scripts/sync-drive-images-to-r2.ts --manifest-only",
+    "sync:images:r2:upload": "tsx scripts/sync-drive-images-to-r2.ts --upload-manifest",
+    "validate:catalog-assets": "tsx scripts/validate-catalog-assets.ts",
+    "publish:catalog": "pnpm sync:images:manifest && pnpm sync:products && pnpm validate:catalog-assets && pnpm sync:images:r2:upload && tsx scripts/sync-products-to-supabase.ts",
     "typecheck": "tsc --noEmit",
-    "build:ci": "pnpm sync:products && vite build",
+    "build:ci": "vite build",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "pnpm build:ci && wrangler deploy",
-    "deploy:qa": "CLOUDFLARE_ENV=qa pnpm build:ci && wrangler deploy --env qa",
-    "deploy:coming-soon": "wrangler deploy --config wrangler.coming-soon.jsonc",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {

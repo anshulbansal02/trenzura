@@ -6,8 +6,6 @@ This storefront deploys to Cloudflare Workers via Wrangler.
 
 - `main` deploys the production Worker, using `trenzura.in` and `www.trenzura.in`.
 - `qa` deploys the Worker environment `qa`, using `qa.trenzura.in`.
-- `pnpm deploy:qa` builds and deploys with `CLOUDFLARE_ENV=qa`.
-- `pnpm deploy` builds and deploys production.
 - `.github/workflows/deploy-cloudflare.yml` deploys production when `main` is pushed, or when run manually.
 - `.github/workflows/deploy-cloudflare-qa.yml` deploys QA when the `qa` branch is pushed, or when run manually.
 - The workflows use GitHub environments named `prod` and `qa`, so environment-specific secrets can override
@@ -33,27 +31,8 @@ starting the nameserver switch.
    Cloudflare nameservers exactly.
 5. Wait until Cloudflare marks the zone active.
 
-After the zone is active, deploy production and QA:
-
-```bash
-pnpm deploy
-pnpm deploy:qa
-```
-
-Wrangler should create the Worker custom domains and the necessary proxied DNS records for `trenzura.in`,
+After the zone is active, run the GitHub Actions deploy workflows. Wrangler should create the Worker custom domains and the necessary proxied DNS records for `trenzura.in`,
 `www.trenzura.in`, and `qa.trenzura.in`.
-
-## Manual CLI equivalent
-
-Use this if you do not want to use the package script:
-
-```bash
-pnpm build:ci
-pnpm exec wrangler deploy
-
-CLOUDFLARE_ENV=qa pnpm build:ci
-CLOUDFLARE_ENV=qa pnpm exec wrangler deploy
-```
 
 ## Git branches
 
@@ -90,8 +69,6 @@ Shared values:
 CLOUDFLARE_API_TOKEN
 CLOUDFLARE_ACCOUNT_ID
 SUPABASE_ACCESS_TOKEN
-GOOGLE_SHEETS_SPREADSHEET_ID
-GOOGLE_SERVICE_ACCOUNT_JSON
 ```
 
 Environment-specific values:
@@ -156,7 +133,7 @@ Add the QA project ref, DB password, URL, anon key, and service role key to the 
 Then run these GitHub Actions manually for `qa`:
 
 1. `Deploy Supabase`
-2. `Sync products`
+2. `Publish catalog`
 
 Run the same actions for `prod` when live secrets change or migrations/functions need to deploy.
 

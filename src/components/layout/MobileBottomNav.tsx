@@ -2,11 +2,13 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { Home, ShoppingBag, Store } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import { useCart } from '../cart/CartProvider'
+import { useOptionalCart } from '../cart/CartProvider'
 
 export function MobileBottomNav() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const { itemCount, openCart } = useCart()
+  const cart = useOptionalCart()
+  const itemCount = cart?.itemCount ?? 0
+  const openCart = cart?.openCart ?? (() => {})
   const shouldShow = pathname === '/' || pathname === '/products'
 
   if (!shouldShow) return null
@@ -14,7 +16,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-2 shadow-2xl shadow-stone-950/12 backdrop-blur-xl sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 pb-[calc(env(safe-area-inset-bottom)+0.45rem)] pt-2 shadow-sm backdrop-blur-xl sm:hidden"
     >
       <div className="mx-auto grid max-w-sm grid-cols-3 gap-1">
         <MobileNavLink to="/" label="Home" Icon={Home} />
@@ -22,7 +24,7 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={openCart}
-          className="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1rem] px-2 text-xs font-semibold text-[var(--color-muted)] transition duration-150 ease-out active:scale-[0.97]"
+          className="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--color-muted)] transition duration-150 ease-out active:scale-[0.97]"
         >
           <span className="relative">
             <ShoppingBag className="size-5" aria-hidden="true" />
@@ -57,7 +59,7 @@ function MobileNavLink({
       inactiveProps={{
         className: 'text-[var(--color-muted)]',
       }}
-      className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1rem] px-2 text-xs font-semibold transition duration-150 ease-out active:scale-[0.97]"
+    className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold transition duration-150 ease-out active:scale-[0.97]"
     >
       <Icon className="size-5" aria-hidden="true" />
       {label}

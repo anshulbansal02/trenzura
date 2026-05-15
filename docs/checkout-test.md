@@ -33,15 +33,11 @@ account-specific create-shipment URL and token are confirmed.
 
 ## Deploy Before Testing
 
-```bash
-supabase db push
-supabase functions deploy create-checkout-order
-supabase functions deploy verify-payment
-supabase functions deploy razorpay-webhook
-supabase functions deploy create-shipment
-supabase functions deploy retry-shipment
-pnpm sync:products:supabase
-```
+Run the GitHub Actions `Deploy Supabase` workflow for the target environment after migration or
+Edge Function changes.
+
+Run the GitHub Actions `Publish catalog` workflow for the target environment before checkout tests
+when product data, stock, or images changed.
 
 ## Browser Test
 

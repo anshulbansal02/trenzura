@@ -96,14 +96,14 @@ function ProductPreviewPage() {
 
         <div className="min-w-0">
           {product.featured ? (
-            <p className="mb-4 inline-flex rounded-full bg-[var(--color-canvas)] px-3 py-1 text-xs font-semibold text-[var(--color-rouge)]">
-              Featured
+            <p className="mb-4 inline-flex rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-rouge)]">
+              Most wanted
             </p>
           ) : null}
           <div className="flex items-start justify-between gap-5">
             <div>
               <p className="fashion-eyebrow">{product.categoryLabel}</p>
-              <h1 className="fashion-display mt-2 text-5xl sm:text-6xl">
+              <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
                 {product.title}
               </h1>
             </div>
@@ -124,7 +124,7 @@ function ProductPreviewPage() {
 
       <section className="mt-12 grid gap-10 border-y border-[var(--color-line)] py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)]">
         <div>
-          <h2 className="fashion-display text-3xl">About this piece</h2>
+            <h2 className="fashion-display text-2xl">About this piece</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
             Designed for repeat wear: easy to style, comfortable through the day, and clear enough
             to buy without guessing on fit, availability, or delivery.
@@ -179,7 +179,7 @@ function ProductPreviewPage() {
             <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
               Measurements are garment measurements. Pick your usual size for a regular fit.
             </p>
-            <div className="mt-4 overflow-hidden rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)]">
+            <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)]">
               <table className="w-full text-left text-sm">
                 <tbody>
                   {product.sizeChart.map((row) => (
@@ -187,7 +187,7 @@ function ProductPreviewPage() {
                       key={row.size}
                       className="border-b border-[var(--color-line)] last:border-b-0"
                     >
-                      <th className="w-20 bg-[var(--color-canvas)] px-4 py-3 font-semibold text-[var(--color-ink)]">
+                      <th className="w-20 bg-[var(--color-surface)] px-4 py-3 font-bold text-[var(--color-ink)]">
                         {row.size}
                       </th>
                       <td className="px-4 py-3 text-[var(--color-muted)]">
@@ -209,7 +209,7 @@ function ProductPreviewPage() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="fashion-eyebrow">Keep browsing</p>
-              <h2 className="fashion-display mt-2 text-4xl">More from this edit</h2>
+              <h2 className="fashion-display mt-2 text-2xl">More from this edit</h2>
             </div>
             <Link
               to="/products"
@@ -225,11 +225,11 @@ function ProductPreviewPage() {
                 key={item.productId}
                 to="/products/$slug"
                 params={{ slug: item.slug }}
-                className="group rounded-[1.15rem] border border-[var(--color-line)] bg-[var(--color-surface)] p-3 transition duration-200 ease-out hover:shadow-lg hover:shadow-stone-950/10"
+                className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-200 ease-out hover:border-[var(--color-rouge)] hover:shadow-sm"
               >
                 <ProductMedia product={item} className="aspect-[4/5]" hoverZoom />
                 <div className="mt-3 flex items-start justify-between gap-3">
-                  <p className="font-semibold text-[var(--color-ink)]">{item.title}</p>
+                  <p className="font-medium text-[var(--color-ink)]">{item.title}</p>
                   <p className="mt-1 text-sm text-[var(--color-muted)]">
                     {formatPrice(item.sellingPricePaise)}
                   </p>

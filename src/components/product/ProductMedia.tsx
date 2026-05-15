@@ -17,7 +17,7 @@ export function ProductMedia({
   const hoverImage = hoverZoom ? product.images[1] : undefined
 
   return (
-    <div className={`relative overflow-hidden rounded-[1.1rem] bg-[var(--color-line)] ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg bg-[var(--color-line)] ${className}`}>
       <img
         src={image}
         alt={product.imageAlt}

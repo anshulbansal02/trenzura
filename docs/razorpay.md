@@ -71,30 +71,17 @@ customer name, phone, and email as order columns for Supabase Dashboard visibili
 
 ## Supabase Deploy
 
-```bash
-supabase db push
-supabase functions deploy create-checkout-order
-supabase functions deploy verify-payment
-supabase functions deploy razorpay-webhook
-supabase functions deploy create-shipment
-supabase functions deploy retry-shipment
-```
+Run the GitHub Actions `Deploy Supabase` workflow for the target environment after migration or
+Edge Function changes.
 
 Set the Razorpay webhook URL to the deployed `razorpay-webhook` function and configure the same
 `RAZORPAY_WEBHOOK_SECRET` in Razorpay and Supabase.
 
 ## Product Sync
 
-The CI build still generates `src/generated/products.json` from Google Sheets or seed data. To sync
-that catalog into Supabase for checkout validation, run:
-
-```bash
-pnpm sync:products:supabase
-```
-
-The same sync can be run manually from GitHub Actions with the `Sync products` workflow. It
-generates the catalog, uploads product images, syncs Supabase products/variants, and typechecks the
-generated files.
+Use the GitHub Actions `Publish catalog` workflow after product data, stock, or images change. It
+generates the catalog from Google Sheets, syncs images from Google Drive to R2, syncs Supabase
+products/variants for checkout validation, builds, prerenders, and deploys the storefront.
 
 ## Test Checkout
 

@@ -6,9 +6,13 @@ import { Minus, Plus, ShoppingBag, X } from 'lucide-react'
 import { formatPrice, standardShippingPaise } from '../../lib/format'
 import { ProductMedia } from '../product/ProductMedia'
 import { RecentlyViewedRail } from '../product/RecentlyViewed'
-import { useCart } from './CartProvider'
+import { useOptionalCart } from './CartProvider'
 
 export function CartDrawer() {
+  const cart = useOptionalCart()
+
+  if (!cart) return null
+
   const {
     lines,
     itemCount,
@@ -19,7 +23,7 @@ export function CartDrawer() {
     updateQuantity,
     removeItem,
     closeCart,
-  } = useCart()
+  } = cart
   const total = subtotal + standardShippingPaise
 
   return (
@@ -27,7 +31,7 @@ export function CartDrawer() {
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-40 bg-[var(--color-ink)]/35 backdrop-blur-sm transition duration-200 ease-out data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Drawer.Viewport>
-          <Drawer.Popup className="fixed right-0 top-0 z-50 flex h-dvh w-full max-w-md flex-col bg-[var(--color-paper)] shadow-2xl shadow-stone-950/20 outline-none transition duration-200 ease-out data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full">
+          <Drawer.Popup className="fixed right-0 top-0 z-50 flex h-dvh w-full max-w-md flex-col border-l border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 ease-out data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full">
           <div className="flex items-start justify-between gap-6 border-b border-[var(--color-line)] px-5 py-5">
             <div>
               <Drawer.Title className="flex items-center gap-2 font-serif text-2xl text-[var(--color-ink)]">
