@@ -17,4 +17,5 @@ todos.json
 public/Photo/
 public/data.xlsx
 scripts/product-slugs.json
+scripts/seed-products.json
 src/generated/product-image-manifest.json
