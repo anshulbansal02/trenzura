@@ -25,6 +25,13 @@ async function main() {
   const products = JSON.parse(await readFile(productsPath, 'utf8')) as GeneratedProduct[]
   const syncRecords = JSON.parse(await readFile(productsSyncPath, 'utf8')) as ProductSyncRecord[]
 
+  if (!Array.isArray(products) || products.length === 0) {
+    throw new Error('Generated storefront catalog is empty. Run the catalog publish workflow first.')
+  }
+  if (!Array.isArray(syncRecords) || syncRecords.length === 0) {
+    throw new Error('Generated Supabase catalog sync payload is empty. Run the catalog publish workflow first.')
+  }
+
   validateProducts(products, publicBaseUrl)
   validateSyncRecords(syncRecords, publicBaseUrl)
 

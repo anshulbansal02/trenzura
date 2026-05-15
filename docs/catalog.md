@@ -4,7 +4,9 @@ Products are managed by the shop owner in Google Sheets. Product images are mana
 Drive folders. The storefront catalog is published through the `Publish catalog` GitHub Actions
 workflow or through the `/admin` page action that dispatches that workflow.
 
-Do not edit `src/generated/products.json` by hand.
+Do not edit `src/generated/products.json` by hand. The repository keeps only empty generated
+placeholders; real catalog data is produced during the publish workflow from Google Sheets and
+Google Drive.
 
 ## Owner Sources
 

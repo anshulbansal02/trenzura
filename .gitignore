@@ -16,3 +16,5 @@ __unconfig*
 todos.json
 public/Photo/
 public/data.xlsx
+scripts/product-slugs.json
+src/generated/product-image-manifest.json
