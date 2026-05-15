@@ -83,9 +83,17 @@ function buildShipmentPayload(
 ): { ok: true; payload: Record<string, unknown> } | Extract<DelhiveryShipmentResult, { ok: false }> {
   const address = order.shipping_address
   const pickupLocationName = Deno.env.get('DELHIVERY_PICKUP_LOCATION')
+  const sellerGst = Deno.env.get('DELHIVERY_SELLER_GST')
+  const hsnCode = Deno.env.get('DELHIVERY_HSN_CODE')
 
   if (!pickupLocationName) {
     return { ok: false, reason: 'delhivery_pickup_location_missing' }
+  }
+  if (!sellerGst) {
+    return { ok: false, reason: 'delhivery_seller_gst_missing' }
+  }
+  if (!hsnCode) {
+    return { ok: false, reason: 'delhivery_hsn_code_missing' }
   }
 
   try {
@@ -112,8 +120,8 @@ function buildShipmentPayload(
             shipment_length: readNumberEnv('DELHIVERY_PACKAGE_LENGTH_CM', 30),
             shipment_width: readNumberEnv('DELHIVERY_PACKAGE_BREADTH_CM', 25),
             shipment_height: readNumberEnv('DELHIVERY_PACKAGE_HEIGHT_CM', 5),
-            seller_gst_tin: Deno.env.get('DELHIVERY_SELLER_GST') ?? '',
-            hsn_code: Deno.env.get('DELHIVERY_HSN_CODE') ?? '',
+            seller_gst_tin: sellerGst,
+            hsn_code: hsnCode,
             extra_parameters: {
               trenzuraOrderId: order.id,
               trenzuraShipmentId: shipment.id,
