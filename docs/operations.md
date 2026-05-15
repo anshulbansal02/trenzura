@@ -68,12 +68,25 @@ Telegram failures never fail checkout, payment verification, or shipment retry.
 
 ## Delhivery Guard
 
-Delhivery live creation is disabled unless:
+Delhivery shipment creation is disabled unless all required account values are present:
 
 ```text
 DELHIVERY_ENABLED=true
 DELHIVERY_API_TOKEN=...
 DELHIVERY_CREATE_SHIPMENT_URL=...
+DELHIVERY_PICKUP_LOCATION=...
+```
+
+Use Delhivery's staging shipment URL in QA:
+
+```text
+https://staging-express.delhivery.com/api/cmu/create.json
+```
+
+Use Delhivery's production shipment URL in prod:
+
+```text
+https://track.delhivery.com/api/cmu/create.json
 ```
 
 Default package configuration:
@@ -88,8 +101,9 @@ DELHIVERY_SELLER_GST=
 DELHIVERY_HSN_CODE=
 ```
 
-Until Delhivery account-specific details are confirmed, keep `DELHIVERY_ENABLED=false` and fulfill
-from `shipment_pending` orders manually.
+The pickup location must match the registered Delhivery warehouse name exactly, including case.
+Until Delhivery account-specific staging details are confirmed, keep `DELHIVERY_ENABLED=false` and
+fulfill from `shipment_pending` orders manually.
 
-Current setup keeps Delhivery disabled for both QA and prod environments. Do not enable prod until
-the live token, create-shipment URL, and pickup location are confirmed in Delhivery.
+QA should use Delhivery staging credentials. Do not enable prod until the live token,
+create-shipment URL, and pickup location are confirmed in Delhivery.
