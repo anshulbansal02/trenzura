@@ -58,6 +58,7 @@ Keep future changes incremental:
 - Admin route presentation is separated into admin components, with shared admin UI formatting in
   `src/lib/admin-ui.ts`.
 - Product listing URL search parsing and result header/chips are separated from the route module.
+- Homepage sections are separated into focused components under `src/components/home/`.
 - Script runtime helpers, R2 upload/signing helpers, sheet row parsing helpers, and product image
   manifest helpers are separated under `scripts/lib/`.
 
