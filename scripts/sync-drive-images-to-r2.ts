@@ -48,6 +48,7 @@ const projectRoot = path.resolve(dirname, '..')
 const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-manifest.json')
 
 const supportedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif'])
+const ignoredDriveFileNames = new Set(['.ds_store', 'thumbs.db', 'desktop.ini'])
 
 async function main() {
   await loadEnvFile()
@@ -260,8 +261,9 @@ async function listImageFiles(drive: ReturnType<typeof google.drive>, parentFold
     ].join(' and '),
     fields: 'nextPageToken, files(id, name, mimeType, md5Checksum, size)',
   })
+  const candidateImages = files.filter((file) => !isIgnoredDriveMetadataFile(file.name))
 
-  const unsupportedFiles = files.filter(
+  const unsupportedFiles = candidateImages.filter(
     (file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()),
   )
 
@@ -271,7 +273,12 @@ async function listImageFiles(drive: ReturnType<typeof google.drive>, parentFold
     )
   }
 
-  return files.sort(sortImageFiles)
+  return candidateImages.sort(sortImageFiles)
+}
+
+function isIgnoredDriveMetadataFile(fileName: string) {
+  const normalized = fileName.trim().toLowerCase()
+  return ignoredDriveFileNames.has(normalized) || normalized.startsWith('._')
 }
 
 async function listDriveFiles<T>(
