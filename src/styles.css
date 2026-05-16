@@ -8,21 +8,21 @@
 }
 
 :root {
-  --color-canvas: #ffffff;
+  --color-canvas: #f4f2ed;
   --color-paper: #ffffff;
-  --color-surface: #f7f5f2;
-  --color-ink: #261c18;
-  --color-ink-soft: #43342e;
-  --color-muted: #756b66;
-  --color-line: #e5ded8;
-  --color-rouge: #8f2b3a;
-  --color-rouge-dark: #64202a;
-  --color-sage: #50755d;
-  --color-gold: #c09345;
-  --color-mist: #f8fbfa;
+  --color-surface: #f9f8f5;
+  --color-ink: #1c2e4a;
+  --color-ink-soft: #31425c;
+  --color-muted: #687184;
+  --color-line: #c9c7c3;
+  --color-rouge: #1c2e4a;
+  --color-rouge-dark: #132139;
+  --color-sage: #9b827f;
+  --color-gold: #d8b7b1;
+  --color-mist: #f7f1ef;
   --site-header-height: 6.375rem;
   --sticky-panel-gap: 1.5rem;
-  --shadow-soft: 0 8px 18px rgb(77 16 16 / 0.05);
+  --shadow-soft: 0 8px 18px rgb(28 46 74 / 0.06);
 }
 
 * {
@@ -63,7 +63,7 @@ button:disabled,
 }
 
 ::selection {
-  background: var(--color-rouge);
+  background: var(--color-ink);
   color: var(--color-paper);
 }
 
@@ -98,7 +98,7 @@ button:disabled,
   }
 
   .fashion-eyebrow {
-    @apply text-xs font-semibold uppercase text-[var(--color-rouge)];
+    @apply text-xs font-semibold uppercase text-[var(--color-ink-soft)];
   }
 
   .fashion-display {
@@ -119,18 +119,18 @@ button:disabled,
     @apply inline-flex items-center justify-center rounded-full px-5 text-sm font-semibold shadow-sm transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
     background: var(--color-rouge);
     color: var(--color-paper);
-    box-shadow: 0 6px 14px rgb(155 47 61 / 0.12);
+    box-shadow: 0 6px 14px rgb(28 46 74 / 0.12);
   }
 
   .fashion-button-primary:hover {
     background: var(--color-rouge-dark);
-    box-shadow: 0 8px 18px rgb(111 23 35 / 0.14);
+    box-shadow: 0 8px 18px rgb(28 46 74 / 0.14);
   }
 
   .fashion-button-primary:disabled {
     @apply cursor-not-allowed shadow-none;
-    background: #e5ddd2;
-    color: #665c52;
+    background: #d9d6cf;
+    color: #697082;
     transform: none;
   }
 
@@ -144,7 +144,7 @@ button:disabled,
   .fashion-button-secondary:hover {
     border-color: var(--color-rouge);
     color: var(--color-rouge);
-    box-shadow: 0 6px 14px rgb(77 16 16 / 0.05);
+    box-shadow: 0 6px 14px rgb(28 46 74 / 0.06);
   }
 
   .fashion-focus {

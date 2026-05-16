@@ -186,8 +186,8 @@ function CheckoutPage() {
         customerEmail: normalizedForm.email,
       },
       theme: {
-        color: '#72343d',
-        backdrop_color: '#171310',
+        color: '#1C2E4A',
+        backdrop_color: '#1C2E4A',
       },
       modal: {
         backdropclose: false,

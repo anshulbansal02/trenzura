@@ -23,9 +23,17 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link
           to="/"
-          className="text-2xl font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:text-[var(--color-rouge)]"
+          className="flex min-w-0 items-center gap-2 text-2xl font-semibold tracking-[0.04em] text-[var(--color-ink)] transition duration-150 ease-out hover:text-[var(--color-rouge)]"
         >
-          Trenzura
+          <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)]">
+            <img
+              src="/assets/brand/trenzura-mark.webp"
+              alt=""
+              className="size-7 object-contain"
+              aria-hidden="true"
+            />
+          </span>
+          <span className="text-xl sm:text-2xl">Trenzura</span>
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-3 text-sm sm:gap-5">
           {isHome ? (
