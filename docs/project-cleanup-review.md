@@ -51,6 +51,16 @@ Keep future changes incremental:
 - Keep admin actions as CI/CD dispatches where deployment or catalog publishing is involved.
 - Prefer tightening docs, validation, and fail-fast checks before adding new abstractions.
 
+## Completed Restructuring Baseline
+
+- Checkout route orchestration is separated from checkout domain helpers and presentation
+  components.
+- Admin route presentation is separated into admin components, with shared admin UI formatting in
+  `src/lib/admin-ui.ts`.
+- Product listing URL search parsing and result header/chips are separated from the route module.
+- Script runtime helpers, R2 upload/signing helpers, sheet row parsing helpers, and product image
+  manifest helpers are separated under `scripts/lib/`.
+
 ## React and Route Boundaries
 
 Trenzura uses TanStack Start rather than Next.js, but the same React 19 discipline applies:
@@ -67,8 +77,8 @@ Trenzura uses TanStack Start rather than Next.js, but the same React 19 discipli
 ## Known Follow-Ups
 
 - Merge the local Portless development URL PR separately from this cleanup branch.
-- Continue extracting large files after the checkout, admin, and product listing route splits are
-  reviewed; sync scripts are the next likely candidates.
+- Review any additional large-file splits after this cleanup PR lands; avoid more movement unless a
+  concrete change needs it.
 - Replace the Cloudflare API token with one that can edit Worker custom-domain routes before QA
   deploy can fully pass.
 - Enable Delhivery in QA only after staging token, pickup location, GST, and HSN values are provided.
