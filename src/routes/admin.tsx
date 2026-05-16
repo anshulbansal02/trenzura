@@ -1,5 +1,5 @@
 import { Button } from '@base-ui/react/button'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn, useServerFn } from '@tanstack/react-start'
 import {
   RefreshCw,
@@ -89,6 +89,7 @@ export const Route = createFileRoute('/admin')({
 
 function AdminPage() {
   const dashboard = Route.useLoaderData()
+  const router = useRouter()
   const retryShipment = useServerFn(retryAdminShipment)
   const dispatchCatalogPublish = useServerFn(publishCatalog)
   const loadPublishStatus = useServerFn(getCatalogPublishStatus)
@@ -104,7 +105,7 @@ function AdminPage() {
   const activeRows = dashboard.views[activeView]
 
   function refreshDashboard() {
-    window.location.reload()
+    void router.invalidate()
   }
 
   async function submitRetry(event: FormEvent<HTMLFormElement>) {

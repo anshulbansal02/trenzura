@@ -34,18 +34,6 @@ export function ProductPurchasePanel({
   const canAddToCart = Boolean(selectedInventory && quantity >= 1 && quantity <= maxQuantity)
 
   useEffect(() => {
-    const stillAvailable = availableSizes.some((size) => size.label === selectedSize)
-
-    if (!stillAvailable) {
-      setSelectedSize(availableSizes[0]?.label ?? '')
-      setQuantity(1)
-      return
-    }
-
-    setQuantity((value) => Math.min(Math.max(value, 1), maxQuantity))
-  }, [availableSizes, maxQuantity, selectedSize])
-
-  useEffect(() => {
     setSelectedSize(availableSizes[0]?.label ?? '')
     setQuantity(1)
   }, [availableSizes, product.productId])
