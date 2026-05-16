@@ -8,16 +8,18 @@ import { type AddedCartItem, useOptionalCart } from './CartProvider'
 
 export function AddToBagToast() {
   const cart = useOptionalCart()
+  const dismissAddedItem = cart?.dismissAddedItem
+  const openCart = cart?.openCart
   const [visibleItem, setVisibleItem] = useState<AddedCartItem | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   const closeToast = useCallback(() => {
     setIsVisible(false)
     window.setTimeout(() => {
-      cart?.dismissAddedItem()
+      dismissAddedItem?.()
       setVisibleItem(null)
     }, 180)
-  }, [cart])
+  }, [dismissAddedItem])
 
   useEffect(() => {
     if (!cart?.addedItem) return
@@ -75,7 +77,7 @@ export function AddToBagToast() {
           type="button"
           onClick={() => {
             closeToast()
-            cart.openCart()
+            openCart?.()
           }}
           className="h-10 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)]"
         >

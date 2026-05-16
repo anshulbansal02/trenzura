@@ -124,7 +124,7 @@ function ProductPreviewPage() {
 
       <section className="mt-12 grid gap-10 border-y border-[var(--color-line)] py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)]">
         <div>
-            <h2 className="fashion-display text-2xl">About this piece</h2>
+          <h2 className="fashion-display text-2xl">About this piece</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
             Designed for repeat wear: easy to style, comfortable through the day, and clear enough
             to buy without guessing on fit, availability, or delivery.

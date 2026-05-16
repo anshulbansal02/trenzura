@@ -23,8 +23,9 @@ export function MobileBottomNav() {
         <MobileNavLink to="/products" label="Shop" Icon={Store} />
         <button
           type="button"
+          aria-label="Open shopping bag"
           onClick={openCart}
-          className="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--color-muted)] transition duration-150 ease-out active:scale-[0.97]"
+          className="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--color-muted)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.97]"
         >
           <span className="relative">
             <ShoppingBag className="size-5" aria-hidden="true" />
@@ -59,7 +60,7 @@ function MobileNavLink({
       inactiveProps={{
         className: 'text-[var(--color-muted)]',
       }}
-    className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold transition duration-150 ease-out active:scale-[0.97]"
+      className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold transition duration-150 ease-out active:scale-[0.97]"
     >
       <Icon className="size-5" aria-hidden="true" />
       {label}

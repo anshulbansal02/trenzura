@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Product } from '../../data/products'
 import { getProduct, getProductVariant } from '../../data/products'
@@ -126,6 +126,76 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [lines],
   )
 
+  const addItem = useCallback(({ product, size, quantity = 1 }: AddCartItemInput) => {
+    const sizeInventory = product.sizes.find((item) => item.label === size)
+    if (!sizeInventory || sizeInventory.stockAvailable < 1) return
+
+    const maxQuantity = sizeInventory.stockAvailable
+    const id = createCartLineId(product.productId, sizeInventory.variantId)
+    const safeQuantity = clampQuantity(quantity, maxQuantity)
+
+    setCartLines((currentLines) => {
+      const existingLine = currentLines.find((line) => line.id === id)
+
+      if (!existingLine) {
+        return [
+          ...currentLines,
+          {
+            id,
+            productId: product.productId,
+            variantId: sizeInventory.variantId,
+            size,
+            quantity: safeQuantity,
+          },
+        ]
+      }
+
+      return currentLines.map((line) =>
+        line.id === id
+          ? {
+              ...line,
+              quantity: clampQuantity(line.quantity + safeQuantity, maxQuantity),
+            }
+          : line,
+      )
+    })
+    setAddedItem({ product, size, quantity: safeQuantity })
+  }, [])
+
+  const dismissAddedItem = useCallback(() => setAddedItem(null), [])
+
+  const updateQuantity = useCallback((id: string, quantity: number) => {
+    setCartLines((currentLines) =>
+      currentLines
+        .map((line) => {
+          if (line.id !== id) return line
+
+          const product = getProduct(line.productId)
+          const maxQuantity =
+            product?.sizes.find((size) => size.variantId === line.variantId)?.stockAvailable ?? 0
+
+          return {
+            ...line,
+            quantity: clampQuantity(quantity, maxQuantity),
+          }
+        })
+        .filter((line) => line.quantity > 0),
+    )
+  }, [])
+
+  const removeItem = useCallback((id: string) => {
+    setCartLines((currentLines) => currentLines.filter((line) => line.id !== id))
+  }, [])
+
+  const clearCart = useCallback(() => setCartLines([]), [])
+
+  const openCart = useCallback(() => {
+    setAddedItem(null)
+    setIsOpen(true)
+  }, [])
+
+  const closeCart = useCallback(() => setIsOpen(false), [])
+
   const value = useMemo<CartContextValue>(
     () => ({
       lines,
@@ -135,72 +205,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       savings: Math.max(0, totals.mrpTotal - totals.subtotal),
       isOpen,
       addedItem,
-      addItem: ({ product, size, quantity = 1 }) => {
-        const sizeInventory = product.sizes.find((item) => item.label === size)
-        if (!sizeInventory || sizeInventory.stockAvailable < 1) return
-
-        const maxQuantity = sizeInventory.stockAvailable
-        const id = createCartLineId(product.productId, sizeInventory.variantId)
-        const safeQuantity = clampQuantity(quantity, maxQuantity)
-
-        setCartLines((currentLines) => {
-          const existingLine = currentLines.find((line) => line.id === id)
-
-          if (!existingLine) {
-            return [
-              ...currentLines,
-              {
-                id,
-                productId: product.productId,
-                variantId: sizeInventory.variantId,
-                size,
-                quantity: safeQuantity,
-              },
-            ]
-          }
-
-          return currentLines.map((line) =>
-            line.id === id
-              ? {
-                  ...line,
-                  quantity: clampQuantity(line.quantity + safeQuantity, maxQuantity),
-                }
-              : line,
-          )
-        })
-        setAddedItem({ product, size, quantity: safeQuantity })
-      },
-      dismissAddedItem: () => setAddedItem(null),
-      updateQuantity: (id, quantity) => {
-        setCartLines((currentLines) =>
-          currentLines
-            .map((line) => {
-              if (line.id !== id) return line
-
-              const product = getProduct(line.productId)
-              const maxQuantity =
-                product?.sizes.find((size) => size.variantId === line.variantId)?.stockAvailable ?? 0
-
-              return {
-                ...line,
-                quantity: clampQuantity(quantity, maxQuantity),
-              }
-            })
-            .filter((line) => line.quantity > 0),
-        )
-      },
-      removeItem: (id) => {
-        setCartLines((currentLines) => currentLines.filter((line) => line.id !== id))
-      },
-      clearCart: () => setCartLines([]),
-      openCart: () => {
-        setAddedItem(null)
-        setIsOpen(true)
-      },
-      closeCart: () => setIsOpen(false),
+      addItem,
+      dismissAddedItem,
+      updateQuantity,
+      removeItem,
+      clearCart,
+      openCart,
+      closeCart,
       setCartOpen: setIsOpen,
     }),
-    [addedItem, isOpen, lines, totals.itemCount, totals.mrpTotal, totals.subtotal],
+    [
+      addItem,
+      addedItem,
+      clearCart,
+      closeCart,
+      dismissAddedItem,
+      isOpen,
+      lines,
+      openCart,
+      removeItem,
+      totals.itemCount,
+      totals.mrpTotal,
+      totals.subtotal,
+      updateQuantity,
+    ],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

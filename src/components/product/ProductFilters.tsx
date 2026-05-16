@@ -106,7 +106,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-                className="shrink-0 text-sm font-bold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
+              className="shrink-0 text-sm font-bold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
             >
               Reset
             </button>
