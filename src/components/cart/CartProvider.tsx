@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Product } from '../../data/products'
 import { getProduct, getProductVariant } from '../../data/products'
+import { trackAnalyticsEvent } from '../../lib/analytics'
 
 export type CartLine = {
   id: string
@@ -54,6 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [addedItem, setAddedItem] = useState<AddedCartItem | null>(null)
   const [hasLoadedCart, setHasLoadedCart] = useState(false)
+  const wasOpenRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -79,6 +81,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     window.localStorage.setItem(cartStorageKey, JSON.stringify(cartLines))
   }, [cartLines, hasLoadedCart])
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      trackAnalyticsEvent('cart_open')
+    }
+
+    wasOpenRef.current = isOpen
+  }, [isOpen])
 
   const lines = useMemo(
     () =>

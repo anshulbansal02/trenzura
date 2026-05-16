@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
 import type { Product } from '../../data/products'
+import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, joinClasses, standardShippingPaise } from '../../lib/format'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
 
@@ -51,12 +52,24 @@ export function ProductPurchasePanel({
 
   function addCurrentSelection() {
     if (!canAddToCart) return
+    trackAnalyticsEvent('add_to_bag', {
+      ...createProductAnalyticsPayload(product),
+      quantity,
+      size: selectedSize,
+      source: isQuickLook ? 'quick_look' : 'product_page',
+    })
     addItem({ product, size: selectedSize, quantity })
     onAdded?.()
   }
 
   function buyCurrentSelection() {
     if (!canAddToCart) return
+    trackAnalyticsEvent('buy_now', {
+      ...createProductAnalyticsPayload(product),
+      quantity,
+      size: selectedSize,
+      source: 'product_page',
+    })
     addItem({ product, size: selectedSize, quantity })
     void navigate({ to: '/checkout' })
   }
@@ -116,6 +129,11 @@ export function ProductPurchasePanel({
                 onClick={() => {
                   setSelectedSize(size.label)
                   setQuantity(1)
+                  trackAnalyticsEvent('size_select', {
+                    ...createProductAnalyticsPayload(product),
+                    size: size.label,
+                    source: isQuickLook ? 'quick_look' : 'product_page',
+                  })
                 }}
                 className={joinClasses(
                   'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',

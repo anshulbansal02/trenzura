@@ -15,6 +15,7 @@ import { useState } from 'react'
 
 import { useCart } from '../components/cart/CartProvider'
 import { ProductMedia } from '../components/product/ProductMedia'
+import { getAmountBucket, trackAnalyticsEvent } from '../lib/analytics'
 import { formatPrice, standardShippingPaise } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
@@ -170,10 +171,15 @@ function CheckoutPage() {
       return
     }
 
+    trackAnalyticsEvent('checkout_submit', getCheckoutAnalyticsPayload(itemCount, total))
     setStatus(activePendingOrder ? 'opening' : 'preparing')
     setMessage('')
 
     try {
+      trackAnalyticsEvent('checkout_started', {
+        ...getCheckoutAnalyticsPayload(itemCount, total),
+        reused_order: Boolean(activePendingOrder),
+      })
       const order = activePendingOrder ?? (await createCheckoutOrder())
       if (!activePendingOrder) {
         setPendingOrder({ ...order, fingerprint: checkoutFingerprint })
@@ -189,6 +195,10 @@ function CheckoutPage() {
 
       await openRazorpayCheckout(order)
     } catch (error) {
+      trackAnalyticsEvent('payment_failed', {
+        ...getCheckoutAnalyticsPayload(itemCount, total),
+        stage: 'checkout_start',
+      })
       setStatus('error')
       setMessage(error instanceof Error ? error.message : 'Unable to start checkout')
     }
@@ -256,6 +266,7 @@ function CheckoutPage() {
         handleback: true,
         ondismiss: () => {
           if (!paymentStarted) {
+            trackAnalyticsEvent('payment_cancelled', getCheckoutAnalyticsPayload(itemCount, order.totals.total))
             setStatus('cancelled')
             setMessage('Payment window closed. Your details and confirmed total are still here.')
           }
@@ -291,7 +302,15 @@ function CheckoutPage() {
               ? 'Payment was received. We are checking availability before dispatch.'
               : createSuccessMessage(verification),
           )
+          trackAnalyticsEvent('purchase_completed', {
+            ...getCheckoutAnalyticsPayload(itemCount, order.totals.total),
+            needs_review: needsReview,
+          })
         } catch (error) {
+          trackAnalyticsEvent('payment_failed', {
+            ...getCheckoutAnalyticsPayload(itemCount, order.totals.total),
+            stage: 'payment_verify',
+          })
           setStatus('error')
           setMessage(error instanceof Error ? error.message : 'Unable to confirm your payment')
         }
@@ -299,6 +318,7 @@ function CheckoutPage() {
     })
 
     checkout.open()
+    trackAnalyticsEvent('razorpay_opened', getCheckoutAnalyticsPayload(itemCount, order.totals.total))
     setStatus('payment-open')
     setMessage('Complete payment in the Razorpay window. We will confirm the order here.')
   }
@@ -795,6 +815,13 @@ function getMobilePayButtonLabel(status: CheckoutStatus) {
   if (status === 'error') return 'Try again'
 
   return 'Pay now'
+}
+
+function getCheckoutAnalyticsPayload(itemCount: number, totalPaise: number) {
+  return {
+    amount_bucket: getAmountBucket(totalPaise),
+    item_count: itemCount,
+  }
 }
 
 function validateCheckoutForm(form: CheckoutForm) {
