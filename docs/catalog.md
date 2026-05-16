@@ -68,7 +68,8 @@ Column notes:
 - Filename order controls gallery order. Prefer `01-front.jpg`, `02-close.jpg`, and so on.
 - Files without a supported image extension are ignored with a workflow warning.
 - Active products without supported images are skipped with a workflow warning.
-- Image sync computes a content hash and uploads only new or changed files to Cloudflare R2.
+- Image sync computes a content hash and uploads only missing optimized WebP variants to Cloudflare R2.
+- Generated storefront images include `400w`, `800w`, and `1200w` variants for responsive loading.
 - Storefront image URLs are generated from the environment's `PRODUCT_IMAGE_PUBLIC_BASE_URL`.
 
 ## Publishing

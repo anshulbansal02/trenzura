@@ -33,7 +33,8 @@ Rationale:
   10 million Class B operations, and no internet egress charge on Standard storage.
 - The storefront already runs on Cloudflare Workers.
 - R2 keeps product images out of the repo and out of the database platform.
-- Cloudflare Images transformations can be added later if responsive variants become necessary.
+- Responsive WebP variants are generated in CI and stored in R2, so the storefront does not need a
+  paid image transformation service for v1.
 
 Do not use Cloudflare Images storage for v1. It is a paid image-hosting product and is unnecessary
 for the initial catalog size.
@@ -149,22 +150,26 @@ Store product image URLs as hosted public URLs generated during sync.
 Recommended object key shape:
 
 ```text
-products/<product_id>/<content_hash>-<original_file_name>
+products/<product_id>/<content_hash>-<safe_original_file_name>-<width>w.webp
 ```
 
 Example:
 
 ```text
-products/TZ-001/8f31c2a4-01-front.jpg
+products/TZ-001/8f31c2a4-01-front-800w.webp
 ```
 
 Using a content hash in the object key avoids stale browser/CDN cache when an owner replaces an
 image with the same filename.
 
+For each supported Drive image, the workflow writes `400w`, `800w`, and `1200w` WebP variants. The
+generated catalog stores the `800w` URL as the default `images` entry and stores all variants in
+`imageVariants` for storefront `srcset` rendering.
+
 Generated public URL:
 
 ```text
-https://media.trenzura.in/products/TZ-001/8f31c2a4-01-front.jpg
+https://media.trenzura.in/products/TZ-001/8f31c2a4-01-front-800w.webp
 ```
 
 ## Publish Workflow
@@ -183,7 +188,7 @@ Workflow steps:
 5. Generate a product image manifest with content-hash object keys and hosted image URLs.
 6. Generate the product catalog using hosted image URLs.
 7. Validate that generated image URLs use the configured environment media host.
-8. Upload missing or changed images from the validated manifest to the environment's R2 bucket.
+8. Upload missing optimized image variants from the validated manifest to the environment's R2 bucket.
 9. Sync products and variants to the environment's Supabase project.
 10. Build the storefront.
 11. Deploy the storefront through Cloudflare Workers.
@@ -257,7 +262,8 @@ deploy from the local machine or from the browser.
 - `.github/workflows/publish-catalog.yml` validates environment config, publishes images/data, builds,
   and deploys through GitHub Actions.
 - `scripts/sync-drive-images-to-r2.ts` reads Google Drive, computes content hashes, writes the image
-  manifest, and can upload only the missing R2 objects after product validation passes.
+  manifest, generates responsive WebP variants, and uploads only missing R2 objects after product
+  validation passes.
 - `scripts/sync-products.ts` reads Google Sheets, validates active product images from the manifest, and
   generates catalog data.
 - `scripts/sync-products-to-supabase.ts` syncs product and variant rows to the configured Supabase project

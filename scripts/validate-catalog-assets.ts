@@ -6,6 +6,7 @@ type GeneratedProduct = {
   productId?: string
   images?: unknown
   imageStoragePaths?: unknown
+  imageVariants?: unknown
 }
 
 type ProductSyncRecord = {
@@ -17,6 +18,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(dirname, '..')
 const productsPath = path.join(projectRoot, 'src/generated/products.json')
 const productsSyncPath = path.join(projectRoot, 'src/generated/products-sync.json')
+const expectedImageVariantWidths = [400, 800, 1200]
 
 async function main() {
   await loadEnvFile()
@@ -43,13 +45,33 @@ function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
     const productId = readProductId(product.productId)
     const images = readStringArray(product.images, `${productId}.images`)
     const storagePaths = readStringArray(product.imageStoragePaths, `${productId}.imageStoragePaths`)
+    const imageVariants = readImageVariants(product.imageVariants, `${productId}.imageVariants`)
 
     if (images.length === 0) {
       throw new Error(`${productId} must have at least one generated product image URL`)
     }
 
+    if (storagePaths.length !== images.length) {
+      throw new Error(`${productId}.imageStoragePaths must have one storage path per product image`)
+    }
+
+    if (imageVariants.length !== images.length) {
+      throw new Error(`${productId}.imageVariants must have one variant list per product image`)
+    }
+
     for (const image of images) {
       assertPublicImageUrl(image, publicBaseUrl, `${productId}.images`)
+    }
+
+    for (const variants of imageVariants) {
+      const widths = variants.map((variant) => variant.width).join(',')
+      if (widths !== expectedImageVariantWidths.join(',')) {
+        throw new Error(`${productId}.imageVariants must contain ${expectedImageVariantWidths.join(',')} width variants`)
+      }
+
+      for (const variant of variants) {
+        assertPublicImageUrl(variant.url, publicBaseUrl, `${productId}.imageVariants`)
+      }
     }
 
     for (const storagePath of storagePaths) {
@@ -114,6 +136,37 @@ function readStringArray(value: unknown, context: string) {
   }
 
   return value as string[]
+}
+
+function readImageVariants(value: unknown, context: string) {
+  if (!Array.isArray(value)) {
+    throw new Error(`${context} must be an array of image variant arrays`)
+  }
+
+  return value.map((variants, index) => {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      throw new Error(`${context}[${index}] must contain at least one image variant`)
+    }
+
+    return variants.map((variant, variantIndex) => {
+      if (!variant || typeof variant !== 'object') {
+        throw new Error(`${context}[${index}][${variantIndex}] must be an image variant object`)
+      }
+
+      const width = (variant as { width?: unknown }).width
+      const url = (variant as { url?: unknown }).url
+
+      if (typeof width !== 'number' || !Number.isInteger(width) || width <= 0) {
+        throw new Error(`${context}[${index}][${variantIndex}].width must be a positive integer`)
+      }
+
+      if (typeof url !== 'string') {
+        throw new Error(`${context}[${index}][${variantIndex}].url must be a string`)
+      }
+
+      return { width, url }
+    })
+  })
 }
 
 function requiredEnv(name: string) {

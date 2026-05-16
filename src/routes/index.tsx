@@ -20,6 +20,7 @@ import {
   products,
 } from '../data/products'
 import { formatPrice } from '../lib/format'
+import { getProductImage, getProductImageProps } from '../lib/product-images'
 import { createPageMeta } from '../lib/seo'
 
 export const Route = createFileRoute('/')({
@@ -29,7 +30,7 @@ export const Route = createFileRoute('/')({
       description:
         'Shop printed short tops, kurtis, and coordinated sets for everyday plans, festive lunches, and easy occasion wear.',
       path: '/',
-      image: products[0]?.images[0],
+      image: products[0] ? getProductImage(products[0], 0) : undefined,
     }),
   component: Home,
 })
@@ -163,7 +164,7 @@ function Home() {
                 }`}
               >
                 <img
-                  src={product.images[0]}
+                  {...getProductImageProps(product, 0, index === 1 ? '(min-width: 1024px) 36vw, 100vw' : '22vw')}
                   alt={product.imageAlt}
                   loading={index === 1 ? undefined : 'lazy'}
                   decoding="async"
@@ -213,7 +214,7 @@ function Home() {
               className="group relative overflow-hidden rounded-lg bg-[var(--color-line)] shadow-sm"
             >
               <img
-                src={product.images[0]}
+                {...getProductImageProps(product, 0, '(min-width: 768px) 33vw, 100vw')}
                 alt={product.imageAlt}
                 loading="lazy"
                 decoding="async"
@@ -269,7 +270,7 @@ function Home() {
               }`}
             >
               <img
-                src={product.images[index % product.images.length] ?? product.images[0]}
+                {...getProductImageProps(product, index % product.images.length, '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw')}
                 alt={product.imageAlt}
                 loading="lazy"
                 decoding="async"
@@ -297,7 +298,7 @@ function Home() {
                 }`}
               >
                 <img
-                  src={product.images[index % product.images.length] ?? product.images[0]}
+                  {...getProductImageProps(product, index % product.images.length, index === 0 ? '(min-width: 1024px) 25vw, 50vw' : '25vw')}
                   alt={product.imageAlt}
                   loading="lazy"
                   decoding="async"

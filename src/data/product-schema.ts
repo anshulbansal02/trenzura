@@ -12,12 +12,18 @@ export const sizeChartRowSchema = z.object({
   measurements: z.record(z.string(), z.string().min(1)),
 })
 
+export const productImageVariantSchema = z.object({
+  width: z.number().int().positive(),
+  url: z.string().min(1),
+})
+
 export const productSchema = z.object({
   productId: z.string().min(1),
   slug: z.string().min(1),
   title: z.string().min(1),
   images: z.array(z.string().min(1)).min(1),
   imageStoragePaths: z.array(z.string().min(1)).min(1),
+  imageVariants: z.array(z.array(productImageVariantSchema).min(1)).min(1),
   mrpPaise: z.number().int().positive(),
   sellingPricePaise: z.number().int().positive(),
   discountPercent: z.number().min(0).max(100),
@@ -35,5 +41,6 @@ export const productSchema = z.object({
 export const productCatalogSchema = z.array(productSchema)
 
 export type Product = z.infer<typeof productSchema>
+export type ProductImageVariant = z.infer<typeof productImageVariantSchema>
 export type ProductSize = z.infer<typeof productSizeSchema>
 export type SizeChartRow = z.infer<typeof sizeChartRowSchema>

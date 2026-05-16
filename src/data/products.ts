@@ -1,7 +1,7 @@
 import generatedProducts from '../generated/products.json'
 import type { Product } from './product-schema'
 
-export type { Product, ProductSize, SizeChartRow } from './product-schema'
+export type { Product, ProductImageVariant, ProductSize, SizeChartRow } from './product-schema'
 
 export const products = generatedProducts as Product[]
 

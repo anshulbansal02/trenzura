@@ -4,7 +4,12 @@ import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 
-import { productCatalogSchema, type Product, type ProductSize } from '../src/data/product-schema'
+import {
+  productCatalogSchema,
+  type Product,
+  type ProductImageVariant,
+  type ProductSize,
+} from '../src/data/product-schema'
 
 type SheetRow = Record<string, string>
 
@@ -18,11 +23,20 @@ type ImageManifestEntry = {
   storagePath: string
   publicUrl: string
   sourceFileName?: string
+  variants: ImageManifestVariant[]
+}
+
+type ImageManifestVariant = {
+  width: number
+  storagePath: string
+  publicUrl: string
+  contentType: string
 }
 
 type ResolvedProductImage = {
   storagePath: string
   publicUrl: string
+  variants: ProductImageVariant[]
 }
 
 type ProductSyncRecord = {
@@ -220,6 +234,7 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
   })
   const imageStoragePaths = resolvedImages.map((image) => image.storagePath)
   const publicImages = resolvedImages.map((image) => image.publicUrl)
+  const imageVariants = resolvedImages.map((image) => image.variants)
 
   for (const { storagePath: imagePath } of resolvedImages) assertSafeStoragePath(imagePath, rowNumber)
 
@@ -235,6 +250,7 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
         title,
         images: publicImages,
         imageStoragePaths,
+        imageVariants,
         mrpPaise,
         sellingPricePaise,
         discountPercent: deriveDiscountPercent(mrpPaise, sellingPricePaise),
@@ -298,10 +314,22 @@ async function resolveProductImages(
     ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
     : manifestImages
 
-  return resolvedManifestImages.map((image) => ({
-    storagePath: image.storagePath,
-    publicUrl: image.publicUrl,
-  }))
+  return resolvedManifestImages.map((image) => {
+    if (!Array.isArray(image.variants) || image.variants.length === 0) {
+      throw new Error(`Image manifest entry for ${productId} on row ${rowNumber} is missing optimized variants`)
+    }
+
+    return {
+      storagePath: image.storagePath,
+      publicUrl: image.publicUrl,
+      variants: image.variants
+        .map((variant) => ({
+          width: variant.width,
+          url: variant.publicUrl,
+        }))
+        .sort((left, right) => left.width - right.width),
+    }
+  })
 }
 
 function orderManifestImages(

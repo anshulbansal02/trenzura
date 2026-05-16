@@ -1,10 +1,12 @@
 import type { Product } from '../../data/products'
+import { getProductImageProps } from '../../lib/product-images'
 
 type ProductMediaProps = {
   product: Product
   priority?: boolean
   className?: string
   hoverZoom?: boolean
+  sizes?: string
 }
 
 export function ProductMedia({
@@ -12,14 +14,15 @@ export function ProductMedia({
   priority,
   className = '',
   hoverZoom = false,
+  sizes = '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw',
 }: ProductMediaProps) {
-  const image = product.images[0]
-  const hoverImage = hoverZoom ? product.images[1] : undefined
+  const image = getProductImageProps(product, 0, sizes)
+  const hoverImage = hoverZoom && product.images[1] ? getProductImageProps(product, 1, sizes) : undefined
 
   return (
     <div className={`relative overflow-hidden rounded-lg bg-[var(--color-line)] ${className}`}>
       <img
-        src={image}
+        {...image}
         alt={product.imageAlt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
@@ -30,7 +33,7 @@ export function ProductMedia({
       />
       {hoverImage ? (
         <img
-          src={hoverImage}
+          {...hoverImage}
           alt=""
           loading="lazy"
           decoding="async"
