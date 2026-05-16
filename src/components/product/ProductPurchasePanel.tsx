@@ -148,8 +148,34 @@ export function ProductPurchasePanel({
         )}
       </div>
 
+      <div
+        className={joinClasses(
+          'mt-6 grid gap-3',
+          isQuickLook ? '' : 'sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
+        )}
+      >
+        <Button
+          type="button"
+          disabled={!canAddToCart}
+          onClick={addCurrentSelection}
+          className="fashion-button-primary h-12 px-5"
+        >
+          Add to bag
+        </Button>
+        {!isQuickLook ? (
+          <Button
+            type="button"
+            disabled={!canAddToCart}
+            onClick={buyCurrentSelection}
+            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
+          >
+            Buy now
+          </Button>
+        ) : null}
+      </div>
+
       {!isQuickLook ? (
-        <div className="mt-6">
+        <div className="mt-5">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
           <div className="mt-3 inline-flex h-11 items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
             <button
@@ -179,33 +205,7 @@ export function ProductPurchasePanel({
 
       <div
         className={joinClasses(
-          'mt-6 grid gap-3',
-          isQuickLook ? '' : 'sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
-        )}
-      >
-        <Button
-          type="button"
-          disabled={!canAddToCart}
-          onClick={addCurrentSelection}
-          className="fashion-button-primary h-12 px-5"
-        >
-          Add to bag
-        </Button>
-        {!isQuickLook ? (
-          <Button
-            type="button"
-            disabled={!canAddToCart}
-            onClick={buyCurrentSelection}
-            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
-          >
-            Buy now
-          </Button>
-        ) : null}
-      </div>
-
-      <div
-        className={joinClasses(
-          'mt-6 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]',
+          'mt-5 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]',
           isQuickLook ? 'text-xs leading-5' : '',
         )}
       >

@@ -43,7 +43,7 @@ export function HomeCategoryTiles({ categoryLabels, tiles }: HomeCategoryTilesPr
               decoding="async"
               className="aspect-[3/4] h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.03]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgb(77_16_16_/_0.7))]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgb(28_46_74_/_0.72))]" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-[var(--color-paper)]">
               <p className="text-xs font-semibold uppercase text-[var(--color-paper)]/82">Shop</p>
               <h2 className="mt-2 text-xl font-medium">{categoryLabels[category]}</h2>

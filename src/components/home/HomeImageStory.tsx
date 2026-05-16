@@ -37,7 +37,7 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
               decoding="async"
               className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(77_16_16_/_0.72)] to-transparent p-4 text-white">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(28_46_74_/_0.72)] to-transparent p-4 text-white">
               <p className="text-xs font-semibold uppercase">{product.categoryLabel}</p>
               <h2 className="mt-1 text-base font-medium">{product.title}</h2>
             </div>

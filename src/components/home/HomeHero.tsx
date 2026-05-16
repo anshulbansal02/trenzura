@@ -83,7 +83,7 @@ export function HomeHero({ gallery, minPricePaise }: HomeHeroProps) {
                 fetchPriority={index === 1 ? 'high' : undefined}
                 className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
               />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(77_16_16_/_0.72)] to-transparent p-4 text-white">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(28_46_74_/_0.72)] to-transparent p-4 text-white">
                 <p className="text-xs font-semibold">{index === 1 ? 'Most wanted' : 'New in'}</p>
                 <p className="mt-1 text-sm font-medium">{product.title}</p>
               </div>
