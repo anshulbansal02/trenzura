@@ -8,6 +8,16 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  server: {
+    host: '127.0.0.1',
+    port: 37149,
+    strictPort: true,
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 39217,
+    strictPort: true,
+  },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tailwindcss(),
