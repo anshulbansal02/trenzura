@@ -107,6 +107,8 @@ Rules:
 - Product image folder name must match `product_id` in the sheet.
 - File order comes from the numeric filename prefix.
 - Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
+- OS metadata files such as `.DS_Store`, `Thumbs.db`, `desktop.ini`, and AppleDouble `._*`
+  files are ignored.
 - Active products must have at least one image.
 - The sync must fail if an active product has no matching image folder.
 - The sync must fail if a referenced image is missing, unreadable, or has an unsupported extension.
