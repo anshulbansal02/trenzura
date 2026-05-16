@@ -78,7 +78,6 @@ async function main() {
 
   const rows = await loadRows()
   assertUniqueProductIds(rows)
-  assertImageManifestCoverage(rows)
   const slugs = await readSlugManifest()
   const normalizedProducts = await Promise.all(
     rows.map((row, index) => normalizeProduct(row, index + 2, slugs)),
@@ -89,6 +88,7 @@ async function main() {
       .filter((product): product is Product => Boolean(product)),
   )
   const syncRecords = normalizedProducts.map(({ sync }) => sync)
+    .filter((sync): sync is ProductSyncRecord => Boolean(sync))
 
   await mkdir(path.dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(products, null, 2)}\n`)
@@ -226,7 +226,9 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
   const description = pick(row, ['description'], rowNumber)
   const sizeChart = parseSizeChart(pickOptional(row, ['size_chart']) ?? '', rowNumber)
   const featured = parseBoolean(pick(row, ['featured'], rowNumber))
-  const product: Product | undefined = active
+  const hasImages = resolvedImages.length > 0
+  const publishProduct = active && hasImages
+  const product: Product | undefined = publishProduct
     ? {
         productId,
         slug,
@@ -248,26 +250,28 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
       }
     : undefined
 
-  const sync: ProductSyncRecord = {
-    productId,
-    slug,
-    title,
-    category,
-    description,
-    images: publicImages,
-    mrpPaise,
-    sellingPricePaise,
-    sizeChart,
-    active,
-    featured,
-    variants: variants.map((variant) => ({
-      variantId: variant.variantId,
-      sizeLabel: variant.label,
-      stock: stockBySize.get(variant.label.toLowerCase()) ?? 0,
-      restock: restockBySize.get(variant.label.toLowerCase()) ?? null,
-      active: variant.active,
-    })),
-  }
+  const sync: ProductSyncRecord | undefined = active && !hasImages
+    ? undefined
+    : {
+        productId,
+        slug,
+        title,
+        category,
+        description,
+        images: publicImages,
+        mrpPaise,
+        sellingPricePaise,
+        sizeChart,
+        active,
+        featured,
+        variants: variants.map((variant) => ({
+          variantId: variant.variantId,
+          sizeLabel: variant.label,
+          stock: stockBySize.get(variant.label.toLowerCase()) ?? 0,
+          restock: restockBySize.get(variant.label.toLowerCase()) ?? null,
+          active: variant.active,
+        })),
+      }
 
   return { product, sync }
 }
@@ -286,7 +290,8 @@ async function resolveProductImages(
   if (!manifestImages || manifestImages.length === 0) {
     if (!active) return []
 
-    throw new Error(`No image manifest entries found for ${productId} on row ${rowNumber}`)
+    console.warn(`Skipping active product ${productId} on row ${rowNumber}: no supported images found`)
+    return []
   }
 
   const resolvedManifestImages = explicitPaths.length > 0
@@ -371,31 +376,6 @@ function assertUniqueProductIds(rows: SheetRow[]) {
 
     seen.set(normalizedProductId, rowNumber)
   })
-}
-
-function assertImageManifestCoverage(rows: SheetRow[]) {
-  if (!imageManifest) return
-
-  const missingProductImages: string[] = []
-
-  rows.forEach((row, index) => {
-    const rowNumber = index + 2
-    const productId = pick(row, ['product_id'], rowNumber)
-    const active = parseBoolean(pick(row, ['active'], rowNumber))
-
-    if (!active) return
-
-    const images = imageManifest?.products[productId]
-    if (!images || images.length === 0) {
-      missingProductImages.push(`${productId} on row ${rowNumber}`)
-    }
-  })
-
-  if (missingProductImages.length > 0) {
-    throw new Error(
-      `Missing product image folder(s) or image file(s) for active products: ${missingProductImages.join(', ')}`,
-    )
-  }
 }
 
 function pick(row: SheetRow, aliases: string[], rowNumber: number) {
