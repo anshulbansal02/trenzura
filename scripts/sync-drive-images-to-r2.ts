@@ -49,6 +49,8 @@ const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-
 
 const supportedImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
 const supportedExtensions = new Set(supportedImageExtensions)
+const driveFolderConcurrency = 8
+const r2UploadConcurrency = 8
 
 async function main() {
   await loadEnvFile()
@@ -82,17 +84,15 @@ async function main() {
     },
   }
 
-  for (const folder of productFolders) {
+  const productImageEntries = await mapWithConcurrency(productFolders, driveFolderConcurrency, async (folder) => {
     assertStableProductId(folder.name)
 
     const files = await listImageFiles(drive, folder.id)
-    if (files.length === 0) continue
-
-    manifest.products[folder.name] = []
+    const images: ProductImageManifestEntry[] = []
+    let imagesUploaded = 0
+    let imagesSkipped = 0
 
     for (const file of files) {
-      manifest.summary.imagesDiscovered += 1
-
       const hash = await resolveContentHash(drive, file)
       const objectKey = createObjectKey(folder.name, hash, file.name)
       const publicUrl = `${config.publicBaseUrl}/${encodeObjectKey(objectKey)}`
@@ -101,15 +101,15 @@ async function main() {
         const exists = await r2ObjectExists(config, objectKey)
 
         if (exists) {
-          manifest.summary.imagesSkipped += 1
+          imagesSkipped += 1
         } else {
           const content = await downloadDriveFile(drive, file.id)
           await putR2Object(config, objectKey, content, getContentType(file))
-          manifest.summary.imagesUploaded += 1
+          imagesUploaded += 1
         }
       }
 
-      manifest.products[folder.name].push({
+      images.push({
         storagePath: objectKey,
         publicUrl,
         sourceFileId: file.id,
@@ -119,6 +119,17 @@ async function main() {
         sizeBytes: file.size ? Number(file.size) : null,
       })
     }
+
+    return { productId: folder.name, images, imagesUploaded, imagesSkipped }
+  })
+
+  for (const entry of productImageEntries) {
+    if (entry.images.length === 0) continue
+
+    manifest.products[entry.productId] = entry.images
+    manifest.summary.imagesDiscovered += entry.images.length
+    manifest.summary.imagesUploaded += entry.imagesUploaded
+    manifest.summary.imagesSkipped += entry.imagesSkipped
   }
 
   await writeFile(config.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
@@ -155,28 +166,30 @@ async function uploadManifestImages(
     throw new Error(`Image manifest publicBaseUrl ${manifest.publicBaseUrl} does not match ${config.publicBaseUrl}`)
   }
 
-  let discovered = 0
-  let uploaded = 0
-  let skipped = 0
-
-  for (const [productId, images] of Object.entries(manifest.products)) {
+  const manifestImages = Object.entries(manifest.products).flatMap(([productId, images]) => {
     assertStableProductId(productId)
 
-    for (const image of images) {
-      discovered += 1
+    return images.map((image) => ({ productId, image }))
+  })
+  const uploadResults = await mapWithConcurrency(
+    manifestImages,
+    r2UploadConcurrency,
+    async ({ productId, image }) => {
       assertManifestImage(image, productId)
 
       const exists = await r2ObjectExists(config, image.storagePath)
       if (exists) {
-        skipped += 1
-        continue
+        return 'skipped'
       }
 
       const content = await downloadDriveFile(drive, image.sourceFileId)
       await putR2Object(config, image.storagePath, content, image.contentType)
-      uploaded += 1
-    }
-  }
+      return 'uploaded'
+    },
+  )
+  const discovered = manifestImages.length
+  const uploaded = uploadResults.filter((result) => result === 'uploaded').length
+  const skipped = uploadResults.filter((result) => result === 'skipped').length
 
   console.log(
     [
@@ -199,6 +212,31 @@ function assertManifestImage(image: ProductImageManifestEntry, productId: string
   if (!image.contentType || typeof image.contentType !== 'string') {
     throw new Error(`Image manifest entry for ${productId} is missing contentType`)
   }
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+) {
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+  const workerCount = Math.min(concurrency, items.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (true) {
+        const index = nextIndex
+        nextIndex += 1
+
+        if (index >= items.length) return
+
+        results[index] = await worker(items[index] as T, index)
+      }
+    }),
+  )
+
+  return results
 }
 
 function readMode(): SyncMode {
