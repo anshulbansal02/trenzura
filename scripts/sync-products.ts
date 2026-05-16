@@ -78,6 +78,7 @@ async function main() {
 
   const rows = await loadRows()
   assertUniqueProductIds(rows)
+  assertImageManifestCoverage(rows)
   const slugs = await readSlugManifest()
   const normalizedProducts = await Promise.all(
     rows.map((row, index) => normalizeProduct(row, index + 2, slugs)),
@@ -370,6 +371,31 @@ function assertUniqueProductIds(rows: SheetRow[]) {
 
     seen.set(normalizedProductId, rowNumber)
   })
+}
+
+function assertImageManifestCoverage(rows: SheetRow[]) {
+  if (!imageManifest) return
+
+  const missingProductImages: string[] = []
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2
+    const productId = pick(row, ['product_id'], rowNumber)
+    const active = parseBoolean(pick(row, ['active'], rowNumber))
+
+    if (!active) return
+
+    const images = imageManifest?.products[productId]
+    if (!images || images.length === 0) {
+      missingProductImages.push(`${productId} on row ${rowNumber}`)
+    }
+  })
+
+  if (missingProductImages.length > 0) {
+    throw new Error(
+      `Missing product image folder(s) or image file(s) for active products: ${missingProductImages.join(', ')}`,
+    )
+  }
 }
 
 function pick(row: SheetRow, aliases: string[], rowNumber: number) {
