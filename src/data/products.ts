@@ -13,13 +13,16 @@ export const productSizes = Array.from(
   new Set(products.flatMap((product) => product.sizes.map((size) => size.label))),
 ).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }))
 
-export const productPriceRange = products.reduce(
-  (range, product) => ({
-    min: Math.min(range.min, product.sellingPricePaise),
-    max: Math.max(range.max, product.sellingPricePaise),
-  }),
-  { min: Number.POSITIVE_INFINITY, max: 0 },
-)
+export const productPriceRange =
+  products.length > 0
+    ? products.reduce(
+        (range, product) => ({
+          min: Math.min(range.min, product.sellingPricePaise),
+          max: Math.max(range.max, product.sellingPricePaise),
+        }),
+        { min: products[0]?.sellingPricePaise ?? 0, max: 0 },
+      )
+    : { min: 0, max: 0 }
 
 export const featuredProducts = products.filter((product) => product.featured)
 

@@ -14,19 +14,7 @@ import {
 } from '../../data/products'
 import type { ProductCategoryCounts, ProductSort } from '../../data/product-search'
 import { joinClasses, paiseToRupees, rupeesToPaise } from '../../lib/format'
-
-export type ProductCategoryFilter = string
-
-export type ProductSearchState = {
-  q?: string
-  category?: ProductCategoryFilter
-  sort?: ProductSort
-  sizes?: string[]
-  minPrice?: number
-  maxPrice?: number
-  inStockOnly?: boolean
-  saleOnly?: boolean
-}
+import type { ProductCategoryFilter, ProductSearchState } from '../../lib/product-search-url'
 
 type ProductFiltersProps = {
   search: Required<ProductSearchState>
