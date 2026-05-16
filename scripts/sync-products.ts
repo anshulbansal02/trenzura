@@ -10,8 +10,14 @@ import {
   type ProductSize,
 } from '../src/data/product-schema'
 import { getGoogleServiceAccountCredentials, loadEnvFile, projectRoot } from './lib/runtime'
-
-type SheetRow = Record<string, string>
+import {
+  parseBoolean,
+  pick,
+  pickOptional,
+  sheetRowsFromValues,
+  splitList,
+  type SheetRow,
+} from './lib/sheet-rows'
 
 type SlugManifest = Record<string, string>
 
@@ -148,17 +154,7 @@ async function readGoogleSheetRows(spreadsheetId: string) {
   const response = await sheets.spreadsheets.values.get({ spreadsheetId, range })
   const values = response.data.values ?? []
 
-  if (values.length < 2) {
-    throw new Error(`No product rows found in range ${range}`)
-  }
-
-  const [headers, ...bodyRows] = values
-  const rows = bodyRows
-    .map((row) => rowToObject(headers, row))
-    .filter((row) => Object.values(row).some(Boolean))
-
-  assertRequiredColumns(rows[0] ?? {})
-  return rows.map(normalizeRowKeys)
+  return sheetRowsFromValues(values, requiredColumns, range)
 }
 
 async function readSlugManifest(): Promise<SlugManifest> {
@@ -358,27 +354,6 @@ function orderManifestImages(
   })
 }
 
-function rowToObject(headers: unknown[], values: unknown[]) {
-  return Object.fromEntries(
-    headers.map((header, index) => [String(header), String(values[index] ?? '').trim()]),
-  )
-}
-
-function normalizeRowKeys(row: SheetRow) {
-  return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [normalizeHeader(key), String(value ?? '').trim()]),
-  )
-}
-
-function assertRequiredColumns(row: SheetRow) {
-  const normalized = new Set(Object.keys(normalizeRowKeys(row)))
-  const missing = requiredColumns.filter((column) => !normalized.has(normalizeHeader(column)))
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required product column(s): ${missing.join(', ')}`)
-  }
-}
-
 function assertUniqueProductIds(rows: SheetRow[]) {
   const seen = new Map<string, number>()
 
@@ -394,26 +369,6 @@ function assertUniqueProductIds(rows: SheetRow[]) {
 
     seen.set(normalizedProductId, rowNumber)
   })
-}
-
-function pick(row: SheetRow, aliases: string[], rowNumber: number) {
-  const value = pickOptional(row, aliases)
-
-  if (!value) {
-    throw new Error(`Missing required value for ${aliases[0]} on row ${rowNumber}`)
-  }
-
-  return value
-}
-
-function pickOptional(row: SheetRow, aliases: string[]) {
-  for (const alias of aliases) {
-    const value = row[normalizeHeader(alias)]
-
-    if (value) return value
-  }
-
-  return undefined
 }
 
 function parseSizeQuantityMap(
@@ -489,13 +444,6 @@ function parseSizeChart(value: string, rowNumber: number): Product['sizeChart'] 
   })
 }
 
-function splitList(value: string) {
-  return value
-    .split(/\n|\||,/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
 function parseMoneyToPaise(value: string, context: string) {
   const rupees = Number(value.replace(/[^\d.-]/g, ''))
 
@@ -514,14 +462,6 @@ function parseInteger(value: string, context: string) {
   }
 
   return parsed
-}
-
-function parseBoolean(value: string) {
-  return ['true', 'yes', '1', 'active', 'featured'].includes(value.trim().toLowerCase())
-}
-
-function normalizeHeader(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
 }
 
 function slugify(value: string) {
