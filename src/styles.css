@@ -15,11 +15,11 @@
   --color-ink-soft: #31425c;
   --color-muted: #687184;
   --color-line: #c9c7c3;
-  --color-rouge: #1c2e4a;
-  --color-rouge-dark: #132139;
-  --color-sage: #9b827f;
-  --color-gold: #d8b7b1;
-  --color-mist: #f7f1ef;
+  --color-primary: #1c2e4a;
+  --color-primary-dark: #132139;
+  --color-accent-muted: #9b827f;
+  --color-blush: #d8b7b1;
+  --color-blush-surface: #f7f1ef;
   --site-header-height: 6.375rem;
   --sticky-panel-gap: 1.5rem;
   --shadow-soft: 0 8px 18px rgb(28 46 74 / 0.06);
@@ -117,13 +117,13 @@ button:disabled,
 
   .fashion-button-primary {
     @apply inline-flex items-center justify-center rounded-full px-5 text-sm font-semibold shadow-sm transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
-    background: var(--color-rouge);
+    background: var(--color-primary);
     color: var(--color-paper);
     box-shadow: 0 6px 14px rgb(28 46 74 / 0.12);
   }
 
   .fashion-button-primary:hover {
-    background: var(--color-rouge-dark);
+    background: var(--color-primary-dark);
     box-shadow: 0 8px 18px rgb(28 46 74 / 0.14);
   }
 
@@ -142,13 +142,13 @@ button:disabled,
   }
 
   .fashion-button-secondary:hover {
-    border-color: var(--color-rouge);
-    color: var(--color-rouge);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
     box-shadow: 0 6px 14px rgb(28 46 74 / 0.06);
   }
 
   .fashion-focus {
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
-    --tw-ring-color: var(--color-rouge);
+    --tw-ring-color: var(--color-primary);
   }
 }

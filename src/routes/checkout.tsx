@@ -387,7 +387,7 @@ function CheckoutPage() {
             </div>
             <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
-                <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
+                <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
                 Razorpay secure checkout
               </p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
@@ -415,7 +415,7 @@ function CheckoutPage() {
               type="button"
               onClick={clearCart}
               disabled={isCheckoutBusy}
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
+              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
             >
               Clear bag
             </button>

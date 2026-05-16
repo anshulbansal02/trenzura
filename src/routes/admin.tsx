@@ -170,7 +170,7 @@ function AdminPage() {
       <div className="mb-7 flex flex-col gap-5 border-b border-[var(--color-line)] pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)]">
-            <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
+            <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
             {dashboard.adminEmail}
           </div>
           <h1 className="fashion-display mt-4 text-4xl sm:text-5xl">Admin</h1>

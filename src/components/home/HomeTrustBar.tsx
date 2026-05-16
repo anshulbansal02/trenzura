@@ -13,7 +13,7 @@ export function HomeTrustBar() {
       <div className="fashion-container grid gap-4 py-4 text-sm text-[var(--color-ink)] sm:grid-cols-2 lg:grid-cols-4">
         {trustSignals.map(({ Icon, label }) => (
           <div key={label} className="flex items-center gap-3 font-bold">
-            <Icon className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
+            <Icon className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
             <span>{label}</span>
           </div>
         ))}

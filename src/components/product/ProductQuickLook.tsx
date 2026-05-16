@@ -41,7 +41,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                     {formatPrice(product.sellingPricePaise)}
                   </span>
                   {product.discountPercent > 0 ? (
-                    <span className="font-semibold text-[var(--color-rouge)]">
+                    <span className="font-semibold text-[var(--color-primary)]">
                       Save {formatPrice(product.mrpPaise - product.sellingPricePaise)}
                     </span>
                   ) : null}
@@ -50,7 +50,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
               <div className="flex shrink-0 items-center gap-2">
                 <Dialog.Close
                   aria-label="Close quick look"
-                  className="grid size-10 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-gold)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                  className="grid size-10 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   <X className="size-4" aria-hidden="true" />
                 </Dialog.Close>
@@ -78,7 +78,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                   to="/products/$slug"
                   params={{ slug: product.slug }}
                   onClick={() => onOpenChange(false)}
-                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-gold)] hover:bg-white hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:bg-white hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   More about this piece
                   <ArrowRight className="size-4" aria-hidden="true" />

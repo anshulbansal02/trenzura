@@ -51,7 +51,7 @@ export function AddToBagToast() {
       <div className="grid grid-cols-[64px_1fr_auto] gap-3">
         <ProductMedia product={visibleItem.product} className="aspect-[4/5] rounded-lg" />
         <div className="min-w-0 py-1">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-[var(--color-rouge)]">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-[var(--color-primary)]">
             <ShoppingBag className="size-3.5" aria-hidden="true" />
             Added to bag
           </p>

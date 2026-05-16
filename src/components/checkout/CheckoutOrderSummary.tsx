@@ -67,7 +67,7 @@ export function CheckoutOrderSummary({
         </div>
         {hasConfirmedTotal ? (
           <p className="flex items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)]">
-            <PackageCheck className="size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
+            <PackageCheck className="size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
             Your bag total has been confirmed for this order.
           </p>
         ) : null}
@@ -89,7 +89,7 @@ function SummaryLine({
     <div
       className={
         tone === 'success'
-          ? 'flex justify-between text-[var(--color-sage)]'
+          ? 'flex justify-between text-[var(--color-accent-muted)]'
           : 'flex justify-between text-[var(--color-muted)]'
       }
     >

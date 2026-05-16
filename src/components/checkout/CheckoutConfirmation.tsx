@@ -17,7 +17,7 @@ export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirma
   return (
     <main className="fashion-container py-12 lg:py-16">
       <section className="mx-auto max-w-3xl text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-sage)] text-white">
+        <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-accent-muted)] text-white">
           {confirmation.needsReview ? (
             <AlertTriangle className="size-6" aria-hidden="true" />
           ) : (

@@ -71,19 +71,19 @@ export function ProductPurchasePanel({
       >
       <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-2xl font-semibold text-[var(--color-rouge)]">
+          <p className="text-2xl font-semibold text-[var(--color-primary)]">
             {formatPrice(product.sellingPricePaise)}
           </p>
           {product.discountPercent > 0 ? (
             <p className="mt-1 text-sm text-[var(--color-muted)]">
               <span className="line-through">{formatPrice(product.mrpPaise)}</span>
-              <span className="ml-2 font-bold text-[var(--color-rouge)]">
+              <span className="ml-2 font-bold text-[var(--color-primary)]">
                 {product.discountPercent}% off
               </span>
             </p>
           ) : null}
         </div>
-        <p className="rounded-full bg-[var(--color-mist)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-sage)]">
+        <p className="rounded-full bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-accent-muted)]">
           {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
         </p>
       </div>
@@ -96,7 +96,7 @@ export function ProductPurchasePanel({
               <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
               <a
                 href="#size-chart"
-                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 Size chart
               </a>
@@ -124,10 +124,10 @@ export function ProductPurchasePanel({
                   })
                 }}
                 className={joinClasses(
-                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   isSelected
-                    ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
-                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-white',
                   !isAvailable &&
                     'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:border-[var(--color-line)]',
                 )}
@@ -210,18 +210,18 @@ export function ProductPurchasePanel({
         )}
       >
         <p className="flex gap-3">
-          <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
+          <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
           <span>Ships in 1-2 business days from the studio.</span>
         </p>
         {!isQuickLook ? (
           <>
             <p className="flex gap-3">
-              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
+              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
               <span>Flat {formatPrice(standardShippingPaise)} shipping and easy 7-day exchanges.</span>
             </p>
             <p className="flex gap-3">
               <ShieldCheck
-                className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]"
+                className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]"
                 aria-hidden="true"
               />
               <span>Secure payment options at checkout.</span>

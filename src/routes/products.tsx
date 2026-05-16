@@ -142,7 +142,7 @@ function ProductsPage() {
           render={
             <button
               type="button"
-              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-rouge)] bg-[var(--color-rouge)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-sm transition duration-150 ease-out hover:bg-[var(--color-rouge-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
+              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-sm transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
               aria-label="Open product filters"
             />
           }
@@ -150,7 +150,7 @@ function ProductsPage() {
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filters
           {activeFilters.length > 0 ? (
-            <span className="grid min-w-5 place-items-center rounded-full bg-[var(--color-paper)] px-1.5 text-xs text-[var(--color-rouge)]">
+            <span className="grid min-w-5 place-items-center rounded-full bg-[var(--color-paper)] px-1.5 text-xs text-[var(--color-primary)]">
               {activeFilters.length}
             </span>
           ) : null}
@@ -170,7 +170,7 @@ function ProductsPage() {
                 </div>
                 <Dialog.Close
                   aria-label="Close filters"
-                  className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-gold)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                  className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   <X className="size-4" aria-hidden="true" />
                 </Dialog.Close>

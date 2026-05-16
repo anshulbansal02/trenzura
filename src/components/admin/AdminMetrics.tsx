@@ -59,7 +59,7 @@ function MetricCard({
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-semibold text-[var(--color-muted)]">{label}</p>
         <Icon
-          className={`size-5 ${tone === 'alert' ? 'text-[var(--color-rouge)]' : 'text-[var(--color-sage)]'}`}
+          className={`size-5 ${tone === 'alert' ? 'text-[var(--color-primary)]' : 'text-[var(--color-accent-muted)]'}`}
           aria-hidden="true"
         />
       </div>

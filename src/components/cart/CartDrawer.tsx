@@ -45,7 +45,7 @@ export function CartDrawer() {
             </div>
             <Drawer.Close
               aria-label="Close cart"
-              className="inline-flex size-9 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] active:scale-95"
+              className="inline-flex size-9 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
             >
               <X className="size-4" aria-hidden="true" />
             </Drawer.Close>
@@ -101,7 +101,7 @@ export function CartDrawer() {
                               to="/products/$slug"
                               params={{ slug: line.product.slug }}
                               onClick={closeCart}
-                              className="text-sm font-semibold text-[var(--color-ink)] transition hover:text-[var(--color-rouge)]"
+                              className="text-sm font-semibold text-[var(--color-ink)] transition hover:text-[var(--color-primary)]"
                             >
                               {line.product.title}
                             </Link>
@@ -141,7 +141,7 @@ export function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => removeItem(line.id)}
-                            className="text-xs font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] active:scale-[0.98]"
+                            className="text-xs font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] active:scale-[0.98]"
                           >
                             Remove
                           </button>

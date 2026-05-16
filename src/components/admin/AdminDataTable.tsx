@@ -41,7 +41,7 @@ export function AdminDataTable({
       </div>
       {rows.length === 0 ? (
         <div className="px-4 py-12 text-center">
-          <PackageCheck className="mx-auto size-8 text-[var(--color-sage)]" aria-hidden="true" />
+          <PackageCheck className="mx-auto size-8 text-[var(--color-accent-muted)]" aria-hidden="true" />
           <p className="mt-3 text-sm font-semibold text-[var(--color-ink)]">No rows to review</p>
         </div>
       ) : activeView === 'integrationErrors' ? (
@@ -167,7 +167,7 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
               </TableCell>
               <TableCell>{row.category}</TableCell>
               <TableCell>
-                <span className="text-base font-semibold text-[var(--color-rouge)]">
+                <span className="text-base font-semibold text-[var(--color-primary)]">
                   {row.stock_available}
                 </span>
               </TableCell>

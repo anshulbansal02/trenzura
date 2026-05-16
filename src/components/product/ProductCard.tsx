@@ -29,7 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           ) : null}
           {product.discountPercent > 0 ? (
-            <span className="absolute right-3 top-3 rounded-full bg-[var(--color-sage)] px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-paper)]">
+            <span className="absolute right-3 top-3 rounded-full bg-[var(--color-accent-muted)] px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-paper)]">
               Save {product.discountPercent}%
             </span>
           ) : null}
@@ -41,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={() => setQuickLookOpen(true)}
           aria-label={`Quick look at ${product.title}`}
-          className="absolute bottom-3 right-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 text-xs font-medium text-[var(--color-ink)] backdrop-blur transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:bg-white hover:text-[var(--color-rouge)] active:scale-[0.98]"
+          className="absolute bottom-3 right-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 text-xs font-medium text-[var(--color-ink)] backdrop-blur transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-white hover:text-[var(--color-primary)] active:scale-[0.98]"
         >
           <Eye className="size-3.5" aria-hidden="true" />
           Quick look
@@ -74,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           {product.discountPercent > 0 ? (
-            <p className="text-xs font-medium text-[var(--color-sage)]">
+            <p className="text-xs font-medium text-[var(--color-accent-muted)]">
               Save {formatPrice(product.mrpPaise - product.sellingPricePaise)} today
             </p>
           ) : null}

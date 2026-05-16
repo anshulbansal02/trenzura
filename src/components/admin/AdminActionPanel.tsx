@@ -99,7 +99,7 @@ export function AdminActionPanel({
             <input
               value={publishConfirmation}
               onChange={(event) => onPublishConfirmationChange(event.target.value)}
-              className="mt-2 h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-rouge)] focus:ring-2 focus:ring-[var(--color-rouge)]/20"
+              className="mt-2 h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </label>
         ) : null}
@@ -190,7 +190,7 @@ export function AdminActionPanel({
             value={orderNumber}
             onChange={(event) => onOrderNumberChange(event.target.value)}
             placeholder="TZ-20260511-A7K2F1"
-            className="mt-2 h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-rouge)] focus:ring-2 focus:ring-[var(--color-rouge)]/20"
+            className="mt-2 h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
           />
         </label>
         <Button

@@ -42,7 +42,7 @@ export function FitConfidenceHelper({
         render={
           <button
             type="button"
-            className="inline-flex items-center gap-1 text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1 text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
           />
         }
       >
@@ -65,7 +65,7 @@ export function FitConfidenceHelper({
               </div>
               <Dialog.Close
                 aria-label="Close fit helper"
-                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[var(--color-gold)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 <X className="size-4" aria-hidden="true" />
               </Dialog.Close>
@@ -80,7 +80,7 @@ export function FitConfidenceHelper({
                   Measure flat across the bust, then double it. Enter that full measurement in
                   inches.
                 </span>
-                <div className="mt-3 flex items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 focus-within:border-[var(--color-rouge)] focus-within:bg-white">
+                <div className="mt-3 flex items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 focus-within:border-[var(--color-primary)] focus-within:bg-white">
                   <Ruler className="size-4 text-[var(--color-muted)]" aria-hidden="true" />
                   <input
                     type="number"
@@ -99,7 +99,7 @@ export function FitConfidenceHelper({
               <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-4">
                 {canCompare && recommendation ? (
                   <>
-                    <p className="text-xs font-semibold uppercase text-[var(--color-rouge)]">
+                    <p className="text-xs font-semibold uppercase text-[var(--color-primary)]">
                       Best match
                     </p>
                     <div className="mt-3 flex items-end justify-between gap-4">

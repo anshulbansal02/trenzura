@@ -122,9 +122,9 @@ export function ProductGallery({
                 aria-pressed={activeIndex === index}
                 onClick={() => showMobileImage(index)}
                 className={joinClasses(
-                  'aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-lg border bg-[var(--color-line)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-lg border bg-[var(--color-line)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   activeIndex === index
-                    ? 'border-[var(--color-rouge)]'
+                    ? 'border-[var(--color-primary)]'
                     : 'border-transparent',
                 )}
               >
@@ -156,9 +156,9 @@ export function ProductGallery({
               aria-pressed={activeIndex === index}
               onClick={() => setActiveIndex(index)}
               className={joinClasses(
-                'aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-lg border bg-[var(--color-line)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 lg:w-full',
+                'aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-lg border bg-[var(--color-line)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 lg:w-full',
                 activeIndex === index
-                  ? 'border-[var(--color-rouge)]'
+                  ? 'border-[var(--color-primary)]'
                   : 'border-transparent hover:border-[var(--color-line)]',
               )}
             >
@@ -206,7 +206,7 @@ export function ProductGallery({
             <div
               aria-hidden="true"
               className={joinClasses(
-                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-[var(--color-paper)] bg-[var(--color-surface)] shadow-sm ring-2 ring-[var(--color-rouge)]/15 transition-opacity duration-150 lg:block',
+                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-[var(--color-paper)] bg-[var(--color-surface)] shadow-sm ring-2 ring-[var(--color-primary)]/15 transition-opacity duration-150 lg:block',
                 magnifier.active ? 'opacity-100' : 'opacity-0',
               )}
               style={{

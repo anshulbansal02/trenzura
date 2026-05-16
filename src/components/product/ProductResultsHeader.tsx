@@ -68,7 +68,7 @@ export function ProductResultsHeader({
               key={filter.key}
               type="button"
               onClick={() => onSearchChange(filter.clear)}
-              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm font-bold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm font-bold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
             >
               {filter.label}
               <X className="size-3.5" aria-hidden="true" />
@@ -86,7 +86,7 @@ export function ProductResultsHeader({
                 saleOnly: false,
               })
             }
-            className="min-h-9 rounded-full px-3 text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)]"
+            className="min-h-9 rounded-full px-3 text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)]"
           >
             Clear all
           </button>

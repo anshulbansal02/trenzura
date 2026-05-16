@@ -84,7 +84,7 @@ function ProductPreviewPage() {
     <main className="fashion-container pb-28 pt-8 lg:py-12">
       <Link
         to="/products"
-        className="text-sm font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-rouge)]"
+        className="text-sm font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
       >
         Back to shop
       </Link>
@@ -96,7 +96,7 @@ function ProductPreviewPage() {
 
         <div className="min-w-0">
           {product.featured ? (
-            <p className="mb-4 inline-flex rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-rouge)]">
+            <p className="mb-4 inline-flex rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-primary)]">
               Most wanted
             </p>
           ) : null}
@@ -136,7 +136,7 @@ function ProductPreviewPage() {
           >
             <Accordion.Item value="fit">
               <Accordion.Header>
-                <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-rouge)] focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2">
+                <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
                   Fit and sizing
                   <ChevronDown
                     className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
@@ -155,7 +155,7 @@ function ProductPreviewPage() {
 
             <Accordion.Item value="delivery">
               <Accordion.Header>
-                <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-rouge)] focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2">
+                <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
                   Delivery and exchanges
                   <ChevronDown
                     className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
@@ -214,7 +214,7 @@ function ProductPreviewPage() {
             <Link
               to="/products"
               search={{ category: product.category }}
-              className="text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)]"
+              className="text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)]"
             >
               View edit
             </Link>
@@ -225,7 +225,7 @@ function ProductPreviewPage() {
                 key={item.productId}
                 to="/products/$slug"
                 params={{ slug: item.slug }}
-                className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-200 ease-out hover:border-[var(--color-rouge)] hover:shadow-sm"
+                className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-200 ease-out hover:border-[var(--color-primary)] hover:shadow-sm"
               >
                 <ProductMedia product={item} className="aspect-[4/5]" hoverZoom />
                 <div className="mt-3 flex items-start justify-between gap-3">
