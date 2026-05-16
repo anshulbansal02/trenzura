@@ -66,8 +66,7 @@ Column notes:
 - Active products must have at least one supported image.
 - Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
 - Filename order controls gallery order. Prefer `01-front.jpg`, `02-close.jpg`, and so on.
-- OS metadata files such as `.DS_Store`, `Thumbs.db`, `desktop.ini`, and AppleDouble `._*`
-  files are ignored.
+- Any other file in a product image folder fails validation and must be removed or replaced.
 - Image sync computes a content hash and uploads only new or changed files to Cloudflare R2.
 - Storefront image URLs are generated from the environment's `PRODUCT_IMAGE_PUBLIC_BASE_URL`.
 

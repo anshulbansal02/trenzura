@@ -47,8 +47,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(dirname, '..')
 const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-manifest.json')
 
-const supportedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif'])
-const ignoredDriveFileNames = new Set(['.ds_store', 'thumbs.db', 'desktop.ini'])
+const supportedImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
+const supportedExtensions = new Set(supportedImageExtensions)
 
 async function main() {
   await loadEnvFile()
@@ -261,24 +261,21 @@ async function listImageFiles(drive: ReturnType<typeof google.drive>, parentFold
     ].join(' and '),
     fields: 'nextPageToken, files(id, name, mimeType, md5Checksum, size)',
   })
-  const candidateImages = files.filter((file) => !isIgnoredDriveMetadataFile(file.name))
-
-  const unsupportedFiles = candidateImages.filter(
+  const unsupportedFiles = files.filter(
     (file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()),
   )
 
   if (unsupportedFiles.length > 0) {
     throw new Error(
-      `Unsupported product image file(s): ${unsupportedFiles.map((file) => file.name).join(', ')}`,
+      [
+        `Unsupported product media file(s): ${unsupportedFiles.map((file) => file.name).join(', ')}`,
+        `Supported formats: ${supportedImageExtensions.join(', ')}`,
+        'Remove or replace unsupported files in the Google Drive product image folders.',
+      ].join('\n'),
     )
   }
 
-  return candidateImages.sort(sortImageFiles)
-}
-
-function isIgnoredDriveMetadataFile(fileName: string) {
-  const normalized = fileName.trim().toLowerCase()
-  return ignoredDriveFileNames.has(normalized) || normalized.startsWith('._')
+  return files.sort(sortImageFiles)
 }
 
 async function listDriveFiles<T>(
