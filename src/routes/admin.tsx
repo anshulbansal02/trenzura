@@ -16,7 +16,7 @@ import {
   Truck,
 } from 'lucide-react'
 import type { FormEvent, ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
@@ -490,7 +490,7 @@ function AdminTable({
   rows: AdminDashboard['views'][AdminViewKey]
 }) {
   const title = adminTabs.find((tab) => tab.key === activeView)?.label ?? 'Admin view'
-  const description = useMemo(() => getViewDescription(activeView), [activeView])
+  const description = getViewDescription(activeView)
 
   return (
     <section className="overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] shadow-sm">
