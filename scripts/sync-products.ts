@@ -6,9 +6,14 @@ import { google } from 'googleapis'
 import {
   productCatalogSchema,
   type Product,
-  type ProductImageVariant,
   type ProductSize,
 } from '../src/data/product-schema'
+import {
+  readProductImageManifest,
+  resolveProductImagesFromManifest,
+  type ImageManifest,
+  type ResolvedProductImage,
+} from './lib/product-image-manifest'
 import { getGoogleServiceAccountCredentials, loadEnvFile, projectRoot } from './lib/runtime'
 import {
   parseBoolean,
@@ -20,30 +25,6 @@ import {
 } from './lib/sheet-rows'
 
 type SlugManifest = Record<string, string>
-
-type ImageManifest = {
-  products: Record<string, ImageManifestEntry[]>
-}
-
-type ImageManifestEntry = {
-  storagePath: string
-  publicUrl: string
-  sourceFileName?: string
-  variants: ImageManifestVariant[]
-}
-
-type ImageManifestVariant = {
-  width: number
-  storagePath: string
-  publicUrl: string
-  contentType: string
-}
-
-type ResolvedProductImage = {
-  storagePath: string
-  publicUrl: string
-  variants: ProductImageVariant[]
-}
 
 type ProductSyncRecord = {
   productId: string
@@ -124,14 +105,7 @@ async function readImageManifest() {
   if (!productImageManifestPath) return undefined
 
   const manifestPath = path.resolve(projectRoot, productImageManifestPath)
-  const content = await readFile(manifestPath, 'utf8')
-  const parsed = JSON.parse(content) as ImageManifest
-
-  if (!parsed || typeof parsed !== 'object' || !parsed.products || typeof parsed.products !== 'object') {
-    throw new Error(`Invalid product image manifest at ${path.relative(projectRoot, manifestPath)}`)
-  }
-
-  return parsed
+  return readProductImageManifest(manifestPath, projectRoot)
 }
 
 async function loadRows() {
@@ -292,65 +266,14 @@ async function resolveProductImages(
   rowNumber: number,
   active: boolean,
 ): Promise<ResolvedProductImage[]> {
-  const explicitPaths = splitList(value)
-
   if (!imageManifest) throw new Error('PRODUCT_IMAGE_MANIFEST_PATH is required for product images')
 
-  const manifestImages = imageManifest.products[productId]
-  if (!manifestImages || manifestImages.length === 0) {
-    if (!active) return []
-
-    console.warn(`Skipping active product ${productId} on row ${rowNumber}: no supported images found`)
-    return []
-  }
-
-  const resolvedManifestImages = explicitPaths.length > 0
-    ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
-    : manifestImages
-
-  return resolvedManifestImages.map((image) => {
-    if (!Array.isArray(image.variants) || image.variants.length === 0) {
-      throw new Error(`Image manifest entry for ${productId} on row ${rowNumber} is missing optimized variants`)
-    }
-
-    return {
-      storagePath: image.storagePath,
-      publicUrl: image.publicUrl,
-      variants: image.variants
-        .map((variant) => ({
-          width: variant.width,
-          url: variant.publicUrl,
-        }))
-        .sort((left, right) => left.width - right.width),
-    }
-  })
-}
-
-function orderManifestImages(
-  productId: string,
-  explicitPaths: string[],
-  manifestImages: ImageManifestEntry[],
-  rowNumber: number,
-) {
-  const byName = new Map<string, ImageManifestEntry>()
-
-  for (const image of manifestImages) {
-    const fileName = image.storagePath.split('/').pop() ?? image.storagePath
-    byName.set(fileName.toLowerCase(), image)
-    byName.set(image.storagePath.toLowerCase(), image)
-    byName.set(image.publicUrl.toLowerCase(), image)
-    if (image.sourceFileName) byName.set(image.sourceFileName.toLowerCase(), image)
-  }
-
-  return explicitPaths.map((explicitPath) => {
-    const match = byName.get(explicitPath.toLowerCase())
-    if (!match) {
-      throw new Error(
-        `Image "${explicitPath}" on row ${rowNumber} was not found in the ${productId} image manifest`,
-      )
-    }
-
-    return match
+  return resolveProductImagesFromManifest({
+    active,
+    imageManifest,
+    productId,
+    rowNumber,
+    value,
   })
 }
 
