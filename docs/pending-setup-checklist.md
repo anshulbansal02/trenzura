@@ -107,7 +107,7 @@ Separate prod folders are cleaner for launch control.
 
 ### Still blocked
 
-- QA catalog publish is blocked on Drive image folder ID.
+- QA publish/deploy is blocked on Cloudflare API token permission for Worker custom-domain routes.
 - QA Delhivery enablement is blocked on staging token, pickup location, GST, and HSN.
 - Prod publish/deploy is blocked until QA is validated and prod secrets are completed.
 - Edge Functions need a QA deploy after the latest Delhivery code changes.

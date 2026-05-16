@@ -104,8 +104,9 @@ Current status:
 - QA migrations are applied.
 - QA Edge Functions are deployed.
 - QA GitHub environment has Supabase URL, anon key, service role key, project ref, DB password, and access token.
-- QA catalog publishing now runs through the `Publish catalog` workflow after Google Sheets, Google Drive,
-  R2, and environment secrets are configured.
+- QA catalog publishing now runs through GitHub Actions after Google Sheets, Google Drive, R2, and
+  environment secrets are configured. The manual `Publish catalog` workflow and the `dev` branch
+  deploy both use the same generated catalog path.
 
 ## Cloudflare
 
