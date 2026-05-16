@@ -93,10 +93,10 @@ jobs:
             exit 1
           fi
 
+      - run: pnpm typecheck
+
       - name: Publish catalog data and images
         run: pnpm publish:catalog
-
-      - run: pnpm typecheck
 
       - run: pnpm build
 

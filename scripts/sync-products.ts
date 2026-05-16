@@ -4,7 +4,12 @@ import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 
-import { productCatalogSchema, type Product, type ProductSize } from '../src/data/product-schema'
+import {
+  productCatalogSchema,
+  type Product,
+  type ProductImageVariant,
+  type ProductSize,
+} from '../src/data/product-schema'
 
 type SheetRow = Record<string, string>
 
@@ -18,11 +23,20 @@ type ImageManifestEntry = {
   storagePath: string
   publicUrl: string
   sourceFileName?: string
+  variants: ImageManifestVariant[]
+}
+
+type ImageManifestVariant = {
+  width: number
+  storagePath: string
+  publicUrl: string
+  contentType: string
 }
 
 type ResolvedProductImage = {
   storagePath: string
   publicUrl: string
+  variants: ProductImageVariant[]
 }
 
 type ProductSyncRecord = {
@@ -88,6 +102,7 @@ async function main() {
       .filter((product): product is Product => Boolean(product)),
   )
   const syncRecords = normalizedProducts.map(({ sync }) => sync)
+    .filter((sync): sync is ProductSyncRecord => Boolean(sync))
 
   await mkdir(path.dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(products, null, 2)}\n`)
@@ -219,19 +234,23 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
   })
   const imageStoragePaths = resolvedImages.map((image) => image.storagePath)
   const publicImages = resolvedImages.map((image) => image.publicUrl)
+  const imageVariants = resolvedImages.map((image) => image.variants)
 
   for (const { storagePath: imagePath } of resolvedImages) assertSafeStoragePath(imagePath, rowNumber)
 
   const description = pick(row, ['description'], rowNumber)
   const sizeChart = parseSizeChart(pickOptional(row, ['size_chart']) ?? '', rowNumber)
   const featured = parseBoolean(pick(row, ['featured'], rowNumber))
-  const product: Product | undefined = active
+  const hasImages = resolvedImages.length > 0
+  const publishProduct = active && hasImages
+  const product: Product | undefined = publishProduct
     ? {
         productId,
         slug,
         title,
         images: publicImages,
         imageStoragePaths,
+        imageVariants,
         mrpPaise,
         sellingPricePaise,
         discountPercent: deriveDiscountPercent(mrpPaise, sellingPricePaise),
@@ -247,26 +266,28 @@ async function normalizeProduct(row: SheetRow, rowNumber: number, slugs: SlugMan
       }
     : undefined
 
-  const sync: ProductSyncRecord = {
-    productId,
-    slug,
-    title,
-    category,
-    description,
-    images: publicImages,
-    mrpPaise,
-    sellingPricePaise,
-    sizeChart,
-    active,
-    featured,
-    variants: variants.map((variant) => ({
-      variantId: variant.variantId,
-      sizeLabel: variant.label,
-      stock: stockBySize.get(variant.label.toLowerCase()) ?? 0,
-      restock: restockBySize.get(variant.label.toLowerCase()) ?? null,
-      active: variant.active,
-    })),
-  }
+  const sync: ProductSyncRecord | undefined = active && !hasImages
+    ? undefined
+    : {
+        productId,
+        slug,
+        title,
+        category,
+        description,
+        images: publicImages,
+        mrpPaise,
+        sellingPricePaise,
+        sizeChart,
+        active,
+        featured,
+        variants: variants.map((variant) => ({
+          variantId: variant.variantId,
+          sizeLabel: variant.label,
+          stock: stockBySize.get(variant.label.toLowerCase()) ?? 0,
+          restock: restockBySize.get(variant.label.toLowerCase()) ?? null,
+          active: variant.active,
+        })),
+      }
 
   return { product, sync }
 }
@@ -285,17 +306,30 @@ async function resolveProductImages(
   if (!manifestImages || manifestImages.length === 0) {
     if (!active) return []
 
-    throw new Error(`No image manifest entries found for ${productId} on row ${rowNumber}`)
+    console.warn(`Skipping active product ${productId} on row ${rowNumber}: no supported images found`)
+    return []
   }
 
   const resolvedManifestImages = explicitPaths.length > 0
     ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
     : manifestImages
 
-  return resolvedManifestImages.map((image) => ({
-    storagePath: image.storagePath,
-    publicUrl: image.publicUrl,
-  }))
+  return resolvedManifestImages.map((image) => {
+    if (!Array.isArray(image.variants) || image.variants.length === 0) {
+      throw new Error(`Image manifest entry for ${productId} on row ${rowNumber} is missing optimized variants`)
+    }
+
+    return {
+      storagePath: image.storagePath,
+      publicUrl: image.publicUrl,
+      variants: image.variants
+        .map((variant) => ({
+          width: variant.width,
+          url: variant.publicUrl,
+        }))
+        .sort((left, right) => left.width - right.width),
+    }
+  })
 }
 
 function orderManifestImages(

@@ -4,9 +4,9 @@ Products are managed by the shop owner in Google Sheets. Product images are mana
 Drive folders. The storefront catalog is published through the `Publish catalog` GitHub Actions
 workflow or through the `/admin` page action that dispatches that workflow.
 
-Do not edit `src/generated/products.json` by hand. The repository keeps only empty generated
-placeholders; real catalog data is produced during the publish workflow from Google Sheets and
-Google Drive.
+Do not edit generated catalog files by hand. The repository does not track generated product data,
+catalog sync payloads, image manifests, owner spreadsheets, or product images. Real catalog files
+are produced during the publish workflow from Google Sheets and Google Drive.
 
 ## Owner Sources
 
@@ -66,7 +66,10 @@ Column notes:
 - Active products must have at least one supported image.
 - Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
 - Filename order controls gallery order. Prefer `01-front.jpg`, `02-close.jpg`, and so on.
-- Image sync computes a content hash and uploads only new or changed files to Cloudflare R2.
+- Files without a supported image extension are ignored with a workflow warning.
+- Active products without supported images are skipped with a workflow warning.
+- Image sync computes a content hash and uploads only missing optimized WebP variants to Cloudflare R2.
+- Generated storefront images include `400w`, `800w`, and `1200w` variants for responsive loading.
 - Storefront image URLs are generated from the environment's `PRODUCT_IMAGE_PUBLIC_BASE_URL`.
 
 ## Publishing
@@ -97,6 +100,7 @@ This is push-based. There is no scheduled sync and no interval-based regeneratio
 These commands are for validation and CI/CD jobs. They are not local deployment commands.
 
 ```bash
+pnpm prepare:generated
 pnpm sync:images:manifest
 pnpm sync:images:r2
 pnpm sync:images:r2:upload
@@ -104,6 +108,10 @@ pnpm sync:products
 pnpm validate:catalog-assets
 pnpm publish:catalog
 ```
+
+`pnpm prepare:generated` only creates local empty generated files when missing so non-publish
+typecheck/build jobs can run. It does not add catalog data to Git and does not overwrite real
+generated catalog files created by publish.
 
 `pnpm publish:catalog` requires environment-specific Google, R2, Supabase, and Cloudflare
 configuration. It should normally run inside GitHub Actions.

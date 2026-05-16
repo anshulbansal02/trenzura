@@ -18,8 +18,10 @@ The repository uses two long-lived Git branches:
 
 - `CI` runs on pushes to `dev` and `main`.
 - `CI` runs on pull requests targeting `dev` and `main`.
-- `Deploy storefront QA` runs on pushes to `dev`.
-- `Deploy storefront` runs on pushes to `main`.
+- `Deploy storefront QA` runs on pushes to `dev`, publishes the QA catalog from Google Sheets/Drive,
+  builds with generated catalog data, and deploys `qa.trenzura.in`.
+- `Deploy storefront` runs on pushes to `main`, publishes the production catalog from Google
+  Sheets/Drive, builds with generated catalog data, and deploys production domains.
 - `Deploy Supabase` and `Publish catalog` are manual workflows with an environment selector.
 
 ## Secret Layout

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
+import sharp from 'sharp'
 
 type DriveImageFile = {
   id: string
@@ -39,6 +40,14 @@ type ProductImageManifestEntry = {
   contentHash: string
   contentType: string
   sizeBytes: number | null
+  variants: ProductImageVariant[]
+}
+
+type ProductImageVariant = {
+  width: number
+  storagePath: string
+  publicUrl: string
+  contentType: string
 }
 
 type SyncMode = 'sync' | 'manifest-only' | 'upload-manifest'
@@ -47,7 +56,13 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(dirname, '..')
 const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-manifest.json')
 
-const supportedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif'])
+const supportedImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
+const supportedExtensions = new Set(supportedImageExtensions)
+const driveFolderConcurrency = 8
+const r2UploadConcurrency = 8
+const imageVariantWidths = [400, 800, 1200]
+const imageVariantContentType = 'image/webp'
+const defaultImageVariantWidth = 800
 
 async function main() {
   await loadEnvFile()
@@ -81,43 +96,48 @@ async function main() {
     },
   }
 
-  for (const folder of productFolders) {
+  const productImageEntries = await mapWithConcurrency(productFolders, driveFolderConcurrency, async (folder) => {
     assertStableProductId(folder.name)
 
     const files = await listImageFiles(drive, folder.id)
-    if (files.length === 0) continue
-
-    manifest.products[folder.name] = []
+    const images: ProductImageManifestEntry[] = []
+    let imagesUploaded = 0
+    let imagesSkipped = 0
 
     for (const file of files) {
-      manifest.summary.imagesDiscovered += 1
-
       const hash = await resolveContentHash(drive, file)
-      const objectKey = createObjectKey(folder.name, hash, file.name)
-      const publicUrl = `${config.publicBaseUrl}/${encodeObjectKey(objectKey)}`
+      const variants = createImageVariants(config.publicBaseUrl, folder.name, hash, file.name)
+      const defaultVariant = pickDefaultVariant(variants)
 
       if (mode === 'sync') {
-        const exists = await r2ObjectExists(config, objectKey)
+        const result = await syncImageVariants(drive, config, file.id, folder.name, variants)
 
-        if (exists) {
-          manifest.summary.imagesSkipped += 1
-        } else {
-          const content = await downloadDriveFile(drive, file.id)
-          await putR2Object(config, objectKey, content, getContentType(file))
-          manifest.summary.imagesUploaded += 1
-        }
+        if (result === 'uploaded') imagesUploaded += 1
+        if (result === 'skipped') imagesSkipped += 1
       }
 
-      manifest.products[folder.name].push({
-        storagePath: objectKey,
-        publicUrl,
+      images.push({
+        storagePath: defaultVariant.storagePath,
+        publicUrl: defaultVariant.publicUrl,
         sourceFileId: file.id,
         sourceFileName: file.name,
         contentHash: hash,
-        contentType: getContentType(file),
+        contentType: defaultVariant.contentType,
         sizeBytes: file.size ? Number(file.size) : null,
+        variants,
       })
     }
+
+    return { productId: folder.name, images, imagesUploaded, imagesSkipped }
+  })
+
+  for (const entry of productImageEntries) {
+    if (entry.images.length === 0) continue
+
+    manifest.products[entry.productId] = entry.images
+    manifest.summary.imagesDiscovered += entry.images.length
+    manifest.summary.imagesUploaded += entry.imagesUploaded
+    manifest.summary.imagesSkipped += entry.imagesSkipped
   }
 
   await writeFile(config.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
@@ -154,28 +174,19 @@ async function uploadManifestImages(
     throw new Error(`Image manifest publicBaseUrl ${manifest.publicBaseUrl} does not match ${config.publicBaseUrl}`)
   }
 
-  let discovered = 0
-  let uploaded = 0
-  let skipped = 0
-
-  for (const [productId, images] of Object.entries(manifest.products)) {
+  const manifestImages = Object.entries(manifest.products).flatMap(([productId, images]) => {
     assertStableProductId(productId)
 
-    for (const image of images) {
-      discovered += 1
-      assertManifestImage(image, productId)
+    return images.map((image) => ({ productId, image }))
+  })
+  const uploadResults = await mapWithConcurrency(manifestImages, r2UploadConcurrency, async ({ productId, image }) => {
+    assertManifestImage(image, productId)
 
-      const exists = await r2ObjectExists(config, image.storagePath)
-      if (exists) {
-        skipped += 1
-        continue
-      }
-
-      const content = await downloadDriveFile(drive, image.sourceFileId)
-      await putR2Object(config, image.storagePath, content, image.contentType)
-      uploaded += 1
-    }
-  }
+    return syncImageVariants(drive, config, image.sourceFileId, productId, image.variants)
+  })
+  const discovered = manifestImages.length
+  const uploaded = uploadResults.filter((result) => result === 'uploaded').length
+  const skipped = uploadResults.filter((result) => result === 'skipped').length
 
   console.log(
     [
@@ -198,6 +209,123 @@ function assertManifestImage(image: ProductImageManifestEntry, productId: string
   if (!image.contentType || typeof image.contentType !== 'string') {
     throw new Error(`Image manifest entry for ${productId} is missing contentType`)
   }
+
+  if (!Array.isArray(image.variants) || image.variants.length === 0) {
+    throw new Error(`Image manifest entry for ${productId} is missing optimized variants`)
+  }
+}
+
+async function syncImageVariants(
+  drive: ReturnType<typeof google.drive>,
+  config: ReturnType<typeof readConfig>,
+  sourceFileId: string,
+  productId: string,
+  variants: ProductImageVariant[],
+) {
+  const missingVariants: ProductImageVariant[] = []
+
+  for (const variant of variants) {
+    assertImageVariant(variant, productId)
+
+    const exists = await r2ObjectExists(config, variant.storagePath)
+    if (!exists) missingVariants.push(variant)
+  }
+
+  if (missingVariants.length === 0) return 'skipped' as const
+
+  const content = await downloadDriveFile(drive, sourceFileId)
+  const optimizedByWidth = await createOptimizedImageVariantBuffers(content, missingVariants)
+
+  await Promise.all(
+    missingVariants.map((variant) => {
+      const optimized = optimizedByWidth.get(variant.width)
+      if (!optimized) throw new Error(`Missing optimized ${variant.width}px variant for ${productId}`)
+
+      return putR2Object(config, variant.storagePath, optimized, variant.contentType)
+    }),
+  )
+
+  return 'uploaded' as const
+}
+
+function assertImageVariant(variant: ProductImageVariant, productId: string) {
+  if (!Number.isInteger(variant.width) || variant.width <= 0) {
+    throw new Error(`Image manifest entry for ${productId} has invalid variant width`)
+  }
+
+  if (!variant.storagePath || typeof variant.storagePath !== 'string') {
+    throw new Error(`Image manifest entry for ${productId} has invalid variant storagePath`)
+  }
+
+  if (variant.contentType !== imageVariantContentType) {
+    throw new Error(`Image manifest entry for ${productId} has invalid variant contentType`)
+  }
+}
+
+function createImageVariants(
+  publicBaseUrl: string,
+  productId: string,
+  contentHash: string,
+  sourceFileName: string,
+) {
+  return imageVariantWidths.map((width) => {
+    const storagePath = createVariantObjectKey(productId, contentHash, sourceFileName, width)
+
+    return {
+      width,
+      storagePath,
+      publicUrl: `${publicBaseUrl}/${encodeObjectKey(storagePath)}`,
+      contentType: imageVariantContentType,
+    }
+  })
+}
+
+function pickDefaultVariant(variants: ProductImageVariant[]) {
+  return variants.find((variant) => variant.width === defaultImageVariantWidth) ?? variants[0]
+}
+
+async function createOptimizedImageVariantBuffers(
+  source: Buffer,
+  variants: ProductImageVariant[],
+) {
+  const uniqueWidths = Array.from(new Set(variants.map((variant) => variant.width)))
+  const entries = await Promise.all(
+    uniqueWidths.map(async (width) => [
+      width,
+      await sharp(source)
+        .rotate()
+        .resize({ width, withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer(),
+    ] as const),
+  )
+
+  return new Map(entries)
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+) {
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+  const workerCount = Math.min(concurrency, items.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (true) {
+        const index = nextIndex
+        nextIndex += 1
+
+        if (index >= items.length) return
+
+        results[index] = await worker(items[index] as T, index)
+      }
+    }),
+  )
+
+  return results
 }
 
 function readMode(): SyncMode {
@@ -260,18 +388,19 @@ async function listImageFiles(drive: ReturnType<typeof google.drive>, parentFold
     ].join(' and '),
     fields: 'nextPageToken, files(id, name, mimeType, md5Checksum, size)',
   })
+  const imageFiles = files.filter((file) => supportedExtensions.has(path.extname(file.name).toLowerCase()))
+  const ignoredFiles = files.filter((file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()))
 
-  const unsupportedFiles = files.filter(
-    (file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()),
-  )
-
-  if (unsupportedFiles.length > 0) {
-    throw new Error(
-      `Unsupported product image file(s): ${unsupportedFiles.map((file) => file.name).join(', ')}`,
+  if (ignoredFiles.length > 0) {
+    console.warn(
+      [
+        `Ignoring unsupported product media file(s): ${ignoredFiles.map((file) => file.name).join(', ')}`,
+        `Supported formats: ${supportedImageExtensions.join(', ')}`,
+      ].join('\n'),
     )
   }
 
-  return files.sort(sortImageFiles)
+  return imageFiles.sort(sortImageFiles)
 }
 
 async function listDriveFiles<T>(
@@ -424,8 +553,11 @@ function normalizeHeaderNames(headers: Record<string, string>) {
   )
 }
 
-function createObjectKey(productId: string, hash: string, fileName: string) {
-  return `products/${productId}/${hash}-${sanitizeFileName(fileName)}`
+function createVariantObjectKey(productId: string, hash: string, fileName: string, width: number) {
+  const extension = path.extname(fileName)
+  const baseName = sanitizeFileName(fileName.slice(0, -extension.length) || fileName)
+
+  return `products/${productId}/${hash}-${baseName}-${width}w.webp`
 }
 
 function sanitizeFileName(fileName: string) {
@@ -458,18 +590,6 @@ function imageSortRank(fileName: string) {
   const order = ['F', 'C', 'L', 'R', 'B', 'S', 'W']
   const index = suffix ? order.indexOf(suffix) : -1
   return index === -1 ? 999 : index + 1
-}
-
-function getContentType(file: DriveImageFile) {
-  if (file.mimeType.startsWith('image/')) return file.mimeType
-
-  const extension = path.extname(file.name).toLowerCase()
-  if (extension === '.jpg' || extension === '.jpeg') return 'image/jpeg'
-  if (extension === '.png') return 'image/png'
-  if (extension === '.webp') return 'image/webp'
-  if (extension === '.avif') return 'image/avif'
-
-  throw new Error(`Unsupported image extension for ${file.name}`)
 }
 
 function assertStableProductId(productId: string) {
