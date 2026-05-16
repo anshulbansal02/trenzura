@@ -45,7 +45,7 @@ The workflow:
 1. reads products from Google Sheets;
 2. reads product image folders from Google Drive;
 3. generates and validates the product image manifest;
-4. generates `src/generated/products.json` and `src/generated/products-sync.json`;
+4. generates ignored local catalog files under `src/generated/`;
 5. validates generated image URLs against the configured media host;
 6. uploads only new or changed images to Cloudflare R2;
 7. syncs products and variants to Supabase;

@@ -4,7 +4,7 @@ Product search is powered by `@orama/orama` and runs locally over the generated 
 
 Current behavior:
 
-- Builds a cached in-memory Orama index from `src/generated/products.json`
+- Builds a cached in-memory Orama index from the generated catalog produced during publish
 - Searches title, description, category, color, details, and sizes
 - Boosts title, category, color, and size matches
 - Allows one-character typo tolerance for longer queries

@@ -9,6 +9,7 @@ product-editing admin UI.
 - Keep code deployment, catalog sync, and image sync inside CI/CD.
 - Keep QA and production separated.
 - Avoid storing owner-managed product images in Git.
+- Avoid storing generated catalog data or image manifests in Git.
 - Avoid paid image services until traffic or requirements justify them.
 - Fail fast on missing or invalid catalog/image data.
 
