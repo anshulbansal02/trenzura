@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent, type UIEvent } from 'reac
 
 import type { Product } from '../../data/products'
 import { joinClasses } from '../../lib/format'
+import { getProductImage, getProductImageProps } from '../../lib/product-images'
 
 type ProductGalleryProps = {
   product: Product
@@ -31,7 +32,8 @@ export function ProductGallery({
   })
   const isQuickLook = variant === 'quickLook'
   const canMagnify = !isQuickLook && imageFit === 'cover'
-  const activeImage = product.images[activeIndex] ?? product.images[0]
+  const activeImage = getProductImage(product, activeIndex)
+  const activeImageProps = getProductImageProps(product, activeIndex, '(min-width: 1024px) 50vw, 100vw')
 
   useEffect(() => {
     setActiveIndex(0)
@@ -94,7 +96,7 @@ export function ProductGallery({
               className="relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden"
             >
               <img
-                src={image}
+                {...getProductImageProps(product, index, '100vw')}
                 alt={index === 0 ? product.imageAlt : ''}
                 className={joinClasses(
                   'h-full w-full',
@@ -127,7 +129,7 @@ export function ProductGallery({
                 )}
               >
                 <img
-                  src={image}
+                  {...getProductImageProps(product, index, '64px')}
                   alt=""
                   className="h-full w-full object-cover"
                   loading="lazy"
@@ -161,7 +163,7 @@ export function ProductGallery({
               )}
             >
               <img
-                src={image}
+                {...getProductImageProps(product, index, '88px')}
                 alt=""
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -188,7 +190,7 @@ export function ProductGallery({
             )}
           >
             <img
-              src={activeImage}
+              {...activeImageProps}
               alt={product.imageAlt}
               loading="eager"
               decoding="async"
@@ -247,7 +249,7 @@ export function ProductGallery({
                 {product.images.map((image, index) => (
                   <div key={image} className="flex h-[82svh] w-full shrink-0 snap-center items-center">
                     <img
-                      src={image}
+                      {...getProductImageProps(product, index, '100vw')}
                       alt={index === 0 ? product.imageAlt : ''}
                       className="max-h-full w-full object-contain"
                       loading="lazy"
