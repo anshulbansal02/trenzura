@@ -1,6 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 
@@ -10,6 +9,7 @@ import {
   type ProductImageVariant,
   type ProductSize,
 } from '../src/data/product-schema'
+import { getGoogleServiceAccountCredentials, loadEnvFile, projectRoot } from './lib/runtime'
 
 type SheetRow = Record<string, string>
 
@@ -60,8 +60,6 @@ type ProductSyncRecord = {
   }>
 }
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const slugsPath = path.join(projectRoot, 'scripts/product-slugs.json')
 const outputPath = path.join(projectRoot, 'src/generated/products.json')
 const syncOutputPath = path.join(projectRoot, 'src/generated/products-sync.json')
@@ -142,7 +140,7 @@ async function loadRows() {
 
 async function readGoogleSheetRows(spreadsheetId: string) {
   const auth = new google.auth.GoogleAuth({
-    credentials: getInlineCredentials(),
+    credentials: getGoogleServiceAccountCredentials(),
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   })
   const sheets = google.sheets({ version: 'v4', auth })
@@ -358,14 +356,6 @@ function orderManifestImages(
 
     return match
   })
-}
-
-function getInlineCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-
-  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is required')
-
-  return JSON.parse(raw) as Record<string, unknown>
 }
 
 function rowToObject(headers: unknown[], values: unknown[]) {
@@ -624,25 +614,6 @@ function assertSafeStoragePath(imagePath: string, rowNumber: number) {
 
 function deriveDiscountPercent(mrpPaise: number, sellingPricePaise: number) {
   return Math.round(((mrpPaise - sellingPricePaise) / mrpPaise) * 100)
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
-  }
 }
 
 main().catch((error: unknown) => {

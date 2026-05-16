@@ -1,9 +1,8 @@
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
+import { projectRoot } from './lib/runtime'
+
 const generatedDir = path.join(projectRoot, 'src/generated')
 const generatedFiles = [
   path.join(generatedDir, 'products.json'),

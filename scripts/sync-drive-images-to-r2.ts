@@ -1,10 +1,16 @@
 import { createHash, createHmac } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 import sharp from 'sharp'
+
+import {
+  getGoogleServiceAccountCredentials,
+  loadEnvFile,
+  projectRoot,
+  requiredEnv,
+} from './lib/runtime'
 
 type DriveImageFile = {
   id: string
@@ -52,8 +58,6 @@ type ProductImageVariant = {
 
 type SyncMode = 'sync' | 'manifest-only' | 'upload-manifest'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-manifest.json')
 
 const supportedImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
@@ -72,7 +76,7 @@ async function main() {
   const drive = google.drive({
     version: 'v3',
     auth: new google.auth.GoogleAuth({
-      credentials: getInlineCredentials(),
+      credentials: getGoogleServiceAccountCredentials(),
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     }),
   })
@@ -613,38 +617,6 @@ function assertUniqueFolderNames(folders: DriveFolder[]) {
 
 function escapeDriveQueryValue(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-}
-
-function getInlineCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is required')
-
-  return JSON.parse(raw) as Record<string, unknown>
-}
-
-function requiredEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is required`)
-  return value
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
-  }
 }
 
 main().catch((error: unknown) => {
