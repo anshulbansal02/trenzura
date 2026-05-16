@@ -3,6 +3,7 @@ import { Drawer } from '@base-ui/react/drawer'
 import { Link } from '@tanstack/react-router'
 import { Minus, Plus, ShoppingBag, X } from 'lucide-react'
 
+import { getAmountBucket, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, standardShippingPaise } from '../../lib/format'
 import { ProductMedia } from '../product/ProductMedia'
 import { RecentlyViewedRail } from '../product/RecentlyViewed'
@@ -187,7 +188,14 @@ export function CartDrawer() {
                   render={
                     <Link
                       to="/checkout"
-                      onClick={closeCart}
+                      onClick={() => {
+                        trackAnalyticsEvent('checkout_click', {
+                          amount_bucket: getAmountBucket(total),
+                          item_count: itemCount,
+                          source: 'cart_drawer',
+                        })
+                        closeCart()
+                      }}
                       className="fashion-button-primary mt-4 flex h-12 w-full px-5"
                     />
                   }

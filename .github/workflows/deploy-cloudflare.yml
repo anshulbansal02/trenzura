@@ -23,6 +23,9 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_UMAMI_DOMAINS: ${{ vars.VITE_UMAMI_DOMAINS }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -62,6 +65,9 @@ jobs:
           required R2_SECRET_ACCESS_KEY
           required VITE_SUPABASE_URL
           required VITE_SUPABASE_ANON_KEY
+          required VITE_UMAMI_DOMAINS
+          required VITE_UMAMI_SCRIPT_URL
+          required VITE_UMAMI_WEBSITE_ID
           required SUPABASE_URL
           required SUPABASE_SERVICE_ROLE_KEY
           required EXPECTED_SUPABASE_PROJECT_REF

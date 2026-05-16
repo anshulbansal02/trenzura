@@ -6,6 +6,7 @@ import { CartProvider } from '../components/cart/CartProvider'
 import { MobileBottomNav } from '../components/layout/MobileBottomNav'
 import { SiteHeader } from '../components/layout/SiteHeader'
 import { RouteNotFound } from '../components/layout/RouteBoundaries'
+import { createUmamiHeadScripts } from '../lib/analytics'
 import { createPageMeta, siteDescription, siteName } from '../lib/seo'
 import appCss from '../styles.css?url'
 
@@ -57,6 +58,7 @@ export const Route = createRootRoute({
         href: '/site.webmanifest',
       },
     ],
+    scripts: createUmamiHeadScripts(),
   }),
   notFoundComponent: RouteNotFound,
   shellComponent: RootDocument,

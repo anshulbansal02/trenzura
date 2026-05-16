@@ -4,6 +4,7 @@ import { Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { productSizes } from '../../data/products'
+import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, joinClasses } from '../../lib/format'
 import {
   getDefaultStyleFinderAnswers,
@@ -73,7 +74,13 @@ export function StyleFinder({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (nextOpen) trackAnalyticsEvent('style_finder_open')
+      }}
+    >
       <Dialog.Trigger
         render={
           <button type="button" className={triggerClasses} />
@@ -160,7 +167,15 @@ export function StyleFinder({
                       key={product.productId}
                       to="/products/$slug"
                       params={{ slug: product.slug }}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        trackAnalyticsEvent('style_finder_product_click', {
+                          ...createProductAnalyticsPayload(product),
+                          budget: answers.budget,
+                          occasion: answers.occasion,
+                          preference: answers.preference,
+                        })
+                        setOpen(false)
+                      }}
                       className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-rouge)] hover:shadow-sm"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />

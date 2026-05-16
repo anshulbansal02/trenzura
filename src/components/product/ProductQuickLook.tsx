@@ -1,8 +1,10 @@
 import { Dialog } from '@base-ui/react/dialog'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, X } from 'lucide-react'
+import { useEffect } from 'react'
 
 import type { Product } from '../../data/products'
+import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice } from '../../lib/format'
 import { ProductGallery } from './ProductGallery'
 import { ProductPurchasePanel } from './ProductPurchasePanel'
@@ -15,6 +17,12 @@ type ProductQuickLookProps = {
 }
 
 export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLookProps) {
+  useEffect(() => {
+    if (!open) return
+
+    trackAnalyticsEvent('quick_view_open', createProductAnalyticsPayload(product))
+  }, [open, product])
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
