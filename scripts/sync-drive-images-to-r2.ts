@@ -261,21 +261,19 @@ async function listImageFiles(drive: ReturnType<typeof google.drive>, parentFold
     ].join(' and '),
     fields: 'nextPageToken, files(id, name, mimeType, md5Checksum, size)',
   })
-  const unsupportedFiles = files.filter(
-    (file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()),
-  )
+  const imageFiles = files.filter((file) => supportedExtensions.has(path.extname(file.name).toLowerCase()))
+  const ignoredFiles = files.filter((file) => !supportedExtensions.has(path.extname(file.name).toLowerCase()))
 
-  if (unsupportedFiles.length > 0) {
-    throw new Error(
+  if (ignoredFiles.length > 0) {
+    console.warn(
       [
-        `Unsupported product media file(s): ${unsupportedFiles.map((file) => file.name).join(', ')}`,
+        `Ignoring unsupported product media file(s): ${ignoredFiles.map((file) => file.name).join(', ')}`,
         `Supported formats: ${supportedImageExtensions.join(', ')}`,
-        'Remove or replace unsupported files in the Google Drive product image folders.',
       ].join('\n'),
     )
   }
 
-  return files.sort(sortImageFiles)
+  return imageFiles.sort(sortImageFiles)
 }
 
 async function listDriveFiles<T>(

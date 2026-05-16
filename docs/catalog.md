@@ -66,7 +66,8 @@ Column notes:
 - Active products must have at least one supported image.
 - Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
 - Filename order controls gallery order. Prefer `01-front.jpg`, `02-close.jpg`, and so on.
-- Any other file in a product image folder fails validation and must be removed or replaced.
+- Files without a supported image extension are ignored with a workflow warning.
+- Active products without supported images are skipped with a workflow warning.
 - Image sync computes a content hash and uploads only new or changed files to Cloudflare R2.
 - Storefront image URLs are generated from the environment's `PRODUCT_IMAGE_PUBLIC_BASE_URL`.
 

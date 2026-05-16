@@ -107,10 +107,10 @@ Rules:
 - Product image folder name must match `product_id` in the sheet.
 - File order comes from the numeric filename prefix.
 - Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
-- Any other file in a product image folder fails validation and must be removed or replaced.
-- Active products must have at least one image.
-- The sync must fail if an active product has no matching image folder.
-- The sync must fail if a referenced image is missing, unreadable, or has an unsupported extension.
+- Files without a supported image extension are ignored with a workflow warning.
+- Active products without supported images are skipped with a workflow warning.
+- The sync must fail if an explicitly referenced image filename is missing, unreadable, or has an
+  unsupported extension.
 - The owner should replace images by uploading new files and then running a publish workflow.
 
 ## Sheet Contract
