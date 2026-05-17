@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { createClient } from '@supabase/supabase-js'
+
+import { loadEnvFile, projectRoot, requiredEnv } from './lib/runtime'
 
 type ProductSyncRecord = {
   productId: string
@@ -35,8 +36,6 @@ type ExistingVariantRow = {
   stock_available: number
 }
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const syncPath = path.join(projectRoot, 'src/generated/products-sync.json')
 
 async function main() {
@@ -156,12 +155,6 @@ async function assertOk<T>(
   }
 }
 
-function requiredEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is required`)
-  return value
-}
-
 function assertExpectedSupabaseProject(supabaseUrl: string) {
   const expectedRef = process.env.EXPECTED_SUPABASE_PROJECT_REF
   if (!expectedRef) {
@@ -173,25 +166,6 @@ function assertExpectedSupabaseProject(supabaseUrl: string) {
     throw new Error(
       `SUPABASE_URL points to ${actualRef}; expected ${expectedRef}. Refusing to sync products.`,
     )
-  }
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
   }
 }
 

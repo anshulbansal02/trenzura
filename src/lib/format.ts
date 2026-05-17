@@ -1,5 +1,3 @@
-export const standardShippingPaise = 14900
-
 export function formatPrice(valuePaise: number) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

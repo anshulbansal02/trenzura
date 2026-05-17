@@ -8,7 +8,7 @@ export function RoutePending() {
     <main className="fashion-container grid min-h-[55svh] place-items-center py-16">
       <div className="text-center">
         <LoaderCircle
-          className="mx-auto size-8 animate-spin text-[var(--color-rouge)]"
+          className="mx-auto size-8 animate-spin text-[var(--color-primary)]"
           aria-hidden="true"
         />
         <p className="mt-4 text-sm font-semibold text-[var(--color-ink)]">Loading Trenzura</p>

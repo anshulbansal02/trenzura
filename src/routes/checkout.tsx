@@ -1,23 +1,36 @@
 import { Button } from '@base-ui/react/button'
-import { Field } from '@base-ui/react/field'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CreditCard,
-  LoaderCircle,
-  PackageCheck,
-  ShieldCheck,
-} from 'lucide-react'
-import type { FormEvent, HTMLAttributes } from 'react'
+import { CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react'
+import type { FormEvent } from 'react'
 import { useState } from 'react'
 
 import { useCart } from '../components/cart/CartProvider'
-import { ProductMedia } from '../components/product/ProductMedia'
-import { getAmountBucket, trackAnalyticsEvent } from '../lib/analytics'
-import { formatPrice, standardShippingPaise } from '../lib/format'
+import { CheckoutConfirmation } from '../components/checkout/CheckoutConfirmation'
+import { CheckoutField } from '../components/checkout/CheckoutField'
+import { CheckoutNotice } from '../components/checkout/CheckoutNotice'
+import { CheckoutOrderSummary } from '../components/checkout/CheckoutOrderSummary'
+import { trackAnalyticsEvent } from '../lib/analytics'
+import {
+  type CheckoutForm,
+  type CheckoutConfirmation as CheckoutConfirmationData,
+  type CheckoutStatus,
+  type CreateOrderResponse,
+  type PendingOrder,
+  type RazorpaySuccessResponse,
+  type VerifyPaymentResponse,
+  createSuccessMessage,
+  getCheckoutAnalyticsPayload,
+  getMobilePayButtonLabel,
+  getPayButtonLabel,
+  initialCheckoutForm,
+  isBusyCheckoutStatus,
+  normalizeCheckoutForm,
+  validateCheckoutForm,
+} from '../lib/checkout'
+import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
+import { calculateShippingPaise } from '../lib/shipping'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
 
 export const Route = createFileRoute('/checkout')({
@@ -30,88 +43,6 @@ export const Route = createFileRoute('/checkout')({
   component: CheckoutPage,
 })
 
-type CheckoutForm = {
-  email: string
-  fullName: string
-  phone: string
-  addressLine: string
-  landmark: string
-  city: string
-  state: string
-  pincode: string
-}
-
-const initialForm: CheckoutForm = {
-  email: '',
-  fullName: '',
-  phone: '',
-  addressLine: '',
-  landmark: '',
-  city: '',
-  state: '',
-  pincode: '',
-}
-
-type CheckoutStatus =
-  | 'idle'
-  | 'preparing'
-  | 'ready'
-  | 'opening'
-  | 'payment-open'
-  | 'confirming'
-  | 'success'
-  | 'cancelled'
-  | 'error'
-
-type CreateOrderResponse = {
-  keyId: string
-  orderUuid: string
-  orderNumber: string
-  orderId: string
-  amount: number
-  currency: string
-  totals: {
-    subtotal: number
-    shipping: number
-    total: number
-  }
-}
-
-type VerifyPaymentResponse = {
-  verified: boolean
-  orderUuid?: string
-  orderNumber?: string
-  paymentId?: string
-  orderId?: string
-  orderStatus?: string
-  shipment?: {
-    orderStatus?: string
-    shipmentStatus?: string
-    trackingNumber?: string | null
-    providerOrderId?: string | null
-  } | null
-  error?: string
-}
-
-type RazorpaySuccessResponse = {
-  razorpay_payment_id: string
-  razorpay_order_id: string
-  razorpay_signature: string
-}
-
-type PendingOrder = CreateOrderResponse & {
-  fingerprint: string
-}
-
-type Confirmation = {
-  orderNumber: string
-  paymentId?: string
-  orderStatus?: string
-  shipmentStatus?: string
-  trackingNumber?: string | null
-  needsReview: boolean
-}
-
 const loadCheckoutScript = createIsomorphicFn()
   .client(async () => {
     const { loadRazorpayCheckout } = await import('../lib/razorpay.client')
@@ -123,12 +54,12 @@ const loadCheckoutScript = createIsomorphicFn()
 
 function CheckoutPage() {
   const { lines, itemCount, subtotal, savings, clearCart } = useCart()
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState(initialCheckoutForm)
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<CheckoutStatus>('idle')
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null)
-  const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
-  const shipping = subtotal === 0 ? 0 : standardShippingPaise
+  const [confirmation, setConfirmation] = useState<CheckoutConfirmationData | null>(null)
+  const shipping = calculateShippingPaise(subtotal)
   const total = subtotal + shipping
   const normalizedForm = normalizeCheckoutForm(form)
   const checkoutFingerprint = JSON.stringify({
@@ -256,8 +187,8 @@ function CheckoutPage() {
         customerEmail: normalizedForm.email,
       },
       theme: {
-        color: '#72343d',
-        backdrop_color: '#171310',
+        color: '#1C2E4A',
+        backdrop_color: '#1C2E4A',
       },
       modal: {
         backdropclose: false,
@@ -287,7 +218,7 @@ function CheckoutPage() {
 
           clearCart()
           setPendingOrder(null)
-          setForm(initialForm)
+          setForm(initialCheckoutForm)
           setStatus('success')
           setConfirmation({
             orderNumber: verification.orderNumber ?? order.orderNumber,
@@ -324,58 +255,7 @@ function CheckoutPage() {
   }
 
   if (confirmation) {
-    return (
-      <main className="fashion-container py-12 lg:py-16">
-        <section className="mx-auto max-w-3xl text-center">
-          <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-sage)] text-white">
-            {confirmation.needsReview ? (
-              <AlertTriangle className="size-6" aria-hidden="true" />
-            ) : (
-              <CheckCircle2 className="size-6" aria-hidden="true" />
-            )}
-          </span>
-          <p className="fashion-eyebrow mt-6">Order {confirmation.orderNumber}</p>
-          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
-            {confirmation.needsReview ? 'Payment received' : 'Order confirmed'}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--color-muted)]">
-            {message}
-          </p>
-        </section>
-
-        <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-lg bg-[var(--color-paper)] p-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ConfirmationLine label="Order number" value={confirmation.orderNumber} />
-            <ConfirmationLine label="Payment reference" value={confirmation.paymentId ?? 'Recorded'} />
-            <ConfirmationLine
-              label="Order"
-              value={formatCustomerOrderStatus(confirmation.orderStatus ?? 'paid')}
-            />
-            <ConfirmationLine
-              label="Delivery"
-              value={
-                confirmation.trackingNumber
-                  ? confirmation.trackingNumber
-                  : formatCustomerDeliveryStatus(confirmation.shipmentStatus ?? 'shipment_pending')
-              }
-            />
-          </div>
-          <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-line)] pt-5 sm:flex-row sm:justify-end">
-            <Button
-              nativeButton={false}
-              render={
-                <Link
-                  to="/products"
-                  className="fashion-button-secondary h-11 justify-center px-5"
-                />
-              }
-            >
-              Continue shopping
-            </Button>
-          </div>
-        </section>
-      </main>
-    )
+    return <CheckoutConfirmation confirmation={confirmation} message={message} />
   }
 
   if (lines.length === 0) {
@@ -508,7 +388,7 @@ function CheckoutPage() {
             </div>
             <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
-                <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
+                <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
                 Razorpay secure checkout
               </p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
@@ -536,7 +416,7 @@ function CheckoutPage() {
               type="button"
               onClick={clearCart}
               disabled={isCheckoutBusy}
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
+              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
             >
               Clear bag
             </button>
@@ -580,55 +460,13 @@ function CheckoutPage() {
           </div>
         </form>
 
-        <aside className="fashion-surface order-first self-start rounded-lg bg-[var(--color-paper)] p-5 lg:order-none lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Order summary</h2>
-            <p className="text-sm text-[var(--color-muted)]">
-              {itemCount} {itemCount === 1 ? 'item' : 'items'}
-            </p>
-          </div>
-
-          <div className="mt-5 space-y-5">
-            {lines.map((line) => (
-              <div key={line.id} className="grid grid-cols-[72px_1fr] gap-3">
-                <ProductMedia product={line.product} className="aspect-[4/5]" />
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--color-ink)]">
-                        {line.product.title}
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">
-                        Size {line.size} / Qty {line.quantity}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-[var(--color-ink)]">
-                      {formatPrice(line.product.sellingPricePaise * line.quantity)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 space-y-2 border-t border-[var(--color-line)] pt-5 text-sm">
-            <SummaryLine label="Subtotal" value={formatPrice(summaryTotals.subtotal)} />
-            {savings > 0 && !activePendingOrder ? (
-              <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
-            ) : null}
-            <SummaryLine label="Shipping" value={formatPrice(summaryTotals.shipping)} />
-            <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
-              <span>Total</span>
-              <span>{formatPrice(summaryTotals.total)}</span>
-            </div>
-            {activePendingOrder ? (
-              <p className="flex items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)]">
-                <PackageCheck className="size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-                Your bag total has been confirmed for this order.
-              </p>
-            ) : null}
-          </div>
-        </aside>
+        <CheckoutOrderSummary
+          lines={lines}
+          itemCount={itemCount}
+          savings={savings}
+          summaryTotals={summaryTotals}
+          hasConfirmedTotal={Boolean(activePendingOrder)}
+        />
       </div>
     </main>
   )
@@ -651,276 +489,4 @@ async function verifyPayment(orderUuid: string, response: RazorpaySuccessRespons
   }
 
   return data
-}
-
-function CheckoutField({
-  label,
-  value,
-  onChange,
-  className,
-  type = 'text',
-  inputMode,
-  placeholder,
-  autoComplete,
-  enterKeyHint,
-  required = true,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  className?: string
-  type?: string
-  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
-  placeholder?: string
-  autoComplete?: string
-  enterKeyHint?: HTMLAttributes<HTMLInputElement>['enterKeyHint']
-  required?: boolean
-}) {
-  return (
-    <Field.Root className={className}>
-      <Field.Label className="text-sm font-semibold text-[var(--color-ink)]">{label}</Field.Label>
-      <Field.Control
-        required={required}
-        type={type}
-        inputMode={inputMode}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        enterKeyHint={enterKeyHint}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        className="mt-2 h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
-      />
-    </Field.Root>
-  )
-}
-
-function CheckoutNotice({
-  status,
-  message,
-  total,
-}: {
-  status: CheckoutStatus
-  message: string
-  total: number
-}) {
-  const isError = status === 'error'
-  const isCancelled = status === 'cancelled'
-  const isReady = status === 'ready'
-  const title =
-    status === 'preparing'
-      ? 'Preparing payment'
-      : status === 'opening'
-        ? 'Opening Razorpay'
-        : status === 'payment-open'
-          ? 'Payment window is open'
-          : status === 'confirming'
-            ? 'Confirming payment'
-            : isReady
-              ? 'Total refreshed'
-              : isCancelled
-                ? 'Payment paused'
-                : isError
-                  ? 'Check details'
-                  : 'Checkout'
-  const copy =
-    message ||
-    (status === 'preparing'
-      ? 'We are checking stock and creating your secure payment order.'
-      : status === 'opening'
-        ? 'Razorpay will open in a moment.'
-        : status === 'payment-open'
-          ? 'Complete payment in the Razorpay window. You can return here if you close it.'
-          : status === 'confirming'
-            ? 'Do not refresh. We are verifying your payment and order.'
-            : `Payable total: ${formatPrice(total)}`)
-
-  return (
-    <div
-      className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
-        isError
-          ? 'border-red-200 bg-red-50 text-red-800'
-          : isCancelled
-            ? 'border-amber-200 bg-amber-50 text-amber-900'
-            : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-muted)]'
-      }`}
-      aria-live="polite"
-    >
-      <p className="font-semibold text-[var(--color-ink)]">{title}</p>
-      <p className="mt-1 leading-6">{copy}</p>
-    </div>
-  )
-}
-
-function ConfirmationLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-left">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-        {label}
-      </p>
-      <p className="mt-2 break-words text-sm font-semibold text-[var(--color-ink)]">{value}</p>
-    </div>
-  )
-}
-
-function SummaryLine({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string
-  value: string
-  tone?: 'default' | 'success'
-}) {
-  return (
-    <div
-      className={
-        tone === 'success'
-          ? 'flex justify-between text-[var(--color-sage)]'
-          : 'flex justify-between text-[var(--color-muted)]'
-      }
-    >
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
-  )
-}
-
-function isBusyCheckoutStatus(status: CheckoutStatus) {
-  return (
-    status === 'preparing' ||
-    status === 'opening' ||
-    status === 'payment-open' ||
-    status === 'confirming'
-  )
-}
-
-function getPayButtonLabel(status: CheckoutStatus, total: number) {
-  if (status === 'preparing') return 'Preparing order'
-  if (status === 'opening') return 'Opening Razorpay'
-  if (status === 'payment-open') return 'Payment window open'
-  if (status === 'confirming') return 'Confirming payment'
-  if (status === 'ready') return `Pay ${formatPrice(total)}`
-  if (status === 'cancelled') return 'Try payment again'
-  if (status === 'error') return 'Try again'
-
-  return `Pay ${formatPrice(total)}`
-}
-
-function getMobilePayButtonLabel(status: CheckoutStatus) {
-  if (status === 'preparing') return 'Preparing'
-  if (status === 'opening') return 'Opening'
-  if (status === 'payment-open') return 'Opened'
-  if (status === 'confirming') return 'Confirming'
-  if (status === 'cancelled') return 'Try again'
-  if (status === 'error') return 'Try again'
-
-  return 'Pay now'
-}
-
-function getCheckoutAnalyticsPayload(itemCount: number, totalPaise: number) {
-  return {
-    amount_bucket: getAmountBucket(totalPaise),
-    item_count: itemCount,
-  }
-}
-
-function validateCheckoutForm(form: CheckoutForm) {
-  const requiredFields = [
-    form.email,
-    form.fullName,
-    form.phone,
-    form.addressLine,
-    form.city,
-    form.state,
-    form.pincode,
-  ]
-
-  if (requiredFields.some((field) => !field.trim())) {
-    return 'Complete delivery details to continue.'
-  }
-
-  if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-    return 'Enter a valid email address.'
-  }
-
-  if (!/^\d{6}$/.test(form.pincode.trim())) {
-    return 'Enter a valid 6 digit pincode.'
-  }
-
-  if (!normalizePhoneForPayment(form.phone)) {
-    return 'Enter a valid 10 digit phone number.'
-  }
-
-  return ''
-}
-
-function normalizeCheckoutForm(form: CheckoutForm): CheckoutForm {
-  return {
-    email: form.email.trim(),
-    fullName: form.fullName.trim(),
-    phone: normalizePhoneForPayment(form.phone) || form.phone.trim(),
-    addressLine: form.addressLine.trim(),
-    landmark: form.landmark.trim(),
-    city: form.city.trim(),
-    state: form.state.trim(),
-    pincode: form.pincode.trim(),
-  }
-}
-
-function normalizePhoneForPayment(phone: string) {
-  const trimmedPhone = phone.trim()
-  const digits = trimmedPhone.replace(/\D/g, '')
-
-  if (/^\+\d{10,15}$/.test(trimmedPhone)) return trimmedPhone
-  if (/^\d{10}$/.test(digits)) return `+91${digits}`
-  if (/^91\d{10}$/.test(digits)) return `+${digits}`
-
-  return ''
-}
-
-function createSuccessMessage(verification: VerifyPaymentResponse) {
-  if (verification.shipment?.trackingNumber) {
-    return `Your order is confirmed. Tracking number: ${verification.shipment.trackingNumber}.`
-  }
-
-  if (verification.orderStatus === 'shipment_pending') {
-    return 'Your order is confirmed. We will share tracking after dispatch.'
-  }
-
-  return 'Your order is confirmed. We will start preparing it shortly.'
-}
-
-function formatCustomerOrderStatus(status: string) {
-  const labels: Record<string, string> = {
-    paid: 'Confirmed',
-    shipment_pending: 'Preparing',
-    payment_review_required: 'Being checked',
-    payment_pending: 'Awaiting payment',
-    payment_failed: 'Payment incomplete',
-    shipped: 'Shipped',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
-  }
-
-  return labels[status] ?? toTitleCase(status)
-}
-
-function formatCustomerDeliveryStatus(status: string) {
-  const labels: Record<string, string> = {
-    pending: 'Preparing for dispatch',
-    shipment_pending: 'Preparing for dispatch',
-    created: 'Preparing for dispatch',
-    in_transit: 'On the way',
-    delivered: 'Delivered',
-    failed: 'We will contact you',
-  }
-
-  return labels[status] ?? toTitleCase(status)
-}
-
-function toTitleCase(value: string) {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
 }

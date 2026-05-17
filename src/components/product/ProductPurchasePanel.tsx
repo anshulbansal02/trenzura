@@ -1,32 +1,36 @@
 import { Button } from '@base-ui/react/button'
 import { useNavigate } from '@tanstack/react-router'
 import { Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
 import type { Product } from '../../data/products'
 import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
-import { formatPrice, joinClasses, standardShippingPaise } from '../../lib/format'
+import { formatPrice, joinClasses } from '../../lib/format'
+import { shippingConfig } from '../../lib/shipping'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
+
+const addedMessageDurationMs = 4200
 
 type ProductPurchasePanelProps = {
   product: Product
   variant?: 'default' | 'quickLook'
-  onAdded?: () => void
 }
 
 export function ProductPurchasePanel({
   product,
   variant = 'default',
-  onAdded,
 }: ProductPurchasePanelProps) {
   const isQuickLook = variant === 'quickLook'
   const availableSizes = useMemo(
     () => product.sizes.filter((size) => size.stockAvailable > 0),
     [product.sizes],
   )
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0]?.label ?? '')
+  const defaultSize = availableSizes[0]?.label ?? ''
+  const [selectedSize, setSelectedSize] = useState(defaultSize)
   const [quantity, setQuantity] = useState(1)
+  const [addedMessage, setAddedMessage] = useState('')
+  const addedMessageTimerRef = useRef<number | null>(null)
   const { addItem } = useCart()
   const navigate = useNavigate()
   const selectedInventory = availableSizes.find((size) => size.label === selectedSize)
@@ -34,21 +38,19 @@ export function ProductPurchasePanel({
   const canAddToCart = Boolean(selectedInventory && quantity >= 1 && quantity <= maxQuantity)
 
   useEffect(() => {
-    const stillAvailable = availableSizes.some((size) => size.label === selectedSize)
-
-    if (!stillAvailable) {
-      setSelectedSize(availableSizes[0]?.label ?? '')
-      setQuantity(1)
-      return
-    }
-
-    setQuantity((value) => Math.min(Math.max(value, 1), maxQuantity))
-  }, [availableSizes, maxQuantity, selectedSize])
-
-  useEffect(() => {
-    setSelectedSize(availableSizes[0]?.label ?? '')
+    setSelectedSize(defaultSize)
     setQuantity(1)
-  }, [availableSizes, product.productId])
+    setAddedMessage('')
+  }, [defaultSize, product.productId])
+
+  useEffect(
+    () => () => {
+      if (addedMessageTimerRef.current) {
+        window.clearTimeout(addedMessageTimerRef.current)
+      }
+    },
+    [],
+  )
 
   function addCurrentSelection() {
     if (!canAddToCart) return
@@ -59,7 +61,7 @@ export function ProductPurchasePanel({
       source: isQuickLook ? 'quick_look' : 'product_page',
     })
     addItem({ product, size: selectedSize, quantity })
-    onAdded?.()
+    showAddedMessage()
   }
 
   function buyCurrentSelection() {
@@ -74,28 +76,40 @@ export function ProductPurchasePanel({
     void navigate({ to: '/checkout' })
   }
 
+  function showAddedMessage() {
+    if (addedMessageTimerRef.current) {
+      window.clearTimeout(addedMessageTimerRef.current)
+    }
+
+    setAddedMessage('Added to bag')
+    addedMessageTimerRef.current = window.setTimeout(() => {
+      setAddedMessage('')
+      addedMessageTimerRef.current = null
+    }, addedMessageDurationMs)
+  }
+
   return (
     <>
       <div
         className={joinClasses(
-          isQuickLook ? '' : 'fashion-surface rounded-lg bg-[var(--color-paper)] p-4 lg:p-5',
+          isQuickLook ? '' : 'border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5',
         )}
       >
       <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-2xl font-semibold text-[var(--color-rouge)]">
+          <p className="text-2xl font-semibold text-[var(--color-primary)]">
             {formatPrice(product.sellingPricePaise)}
           </p>
           {product.discountPercent > 0 ? (
             <p className="mt-1 text-sm text-[var(--color-muted)]">
               <span className="line-through">{formatPrice(product.mrpPaise)}</span>
-              <span className="ml-2 font-bold text-[var(--color-rouge)]">
+              <span className="ml-2 font-bold text-[var(--color-primary)]">
                 {product.discountPercent}% off
               </span>
             </p>
           ) : null}
         </div>
-        <p className="rounded-full bg-[var(--color-mist)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-sage)]">
+        <p className="rounded-full bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-accent-muted)]">
           {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
         </p>
       </div>
@@ -108,7 +122,7 @@ export function ProductPurchasePanel({
               <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
               <a
                 href="#size-chart"
-                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 Size chart
               </a>
@@ -136,10 +150,10 @@ export function ProductPurchasePanel({
                   })
                 }}
                 className={joinClasses(
-                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   isSelected
-                    ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
-                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-white',
                   !isAvailable &&
                     'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:border-[var(--color-line)]',
                 )}
@@ -160,8 +174,40 @@ export function ProductPurchasePanel({
         )}
       </div>
 
+      <div
+        className={joinClasses(
+          'mt-6 grid gap-3',
+          isQuickLook ? '' : 'sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
+        )}
+      >
+        <Button
+          type="button"
+          disabled={!canAddToCart}
+          onClick={addCurrentSelection}
+          className="fashion-button-primary h-12 px-5"
+        >
+          Add to bag
+        </Button>
+        {!isQuickLook ? (
+          <Button
+            type="button"
+            disabled={!canAddToCart}
+            onClick={buyCurrentSelection}
+            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
+          >
+            Buy now
+          </Button>
+        ) : null}
+      </div>
+
+      {addedMessage ? (
+        <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">
+          {addedMessage}
+        </p>
+      ) : null}
+
       {!isQuickLook ? (
-        <div className="mt-6">
+        <div className="mt-5">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
           <div className="mt-3 inline-flex h-11 items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
             <button
@@ -191,49 +237,26 @@ export function ProductPurchasePanel({
 
       <div
         className={joinClasses(
-          'mt-6 grid gap-3',
-          isQuickLook ? '' : 'sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
-        )}
-      >
-        <Button
-          type="button"
-          disabled={!canAddToCart}
-          onClick={addCurrentSelection}
-          className="fashion-button-primary h-12 px-5"
-        >
-          Add to bag
-        </Button>
-        {!isQuickLook ? (
-          <Button
-            type="button"
-            disabled={!canAddToCart}
-            onClick={buyCurrentSelection}
-            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
-          >
-            Buy now
-          </Button>
-        ) : null}
-      </div>
-
-      <div
-        className={joinClasses(
-          'mt-6 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]',
+          'mt-5 grid gap-3 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-muted)]',
           isQuickLook ? 'text-xs leading-5' : '',
         )}
       >
         <p className="flex gap-3">
-          <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
+          <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
           <span>Ships in 1-2 business days from the studio.</span>
         </p>
         {!isQuickLook ? (
           <>
             <p className="flex gap-3">
-              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-              <span>Flat {formatPrice(standardShippingPaise)} shipping and easy 7-day exchanges.</span>
+              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
+              <span>
+                {formatPrice(shippingConfig.standardShippingPaise)} shipping below{' '}
+                {formatPrice(shippingConfig.freeShippingThresholdPaise)} and easy 7-day exchanges.
+              </span>
             </p>
             <p className="flex gap-3">
               <ShieldCheck
-                className="mt-0.5 size-4 shrink-0 text-[var(--color-sage)]"
+                className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]"
                 aria-hidden="true"
               />
               <span>Secure payment options at checkout.</span>
@@ -250,8 +273,14 @@ export function ProductPurchasePanel({
               <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
                 {selectedSize ? `${product.title} - ${selectedSize}` : product.title}
               </p>
-              <p className="mt-0.5 text-sm text-[var(--color-muted)]">
-                {formatPrice(product.sellingPricePaise)}
+              <p
+                role={addedMessage ? 'status' : undefined}
+                className={joinClasses(
+                  'mt-0.5 text-sm',
+                  addedMessage ? 'font-semibold text-emerald-700' : 'text-[var(--color-muted)]',
+                )}
+              >
+                {addedMessage || formatPrice(product.sellingPricePaise)}
               </p>
             </div>
             <div className="flex gap-2">

@@ -71,7 +71,6 @@ jobs:
           required VITE_UMAMI_DOMAINS
           required VITE_UMAMI_SCRIPT_URL
           required VITE_UMAMI_WEBSITE_ID
-          required PRODUCT_IMAGE_PUBLIC_BASE_URL
           required CLOUDFLARE_ACCOUNT_ID
           required CLOUDFLARE_API_TOKEN
           required CLOUDFLARE_WORKER_NAME

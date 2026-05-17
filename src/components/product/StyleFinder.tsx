@@ -105,7 +105,7 @@ export function StyleFinder({
               </div>
               <Dialog.Close
                 aria-label="Close style finder"
-                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[#b58b91] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 <X className="size-4" aria-hidden="true" />
               </Dialog.Close>
@@ -155,7 +155,7 @@ export function StyleFinder({
                   <button
                     type="button"
                     onClick={() => setAnswers(getDefaultStyleFinderAnswers())}
-                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)]"
+                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)]"
                   >
                     Reset
                   </button>
@@ -176,7 +176,7 @@ export function StyleFinder({
                         })
                         setOpen(false)
                       }}
-                      className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-rouge)] hover:shadow-sm"
+                      className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-primary)] hover:shadow-sm"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
                       <div className="mt-3">
@@ -196,7 +196,7 @@ export function StyleFinder({
                         <ul className="mt-3 space-y-1.5 text-xs leading-5 text-[var(--color-muted)]">
                           {reasons.map((reason) => (
                             <li key={reason} className="flex gap-2">
-                              <span className="mt-2 size-1 rounded-full bg-[var(--color-rouge)]" />
+                              <span className="mt-2 size-1 rounded-full bg-[var(--color-primary)]" />
                               <span>{reason}</span>
                             </li>
                           ))}
@@ -241,10 +241,10 @@ function OptionGroup<T extends string>({
               aria-pressed={isSelected}
               onClick={() => onChange(option.value)}
               className={joinClasses(
-                'min-h-9 rounded-full border px-3 text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                'min-h-9 rounded-full border px-3 text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                 isSelected
-                  ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
-                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-white',
               )}
             >
               {option.label}

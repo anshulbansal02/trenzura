@@ -788,7 +788,7 @@ Recommended workflow:
 
 - Create separate R2 buckets for QA and production.
 - Attach separate media hostnames to those buckets.
-- Share the Google Drive image root folders with the Google service account.
+- Share the Google Drive image root folder with the Google service account.
 - Keep the `images` sheet column blank for the normal folder-based workflow.
 - Keep the storefront decoupled from the upload workflow by reading image URLs from product data.
 
@@ -825,7 +825,7 @@ Recommended workflow:
 Recommended Google Drive layout:
 
 ```text
-Trenzura Product Images - QA/
+Website Photo/
   KURTI-001/
     01-front.jpg
     02-close.jpg

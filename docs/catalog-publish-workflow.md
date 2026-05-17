@@ -55,6 +55,11 @@ Prod media host: media.trenzura.in
 These names are configurable through GitHub environment variables. Do not hardcode bucket names,
 domains, Google Drive folder IDs, or sheet IDs in application code.
 
+QA and production currently use the same owner-managed Google Sheet and Google Drive image root.
+That keeps catalog management simple for the shop owner. Environment separation is handled by
+separate Supabase projects, R2 buckets, media hostnames, Worker domains, and payment/shipping
+secrets.
+
 Recommended GitHub environment variables:
 
 ```text
@@ -83,17 +88,16 @@ The owner manages catalog content in two Google-owned places:
 1. Google Sheets for product data.
 2. Google Drive for product images.
 
-Recommended Google Drive folder names:
+Current Google Drive folder name:
 
 ```text
-Trenzura Product Images - QA
-Trenzura Product Images - Prod
+Website Photo
 ```
 
 Inside each folder, create one folder per product ID:
 
 ```text
-Trenzura Product Images - QA/
+Website Photo/
   TZ-001/
     01-front.jpg
     02-close.jpg
@@ -242,10 +246,9 @@ deploy from the local machine or from the browser.
 - No paid image transformation dependency.
 - No Git-tracked product image library.
 
-## Open Setup Items
+## Platform Setup Requirements
 
-- Owner creates Google Drive image folders for QA and production.
-- Share each image root folder with the Google service account.
+- Keep the shared Google Drive image root folder shared with the Google service account.
 - Enable R2 in the Cloudflare dashboard.
 - Create R2 buckets:
   - `trenzura-qa-product-images`
@@ -255,8 +258,7 @@ deploy from the local machine or from the browser.
   - `media.trenzura.in`
 - Create R2 S3 API credentials with object read/write access scoped to the product image buckets.
 - Store all environment-specific IDs and URLs in GitHub environment variables.
-- Add the remaining production publish secrets after production sheet, Drive, R2, and Supabase values
-  are finalized.
+- Add the remaining production publish secrets after QA publish/deploy is validated.
 
 ## Implemented In Repo
 

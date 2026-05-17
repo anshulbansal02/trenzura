@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
 import { createRazorpayOrder } from '../_shared/integrations/razorpay.ts'
+import { calculateShippingPaise } from '../../../shared/shipping.ts'
 
 type CartItemInput = {
   productId: string
@@ -41,7 +42,6 @@ type VariantRow = {
 }
 
 const currency = 'INR'
-const standardShippingPaise = 14900
 const maxCheckoutQuantity = 20
 
 Deno.serve(async (request) => {
@@ -132,7 +132,7 @@ Deno.serve(async (request) => {
       }
     })
     const subtotal = orderItems.reduce((total, item) => total + item.line_total_paise, 0)
-    const shipping = standardShippingPaise
+    const shipping = calculateShippingPaise(subtotal)
     const total = subtotal + shipping
 
     if (total < 100) {

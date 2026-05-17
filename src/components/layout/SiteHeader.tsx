@@ -1,6 +1,8 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Search, ShoppingBag } from 'lucide-react'
 
+import { formatPrice } from '../../lib/format'
+import { shippingConfig } from '../../lib/shipping'
 import { useOptionalCart } from '../cart/CartProvider'
 
 export function SiteHeader() {
@@ -11,21 +13,32 @@ export function SiteHeader() {
   const mobileBottomNavVisible = pathname === '/' || pathname === '/products'
   const isHome = pathname === '/'
   const isProducts = pathname === '/products'
+  const freeShippingText = `Free shipping above ${formatPrice(
+    shippingConfig.freeShippingThresholdPaise,
+  )}`
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 backdrop-blur-xl">
       <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-ink)]">
-        <span className="sm:hidden">Free shipping above ₹1,299 | Easy exchanges</span>
+        <span className="sm:hidden">{freeShippingText} | Easy exchanges</span>
         <span className="hidden sm:inline">
-          Free shipping above ₹1,299 | COD-style secure checkout | 7-day easy size exchanges
+          {freeShippingText} | COD-style secure checkout | 7-day easy size exchanges
         </span>
       </div>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link
           to="/"
-          className="text-2xl font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:text-[var(--color-rouge)]"
+          className="flex min-w-0 items-center gap-2 text-2xl font-semibold tracking-[0.04em] text-[var(--color-ink)] transition duration-150 ease-out hover:text-[var(--color-primary)]"
         >
-          Trenzura
+          <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)]">
+            <img
+              src="/assets/brand/trenzura-mark.webp"
+              alt=""
+              className="size-7 object-contain"
+              aria-hidden="true"
+            />
+          </span>
+          <span className="text-xl sm:text-2xl">Trenzura</span>
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-3 text-sm sm:gap-5">
           {isHome ? (
@@ -77,7 +90,7 @@ export function SiteHeader() {
           <Link
             to="/products"
             aria-label="Search products"
-            className="hidden size-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)] hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 sm:flex"
+            className="hidden size-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 sm:flex"
           >
             <Search className="size-4" aria-hidden="true" />
           </Link>
@@ -101,7 +114,7 @@ export function SiteHeader() {
             <ShoppingBag className="size-4" aria-hidden="true" />
             Bag
             {itemCount > 0 ? (
-              <span className="ml-1 inline-flex min-w-5 justify-center rounded-full bg-[var(--color-rouge)] px-1.5 py-0.5 text-xs leading-none text-[var(--color-paper)]">
+              <span className="ml-1 inline-flex min-w-5 justify-center rounded-full bg-[var(--color-primary)] px-1.5 py-0.5 text-xs leading-none text-[var(--color-paper)]">
                 {itemCount}
               </span>
             ) : null}

@@ -4,7 +4,12 @@ import { Link } from '@tanstack/react-router'
 import { Minus, Plus, ShoppingBag, X } from 'lucide-react'
 
 import { getAmountBucket, trackAnalyticsEvent } from '../../lib/analytics'
-import { formatPrice, standardShippingPaise } from '../../lib/format'
+import { formatPrice } from '../../lib/format'
+import {
+  calculateShippingPaise,
+  formatShippingAmount,
+  getFreeShippingMessage,
+} from '../../lib/shipping'
 import { ProductMedia } from '../product/ProductMedia'
 import { RecentlyViewedRail } from '../product/RecentlyViewed'
 import { useOptionalCart } from './CartProvider'
@@ -25,7 +30,8 @@ export function CartDrawer() {
     removeItem,
     closeCart,
   } = cart
-  const total = subtotal + standardShippingPaise
+  const shipping = calculateShippingPaise(subtotal)
+  const total = subtotal + shipping
 
   return (
     <Drawer.Root open={isOpen} onOpenChange={setCartOpen} swipeDirection="right">
@@ -45,7 +51,7 @@ export function CartDrawer() {
             </div>
             <Drawer.Close
               aria-label="Close cart"
-              className="inline-flex size-9 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] active:scale-95"
+              className="inline-flex size-9 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
             >
               <X className="size-4" aria-hidden="true" />
             </Drawer.Close>
@@ -101,7 +107,7 @@ export function CartDrawer() {
                               to="/products/$slug"
                               params={{ slug: line.product.slug }}
                               onClick={closeCart}
-                              className="text-sm font-semibold text-[var(--color-ink)] transition hover:text-[var(--color-rouge)]"
+                              className="text-sm font-semibold text-[var(--color-ink)] transition hover:text-[var(--color-primary)]"
                             >
                               {line.product.title}
                             </Link>
@@ -141,7 +147,7 @@ export function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => removeItem(line.id)}
-                            className="text-xs font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] active:scale-[0.98]"
+                            className="text-xs font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] active:scale-[0.98]"
                           >
                             Remove
                           </button>
@@ -173,7 +179,7 @@ export function CartDrawer() {
                   ) : null}
                   <div className="flex items-center justify-between text-[var(--color-muted)]">
                     <span>Shipping</span>
-                    <span>{formatPrice(standardShippingPaise)}</span>
+                    <span>{formatShippingAmount(shipping)}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
                     <span>Total</span>
@@ -181,7 +187,7 @@ export function CartDrawer() {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-[var(--color-muted)]">
-                  Taxes are included. Final payment is handled through secure checkout.
+                  {getFreeShippingMessage(subtotal)} Taxes are included.
                 </p>
                 <Button
                   nativeButton={false}

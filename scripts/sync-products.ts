@@ -1,43 +1,30 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 
 import {
   productCatalogSchema,
   type Product,
-  type ProductImageVariant,
   type ProductSize,
 } from '../src/data/product-schema'
-
-type SheetRow = Record<string, string>
+import {
+  readProductImageManifest,
+  resolveProductImagesFromManifest,
+  type ImageManifest,
+  type ResolvedProductImage,
+} from './lib/product-image-manifest'
+import { getGoogleServiceAccountCredentials, loadEnvFile, projectRoot } from './lib/runtime'
+import {
+  parseBoolean,
+  pick,
+  pickOptional,
+  sheetRowsFromValues,
+  splitList,
+  type SheetRow,
+} from './lib/sheet-rows'
 
 type SlugManifest = Record<string, string>
-
-type ImageManifest = {
-  products: Record<string, ImageManifestEntry[]>
-}
-
-type ImageManifestEntry = {
-  storagePath: string
-  publicUrl: string
-  sourceFileName?: string
-  variants: ImageManifestVariant[]
-}
-
-type ImageManifestVariant = {
-  width: number
-  storagePath: string
-  publicUrl: string
-  contentType: string
-}
-
-type ResolvedProductImage = {
-  storagePath: string
-  publicUrl: string
-  variants: ProductImageVariant[]
-}
 
 type ProductSyncRecord = {
   productId: string
@@ -60,8 +47,6 @@ type ProductSyncRecord = {
   }>
 }
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const slugsPath = path.join(projectRoot, 'scripts/product-slugs.json')
 const outputPath = path.join(projectRoot, 'src/generated/products.json')
 const syncOutputPath = path.join(projectRoot, 'src/generated/products-sync.json')
@@ -120,14 +105,7 @@ async function readImageManifest() {
   if (!productImageManifestPath) return undefined
 
   const manifestPath = path.resolve(projectRoot, productImageManifestPath)
-  const content = await readFile(manifestPath, 'utf8')
-  const parsed = JSON.parse(content) as ImageManifest
-
-  if (!parsed || typeof parsed !== 'object' || !parsed.products || typeof parsed.products !== 'object') {
-    throw new Error(`Invalid product image manifest at ${path.relative(projectRoot, manifestPath)}`)
-  }
-
-  return parsed
+  return readProductImageManifest(manifestPath, projectRoot)
 }
 
 async function loadRows() {
@@ -142,7 +120,7 @@ async function loadRows() {
 
 async function readGoogleSheetRows(spreadsheetId: string) {
   const auth = new google.auth.GoogleAuth({
-    credentials: getInlineCredentials(),
+    credentials: getGoogleServiceAccountCredentials(),
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   })
   const sheets = google.sheets({ version: 'v4', auth })
@@ -150,17 +128,7 @@ async function readGoogleSheetRows(spreadsheetId: string) {
   const response = await sheets.spreadsheets.values.get({ spreadsheetId, range })
   const values = response.data.values ?? []
 
-  if (values.length < 2) {
-    throw new Error(`No product rows found in range ${range}`)
-  }
-
-  const [headers, ...bodyRows] = values
-  const rows = bodyRows
-    .map((row) => rowToObject(headers, row))
-    .filter((row) => Object.values(row).some(Boolean))
-
-  assertRequiredColumns(rows[0] ?? {})
-  return rows.map(normalizeRowKeys)
+  return sheetRowsFromValues(values, requiredColumns, range)
 }
 
 async function readSlugManifest(): Promise<SlugManifest> {
@@ -298,95 +266,15 @@ async function resolveProductImages(
   rowNumber: number,
   active: boolean,
 ): Promise<ResolvedProductImage[]> {
-  const explicitPaths = splitList(value)
-
   if (!imageManifest) throw new Error('PRODUCT_IMAGE_MANIFEST_PATH is required for product images')
 
-  const manifestImages = imageManifest.products[productId]
-  if (!manifestImages || manifestImages.length === 0) {
-    if (!active) return []
-
-    console.warn(`Skipping active product ${productId} on row ${rowNumber}: no supported images found`)
-    return []
-  }
-
-  const resolvedManifestImages = explicitPaths.length > 0
-    ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
-    : manifestImages
-
-  return resolvedManifestImages.map((image) => {
-    if (!Array.isArray(image.variants) || image.variants.length === 0) {
-      throw new Error(`Image manifest entry for ${productId} on row ${rowNumber} is missing optimized variants`)
-    }
-
-    return {
-      storagePath: image.storagePath,
-      publicUrl: image.publicUrl,
-      variants: image.variants
-        .map((variant) => ({
-          width: variant.width,
-          url: variant.publicUrl,
-        }))
-        .sort((left, right) => left.width - right.width),
-    }
+  return resolveProductImagesFromManifest({
+    active,
+    imageManifest,
+    productId,
+    rowNumber,
+    value,
   })
-}
-
-function orderManifestImages(
-  productId: string,
-  explicitPaths: string[],
-  manifestImages: ImageManifestEntry[],
-  rowNumber: number,
-) {
-  const byName = new Map<string, ImageManifestEntry>()
-
-  for (const image of manifestImages) {
-    const fileName = image.storagePath.split('/').pop() ?? image.storagePath
-    byName.set(fileName.toLowerCase(), image)
-    byName.set(image.storagePath.toLowerCase(), image)
-    byName.set(image.publicUrl.toLowerCase(), image)
-    if (image.sourceFileName) byName.set(image.sourceFileName.toLowerCase(), image)
-  }
-
-  return explicitPaths.map((explicitPath) => {
-    const match = byName.get(explicitPath.toLowerCase())
-    if (!match) {
-      throw new Error(
-        `Image "${explicitPath}" on row ${rowNumber} was not found in the ${productId} image manifest`,
-      )
-    }
-
-    return match
-  })
-}
-
-function getInlineCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-
-  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is required')
-
-  return JSON.parse(raw) as Record<string, unknown>
-}
-
-function rowToObject(headers: unknown[], values: unknown[]) {
-  return Object.fromEntries(
-    headers.map((header, index) => [String(header), String(values[index] ?? '').trim()]),
-  )
-}
-
-function normalizeRowKeys(row: SheetRow) {
-  return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [normalizeHeader(key), String(value ?? '').trim()]),
-  )
-}
-
-function assertRequiredColumns(row: SheetRow) {
-  const normalized = new Set(Object.keys(normalizeRowKeys(row)))
-  const missing = requiredColumns.filter((column) => !normalized.has(normalizeHeader(column)))
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required product column(s): ${missing.join(', ')}`)
-  }
 }
 
 function assertUniqueProductIds(rows: SheetRow[]) {
@@ -404,26 +292,6 @@ function assertUniqueProductIds(rows: SheetRow[]) {
 
     seen.set(normalizedProductId, rowNumber)
   })
-}
-
-function pick(row: SheetRow, aliases: string[], rowNumber: number) {
-  const value = pickOptional(row, aliases)
-
-  if (!value) {
-    throw new Error(`Missing required value for ${aliases[0]} on row ${rowNumber}`)
-  }
-
-  return value
-}
-
-function pickOptional(row: SheetRow, aliases: string[]) {
-  for (const alias of aliases) {
-    const value = row[normalizeHeader(alias)]
-
-    if (value) return value
-  }
-
-  return undefined
 }
 
 function parseSizeQuantityMap(
@@ -499,13 +367,6 @@ function parseSizeChart(value: string, rowNumber: number): Product['sizeChart'] 
   })
 }
 
-function splitList(value: string) {
-  return value
-    .split(/\n|\||,/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
 function parseMoneyToPaise(value: string, context: string) {
   const rupees = Number(value.replace(/[^\d.-]/g, ''))
 
@@ -524,14 +385,6 @@ function parseInteger(value: string, context: string) {
   }
 
   return parsed
-}
-
-function parseBoolean(value: string) {
-  return ['true', 'yes', '1', 'active', 'featured'].includes(value.trim().toLowerCase())
-}
-
-function normalizeHeader(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
 }
 
 function slugify(value: string) {
@@ -624,25 +477,6 @@ function assertSafeStoragePath(imagePath: string, rowNumber: number) {
 
 function deriveDiscountPercent(mrpPaise: number, sellingPricePaise: number) {
   return Math.round(((mrpPaise - sellingPricePaise) / mrpPaise) * 100)
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
-  }
 }
 
 main().catch((error: unknown) => {

@@ -4,8 +4,8 @@
   "description": "Printed kurtis and coordinated sets from Trenzura.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffaf3",
-  "theme_color": "#171310",
+  "background_color": "#F4F2ED",
+  "theme_color": "#1C2E4A",
   "icons": [
     {
       "src": "/favicon.svg",

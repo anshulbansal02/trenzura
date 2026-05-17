@@ -21,21 +21,21 @@ export function ProductGrid({ products }: ProductGridProps) {
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link
               to="/products"
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
             >
               Clear filters
             </Link>
             <Link
               to="/products"
               search={{ category: 'kurtis' }}
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
             >
               Shop kurtis
             </Link>
             <Link
               to="/products"
               search={{ category: 'sets' }}
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
             >
               Shop sets
             </Link>

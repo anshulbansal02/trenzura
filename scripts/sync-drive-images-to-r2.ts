@@ -1,10 +1,18 @@
-import { createHash, createHmac } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { google } from 'googleapis'
 import sharp from 'sharp'
+
+import { mapWithConcurrency } from './lib/concurrency'
+import { encodeObjectKey, putR2Object, r2ObjectExists } from './lib/r2'
+import {
+  getGoogleServiceAccountCredentials,
+  loadEnvFile,
+  projectRoot,
+  requiredEnv,
+} from './lib/runtime'
 
 type DriveImageFile = {
   id: string
@@ -52,8 +60,6 @@ type ProductImageVariant = {
 
 type SyncMode = 'sync' | 'manifest-only' | 'upload-manifest'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const defaultManifestPath = path.join(projectRoot, 'src/generated/product-image-manifest.json')
 
 const supportedImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
@@ -72,7 +78,7 @@ async function main() {
   const drive = google.drive({
     version: 'v3',
     auth: new google.auth.GoogleAuth({
-      credentials: getInlineCredentials(),
+      credentials: getGoogleServiceAccountCredentials(),
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     }),
   })
@@ -303,31 +309,6 @@ async function createOptimizedImageVariantBuffers(
   return new Map(entries)
 }
 
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  worker: (item: T, index: number) => Promise<R>,
-) {
-  const results = new Array<R>(items.length)
-  let nextIndex = 0
-  const workerCount = Math.min(concurrency, items.length)
-
-  await Promise.all(
-    Array.from({ length: workerCount }, async () => {
-      while (true) {
-        const index = nextIndex
-        nextIndex += 1
-
-        if (index >= items.length) return
-
-        results[index] = await worker(items[index] as T, index)
-      }
-    }),
-  )
-
-  return results
-}
-
 function readMode(): SyncMode {
   const args = new Set(process.argv.slice(2))
 
@@ -447,112 +428,6 @@ async function downloadDriveFile(drive: ReturnType<typeof google.drive>, fileId:
   return Buffer.from(response.data as ArrayBuffer)
 }
 
-async function r2ObjectExists(config: ReturnType<typeof readConfig>, objectKey: string) {
-  const response = await signedR2Fetch(config, 'HEAD', objectKey)
-
-  if (response.status === 404) return false
-  if (!response.ok) {
-    throw new Error(`Unable to check R2 object ${objectKey}: ${response.status} ${response.statusText}`)
-  }
-
-  return true
-}
-
-async function putR2Object(
-  config: ReturnType<typeof readConfig>,
-  objectKey: string,
-  body: Buffer,
-  contentType: string,
-) {
-  const response = await signedR2Fetch(config, 'PUT', objectKey, body, {
-    'cache-control': 'public, max-age=31536000, immutable',
-    'content-type': contentType,
-  })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(`Unable to upload R2 object ${objectKey}: ${response.status} ${response.statusText} ${text}`)
-  }
-}
-
-async function signedR2Fetch(
-  config: ReturnType<typeof readConfig>,
-  method: 'HEAD' | 'PUT',
-  objectKey: string,
-  body?: Buffer,
-  extraHeaders: Record<string, string> = {},
-) {
-  const payloadHash = createHash('sha256').update(body ?? '').digest('hex')
-  const now = new Date()
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '')
-  const dateStamp = amzDate.slice(0, 8)
-  const objectPath = `/${config.bucket}/${encodeObjectKey(objectKey)}`
-  const url = new URL(objectPath, config.endpoint)
-  const canonicalHeaders: Record<string, string> = {
-    ...normalizeHeaderNames(extraHeaders),
-    host: config.endpoint.host,
-    'x-amz-content-sha256': payloadHash,
-    'x-amz-date': amzDate,
-  }
-  const signedHeaderNames = Object.keys(canonicalHeaders).sort()
-  const signedHeaders = signedHeaderNames.join(';')
-  const canonicalRequest = [
-    method,
-    objectPath,
-    '',
-    signedHeaderNames.map((name) => `${name}:${canonicalHeaders[name]}`).join('\n') + '\n',
-    signedHeaders,
-    payloadHash,
-  ].join('\n')
-  const credentialScope = `${dateStamp}/auto/s3/aws4_request`
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    amzDate,
-    credentialScope,
-    createHash('sha256').update(canonicalRequest).digest('hex'),
-  ].join('\n')
-  const signature = hmacHex(getSigningKey(config.secretAccessKey, dateStamp), stringToSign)
-  const headers = new Headers(extraHeaders)
-
-  headers.set('x-amz-content-sha256', payloadHash)
-  headers.set('x-amz-date', amzDate)
-  headers.set(
-    'authorization',
-    [
-      `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}`,
-      `SignedHeaders=${signedHeaders}`,
-      `Signature=${signature}`,
-    ].join(', '),
-  )
-
-  return fetch(url, {
-    method,
-    headers,
-    body: body as unknown as BodyInit | undefined,
-  })
-}
-
-function getSigningKey(secretAccessKey: string, dateStamp: string) {
-  const dateKey = hmacBuffer(`AWS4${secretAccessKey}`, dateStamp)
-  const dateRegionKey = hmacBuffer(dateKey, 'auto')
-  const dateRegionServiceKey = hmacBuffer(dateRegionKey, 's3')
-  return hmacBuffer(dateRegionServiceKey, 'aws4_request')
-}
-
-function hmacBuffer(key: string | Buffer, value: string) {
-  return createHmac('sha256', key).update(value).digest()
-}
-
-function hmacHex(key: Buffer, value: string) {
-  return createHmac('sha256', key).update(value).digest('hex')
-}
-
-function normalizeHeaderNames(headers: Record<string, string>) {
-  return Object.fromEntries(
-    Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value.trim()]),
-  )
-}
-
 function createVariantObjectKey(productId: string, hash: string, fileName: string, width: number) {
   const extension = path.extname(fileName)
   const baseName = sanitizeFileName(fileName.slice(0, -extension.length) || fileName)
@@ -571,10 +446,6 @@ function sanitizeFileName(fileName: string) {
   if (!baseName) throw new Error(`Image filename "${fileName}" does not contain a safe basename`)
 
   return `${baseName}${extension}`
-}
-
-function encodeObjectKey(objectKey: string) {
-  return objectKey.split('/').map(encodeURIComponent).join('/')
 }
 
 function sortImageFiles(left: DriveImageFile, right: DriveImageFile) {
@@ -613,38 +484,6 @@ function assertUniqueFolderNames(folders: DriveFolder[]) {
 
 function escapeDriveQueryValue(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-}
-
-function getInlineCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is required')
-
-  return JSON.parse(raw) as Record<string, unknown>
-}
-
-function requiredEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is required`)
-  return value
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
-  }
 }
 
 main().catch((error: unknown) => {

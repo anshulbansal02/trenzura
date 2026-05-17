@@ -14,19 +14,7 @@ import {
 } from '../../data/products'
 import type { ProductCategoryCounts, ProductSort } from '../../data/product-search'
 import { joinClasses, paiseToRupees, rupeesToPaise } from '../../lib/format'
-
-export type ProductCategoryFilter = string
-
-export type ProductSearchState = {
-  q?: string
-  category?: ProductCategoryFilter
-  sort?: ProductSort
-  sizes?: string[]
-  minPrice?: number
-  maxPrice?: number
-  inStockOnly?: boolean
-  saleOnly?: boolean
-}
+import type { ProductCategoryFilter, ProductSearchState } from '../../lib/product-search-url'
 
 type ProductFiltersProps = {
   search: Required<ProductSearchState>
@@ -93,7 +81,7 @@ export function ProductFilters({
       className={joinClasses(
         'w-full min-w-0 self-start overflow-x-hidden',
         variant === 'panel'
-          ? 'fashion-surface space-y-7 rounded-lg bg-[var(--color-paper)] p-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
+          ? 'space-y-7 border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
           : 'space-y-6',
       )}
     >
@@ -118,7 +106,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-                className="shrink-0 text-sm font-bold text-[var(--color-rouge)] transition hover:text-[var(--color-rouge-dark)]"
+              className="shrink-0 text-sm font-bold text-[var(--color-primary)] transition hover:text-[var(--color-primary-dark)]"
             >
               Reset
             </button>
@@ -141,14 +129,14 @@ export function ProductFilters({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search styles"
-            className="h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
+            className="h-11 w-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
           />
           {query ? (
             <Button
               type="button"
               aria-label="Clear search"
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] active:scale-95"
+              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
             >
               <X className="size-4" aria-hidden="true" />
             </Button>
@@ -172,7 +160,7 @@ export function ProductFilters({
             >
               <Radio.Root
                 value={category}
-                className="flex size-4 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-transparent outline-none transition duration-150 ease-out data-[checked]:border-[var(--color-rouge)] data-[checked]:bg-[var(--color-rouge)] data-[checked]:text-[var(--color-paper)] focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="flex size-4 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] text-transparent outline-none transition duration-150 ease-out data-[checked]:border-[var(--color-primary)] data-[checked]:bg-[var(--color-primary)] data-[checked]:text-[var(--color-paper)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 <Radio.Indicator className="size-1.5 rounded-full bg-current" />
               </Radio.Root>
@@ -196,7 +184,7 @@ export function ProductFilters({
             <button
               type="button"
               onClick={() => onSearchChange({ sizes: [] })}
-              className="text-xs font-bold text-[var(--color-muted)] transition hover:text-[var(--color-rouge)]"
+              className="text-xs font-bold text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
             >
               Clear
             </button>
@@ -217,10 +205,10 @@ export function ProductFilters({
                   })
                 }
                 className={joinClasses(
-                  'h-9 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                  'h-9 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   isSelected
-                    ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
-                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)]',
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)]',
                 )}
               >
                 {size}
@@ -243,7 +231,7 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ minPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
             />
           </label>
           <label className="min-w-0 space-y-1">
@@ -256,7 +244,7 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ maxPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
             />
           </label>
         </div>
@@ -284,7 +272,7 @@ export function ProductFilters({
           onValueChange={(sort) => onSearchChange({ sort: sort as ProductSort })}
         >
           <Select.Label className="text-sm font-semibold text-[var(--color-ink)]">Sort</Select.Label>
-          <Select.Trigger className="mt-3 flex h-10 w-full items-center justify-between rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-left text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:border-[var(--color-rouge)] hover:bg-white hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2 data-[popup-open]:border-[var(--color-rouge)]">
+          <Select.Trigger className="mt-3 flex h-10 w-full items-center justify-between rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-left text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-white hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 data-[popup-open]:border-[var(--color-primary)]">
             <Select.Value>
               {(value: ProductSort | null) => (value ? sortLabels[value] : sortLabels.recommended)}
             </Select.Value>
@@ -305,7 +293,7 @@ export function ProductFilters({
                     )}
                   >
                     <Select.ItemText>{label}</Select.ItemText>
-                    <Select.ItemIndicator className="text-[var(--color-rouge)]">
+                    <Select.ItemIndicator className="text-[var(--color-primary)]">
                       <Check className="size-4" aria-hidden="true" />
                     </Select.ItemIndicator>
                   </Select.Item>
@@ -334,7 +322,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)]"
+              className="text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)]"
             >
               Reset filters
             </button>
@@ -368,7 +356,7 @@ function FilterCheckbox({
       <Checkbox.Root
         checked={checked}
         onCheckedChange={onChange}
-        className="flex size-4 items-center justify-center rounded border border-[var(--color-line)] bg-[var(--color-paper)] text-transparent outline-none transition duration-150 ease-out data-[checked]:border-[var(--color-rouge)] data-[checked]:bg-[var(--color-rouge)] data-[checked]:text-[var(--color-paper)] focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+        className="flex size-4 items-center justify-center rounded border border-[var(--color-line)] bg-[var(--color-paper)] text-transparent outline-none transition duration-150 ease-out data-[checked]:border-[var(--color-primary)] data-[checked]:bg-[var(--color-primary)] data-[checked]:text-[var(--color-paper)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
       >
         <Checkbox.Indicator>
           <Check className="size-3" aria-hidden="true" />

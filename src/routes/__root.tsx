@@ -27,7 +27,7 @@ export const Route = createRootRoute({
       }).meta,
       {
         name: 'theme-color',
-        content: '#171310',
+        content: '#1C2E4A',
       },
     ],
     links: [
@@ -51,7 +51,7 @@ export const Route = createRootRoute({
       {
         rel: 'mask-icon',
         href: '/safari-pinned-tab.svg',
-        color: '#171310',
+        color: '#1C2E4A',
       },
       {
         rel: 'manifest',
