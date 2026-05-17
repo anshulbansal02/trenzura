@@ -90,7 +90,7 @@ function ProductPreviewPage() {
       </Link>
 
       <section className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:gap-16">
-        <div className="lg:sticky lg:top-28 lg:self-start">
+        <div className="min-w-0 max-w-full lg:sticky lg:top-28 lg:self-start">
           <ProductGallery product={product} />
         </div>
 
