@@ -78,10 +78,10 @@ export function ProductGallery({
 
   return (
     <>
-      <div className="lg:hidden">
+      <div className="min-w-0 max-w-full lg:hidden">
         <div
           ref={mobileStripRef}
-          className="flex snap-x snap-mandatory overflow-x-auto rounded-[var(--radius-image)] bg-[var(--color-surface)]"
+          className="flex max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-[var(--radius-image)] bg-[var(--color-surface)]"
           onScroll={handleMobileScroll}
         >
           {product.images.map((image, index) => (
@@ -93,7 +93,7 @@ export function ProductGallery({
                 setActiveIndex(index)
                 setViewerOpen(true)
               }}
-              className="relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden"
+              className="relative aspect-[4/5] min-w-full max-w-full shrink-0 snap-center overflow-hidden"
             >
               <img
                 {...getProductImageProps(product, index, '100vw')}
@@ -113,7 +113,10 @@ export function ProductGallery({
           ))}
         </div>
         {product.images.length > 1 ? (
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Product image previews">
+          <div
+            className="mt-3 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1"
+            aria-label="Product image previews"
+          >
             {product.images.map((image, index) => (
               <button
                 key={image}
@@ -141,49 +144,19 @@ export function ProductGallery({
         ) : null}
       </div>
 
-      <div className="hidden gap-3 lg:grid lg:grid-cols-[88px_1fr]">
-        <div
-          className={joinClasses(
-            'order-2 flex gap-3 overflow-x-auto lg:order-1 lg:block lg:space-y-3 lg:overflow-visible',
-            isQuickLook ? 'hidden lg:block' : '',
-          )}
-        >
-          {product.images.map((image, index) => (
-            <button
-              key={image}
-              type="button"
-              aria-label={`View image ${index + 1} of ${product.title}`}
-              aria-pressed={activeIndex === index}
-              onClick={() => setActiveIndex(index)}
-              className={joinClasses(
-                'aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 lg:w-full',
-                activeIndex === index
-                  ? 'border-[var(--color-primary)]'
-                  : 'border-transparent hover:border-[var(--color-line)]',
-              )}
-            >
-              <img
-                {...getProductImageProps(product, index, '88px')}
-                alt=""
-                className="h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            </button>
-          ))}
-        </div>
+      <div className="hidden min-w-0 max-w-full lg:block">
         <div
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setMagnifier((current) => ({ ...current, active: false }))}
           className={joinClasses(
-            'relative order-1 overflow-visible lg:order-2',
+            'relative max-w-full overflow-visible',
             canMagnify ? 'lg:z-10' : '',
           )}
         >
           <div
             data-gallery-frame
             className={joinClasses(
-                'quick-gallery-main overflow-hidden rounded-[var(--radius-image)]',
+              'quick-gallery-main overflow-hidden rounded-[var(--radius-image)]',
               isQuickLook
                 ? 'h-[min(42svh,390px)] bg-[var(--color-surface)] sm:h-[min(54svh,520px)] lg:h-[min(62vh,620px)]'
                 : 'cursor-zoom-in bg-[var(--color-line)]',
@@ -231,6 +204,36 @@ export function ProductGallery({
             </div>
           ) : null}
         </div>
+        {product.images.length > 1 ? (
+          <div
+            className="mt-3 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1"
+            aria-label="Product image previews"
+          >
+            {product.images.map((image, index) => (
+              <button
+                key={image}
+                type="button"
+                aria-label={`View image ${index + 1} of ${product.title}`}
+                aria-pressed={activeIndex === index}
+                onClick={() => setActiveIndex(index)}
+                className={joinClasses(
+                  'aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 xl:w-20',
+                  activeIndex === index
+                    ? 'border-[var(--color-primary)]'
+                    : 'border-transparent hover:border-[var(--color-line)]',
+                )}
+              >
+                <img
+                  {...getProductImageProps(product, index, '(min-width: 1280px) 80px, 64px')}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <Dialog.Root open={viewerOpen} onOpenChange={setViewerOpen}>
