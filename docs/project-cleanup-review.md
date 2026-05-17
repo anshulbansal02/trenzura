@@ -80,7 +80,5 @@ Trenzura uses TanStack Start rather than Next.js, but the same React 19 discipli
 - Merge the local Portless development URL PR separately from this cleanup branch.
 - Review any additional large-file splits after this cleanup PR lands; avoid more movement unless a
   concrete change needs it.
-- Replace the Cloudflare API token with one that can edit Worker custom-domain routes before QA
-  deploy can fully pass.
 - Enable Delhivery in QA only after staging token, pickup location, GST, and HSN values are provided.
 - Complete production secrets only after QA publish/deploy and checkout flows are validated.

@@ -85,4 +85,9 @@ jobs:
       - run: pnpm build
 
       - name: Deploy to Cloudflare Workers
-        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN" --domain "$CLOUDFLARE_WWW_DOMAIN"
+        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
+
+      - name: Verify production domains
+        run: |
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_WWW_DOMAIN}"

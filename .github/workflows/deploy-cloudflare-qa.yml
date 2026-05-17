@@ -84,4 +84,7 @@ jobs:
       - run: pnpm build
 
       - name: Deploy QA to Cloudflare Workers
-        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME"
+
+      - name: Verify QA domain
+        run: curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
