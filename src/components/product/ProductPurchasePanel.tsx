@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCart } from '../cart/CartProvider'
 import type { Product } from '../../data/products'
 import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
-import { formatPrice, joinClasses, standardShippingPaise } from '../../lib/format'
+import { formatPrice, joinClasses } from '../../lib/format'
+import { shippingConfig } from '../../lib/shipping'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
 
 const addedMessageDurationMs = 4200
@@ -248,7 +249,10 @@ export function ProductPurchasePanel({
           <>
             <p className="flex gap-3">
               <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
-              <span>Flat {formatPrice(standardShippingPaise)} shipping and easy 7-day exchanges.</span>
+              <span>
+                {formatPrice(shippingConfig.standardShippingPaise)} shipping below{' '}
+                {formatPrice(shippingConfig.freeShippingThresholdPaise)} and easy 7-day exchanges.
+              </span>
             </p>
             <p className="flex gap-3">
               <ShieldCheck

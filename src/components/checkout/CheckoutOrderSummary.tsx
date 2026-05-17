@@ -3,6 +3,7 @@ import { PackageCheck } from 'lucide-react'
 import type { CartLineWithProduct } from '../cart/CartProvider'
 import { ProductMedia } from '../product/ProductMedia'
 import { formatPrice } from '../../lib/format'
+import { formatShippingAmount, getFreeShippingMessage } from '../../lib/shipping'
 
 type CheckoutOrderSummaryProps = {
   lines: CartLineWithProduct[]
@@ -60,7 +61,7 @@ export function CheckoutOrderSummary({
         {savings > 0 && !hasConfirmedTotal ? (
           <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
         ) : null}
-        <SummaryLine label="Shipping" value={formatPrice(summaryTotals.shipping)} />
+        <SummaryLine label="Shipping" value={formatShippingAmount(summaryTotals.shipping)} />
         <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
           <span>Total</span>
           <span>{formatPrice(summaryTotals.total)}</span>
@@ -70,7 +71,11 @@ export function CheckoutOrderSummary({
             <PackageCheck className="size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
             Your bag total has been confirmed for this order.
           </p>
-        ) : null}
+        ) : (
+          <p className="pt-2 text-xs leading-5 text-[var(--color-muted)]">
+            {getFreeShippingMessage(summaryTotals.subtotal)}
+          </p>
+        )}
       </div>
     </aside>
   )

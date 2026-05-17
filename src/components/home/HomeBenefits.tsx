@@ -1,10 +1,15 @@
 import { RefreshCcw, ShieldCheck, ShoppingBag, Truck, type LucideIcon } from 'lucide-react'
 
+import { formatPrice } from '../../lib/format'
+import { shippingConfig } from '../../lib/shipping'
+
 const benefits: Array<{ Icon: LucideIcon; copy: string; title: string }> = [
   {
     Icon: Truck,
-    title: 'Flat shipping',
-    copy: 'Fixed shipping shown before payment.',
+    title: 'Clear shipping',
+    copy: `${formatPrice(shippingConfig.standardShippingPaise)} shipping below ${formatPrice(
+      shippingConfig.freeShippingThresholdPaise,
+    )}.`,
   },
   {
     Icon: RefreshCcw,

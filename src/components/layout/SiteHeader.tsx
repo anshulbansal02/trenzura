@@ -1,6 +1,8 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Search, ShoppingBag } from 'lucide-react'
 
+import { formatPrice } from '../../lib/format'
+import { shippingConfig } from '../../lib/shipping'
 import { useOptionalCart } from '../cart/CartProvider'
 
 export function SiteHeader() {
@@ -11,13 +13,16 @@ export function SiteHeader() {
   const mobileBottomNavVisible = pathname === '/' || pathname === '/products'
   const isHome = pathname === '/'
   const isProducts = pathname === '/products'
+  const freeShippingText = `Free shipping above ${formatPrice(
+    shippingConfig.freeShippingThresholdPaise,
+  )}`
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 backdrop-blur-xl">
       <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-ink)]">
-        <span className="sm:hidden">Free shipping above ₹1,299 | Easy exchanges</span>
+        <span className="sm:hidden">{freeShippingText} | Easy exchanges</span>
         <span className="hidden sm:inline">
-          Free shipping above ₹1,299 | COD-style secure checkout | 7-day easy size exchanges
+          {freeShippingText} | COD-style secure checkout | 7-day easy size exchanges
         </span>
       </div>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">

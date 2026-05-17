@@ -4,7 +4,12 @@ import { Link } from '@tanstack/react-router'
 import { Minus, Plus, ShoppingBag, X } from 'lucide-react'
 
 import { getAmountBucket, trackAnalyticsEvent } from '../../lib/analytics'
-import { formatPrice, standardShippingPaise } from '../../lib/format'
+import { formatPrice } from '../../lib/format'
+import {
+  calculateShippingPaise,
+  formatShippingAmount,
+  getFreeShippingMessage,
+} from '../../lib/shipping'
 import { ProductMedia } from '../product/ProductMedia'
 import { RecentlyViewedRail } from '../product/RecentlyViewed'
 import { useOptionalCart } from './CartProvider'
@@ -25,7 +30,8 @@ export function CartDrawer() {
     removeItem,
     closeCart,
   } = cart
-  const total = subtotal + standardShippingPaise
+  const shipping = calculateShippingPaise(subtotal)
+  const total = subtotal + shipping
 
   return (
     <Drawer.Root open={isOpen} onOpenChange={setCartOpen} swipeDirection="right">
@@ -173,7 +179,7 @@ export function CartDrawer() {
                   ) : null}
                   <div className="flex items-center justify-between text-[var(--color-muted)]">
                     <span>Shipping</span>
-                    <span>{formatPrice(standardShippingPaise)}</span>
+                    <span>{formatShippingAmount(shipping)}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
                     <span>Total</span>
@@ -181,7 +187,7 @@ export function CartDrawer() {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-[var(--color-muted)]">
-                  Taxes are included. Final payment is handled through secure checkout.
+                  {getFreeShippingMessage(subtotal)} Taxes are included.
                 </p>
                 <Button
                   nativeButton={false}

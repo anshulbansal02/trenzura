@@ -28,8 +28,9 @@ import {
   normalizeCheckoutForm,
   validateCheckoutForm,
 } from '../lib/checkout'
-import { formatPrice, standardShippingPaise } from '../lib/format'
+import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
+import { calculateShippingPaise } from '../lib/shipping'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
 
 export const Route = createFileRoute('/checkout')({
@@ -58,7 +59,7 @@ function CheckoutPage() {
   const [status, setStatus] = useState<CheckoutStatus>('idle')
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null)
   const [confirmation, setConfirmation] = useState<CheckoutConfirmationData | null>(null)
-  const shipping = subtotal === 0 ? 0 : standardShippingPaise
+  const shipping = calculateShippingPaise(subtotal)
   const total = subtotal + shipping
   const normalizedForm = normalizeCheckoutForm(form)
   const checkoutFingerprint = JSON.stringify({
