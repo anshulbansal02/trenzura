@@ -19,10 +19,14 @@ The repository uses two long-lived Git branches:
 - `CI` runs on pushes to `dev` and `main`.
 - `CI` runs on pull requests targeting `dev` and `main`.
 - `Deploy storefront QA` runs on pushes to `dev`, publishes the QA catalog from Google Sheets/Drive,
-  builds with generated catalog data, and deploys `qa.trenzura.in`.
+  builds with generated catalog data, deploys the QA Worker, and verifies `qa.trenzura.in`.
 - `Deploy storefront` runs on pushes to `main`, publishes the production catalog from Google
-  Sheets/Drive, builds with generated catalog data, and deploys production domains.
+  Sheets/Drive, builds with generated catalog data, deploys the production Worker, and verifies the
+  production domains.
 - `Deploy Supabase` and `Publish catalog` are manual workflows with an environment selector.
+
+Cloudflare Worker domain routes are managed as one-time infrastructure. Routine CI/CD deployments
+publish Worker code only and fail if the configured domain is not reachable after deploy.
 
 ## Secret Layout
 

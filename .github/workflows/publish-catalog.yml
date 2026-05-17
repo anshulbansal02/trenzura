@@ -108,8 +108,18 @@ jobs:
 
       - name: Deploy QA to Cloudflare Workers
         if: inputs.environment == 'qa'
-        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Deploy production to Cloudflare Workers
         if: inputs.environment == 'prod'
-        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN" --domain "$CLOUDFLARE_WWW_DOMAIN"
+        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
+
+      - name: Verify QA domain
+        if: inputs.environment == 'qa'
+        run: curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
+
+      - name: Verify production domains
+        if: inputs.environment == 'prod'
+        run: |
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_WWW_DOMAIN}"

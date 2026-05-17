@@ -96,7 +96,6 @@ https://<qa-supabase-project-ref>.supabase.co/functions/v1/razorpay-webhook
 
 ### Still blocked
 
-- QA publish/deploy is blocked on Cloudflare API token permission for Worker custom-domain routes.
 - QA Delhivery enablement is blocked on staging token, pickup location, GST, and HSN.
 - Prod publish/deploy is blocked until QA is validated and prod secrets are completed.
 - Edge Functions need a QA deploy after the latest Delhivery code changes.
