@@ -8,13 +8,15 @@
 }
 
 :root {
-  --color-canvas: #f4f2ed;
+  --color-canvas: #ffffff;
   --color-paper: #ffffff;
-  --color-surface: #f9f8f5;
+  --color-surface: #f4f2ed;
+  --color-surface-soft: #fbfaf8;
   --color-ink: #1c2e4a;
   --color-ink-soft: #31425c;
   --color-muted: #687184;
-  --color-line: #c9c7c3;
+  --color-line: #dedbd4;
+  --color-line-strong: #c9c7c3;
   --color-primary: #1c2e4a;
   --color-primary-dark: #132139;
   --color-accent-muted: #9b827f;
@@ -22,7 +24,8 @@
   --color-blush-surface: #f7f1ef;
   --site-header-height: 6.375rem;
   --sticky-panel-gap: 1.5rem;
-  --shadow-soft: 0 8px 18px rgb(28 46 74 / 0.06);
+  --radius-image: 0.1875rem;
+  --shadow-soft: 0 6px 14px rgb(28 46 74 / 0.045);
 }
 
 * {
@@ -94,15 +97,16 @@ button:disabled,
 
 @layer components {
   .fashion-container {
-    @apply mx-auto max-w-7xl px-5 sm:px-8;
+    @apply mx-auto max-w-[90rem] px-5 sm:px-8;
   }
 
   .fashion-eyebrow {
-    @apply text-xs font-semibold uppercase text-[var(--color-ink-soft)];
+    @apply text-[0.7rem] font-medium uppercase leading-4 text-[var(--color-ink-soft)];
+    letter-spacing: 0.08em;
   }
 
   .fashion-display {
-    @apply font-sans font-medium text-[var(--color-ink)];
+    @apply font-sans font-normal text-[var(--color-ink)];
   }
 
   .fashion-copy {
@@ -110,13 +114,13 @@ button:disabled,
   }
 
   .fashion-surface {
-    @apply border bg-[var(--color-surface)];
+    @apply border bg-[var(--color-paper)];
     border-color: var(--color-line);
     box-shadow: var(--shadow-soft);
   }
 
   .fashion-button-primary {
-    @apply inline-flex items-center justify-center rounded-full px-5 text-sm font-semibold shadow-sm transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
+    @apply inline-flex items-center justify-center rounded-full px-5 text-sm font-medium shadow-sm transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
     background: var(--color-primary);
     color: var(--color-paper);
     box-shadow: 0 6px 14px rgb(28 46 74 / 0.12);
@@ -135,7 +139,7 @@ button:disabled,
   }
 
   .fashion-button-secondary {
-    @apply inline-flex items-center justify-center rounded-full border px-5 text-sm font-semibold transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
+    @apply inline-flex items-center justify-center rounded-full border px-5 text-sm font-medium transition duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99];
     border-color: var(--color-line);
     background: var(--color-paper);
     color: var(--color-ink);

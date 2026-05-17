@@ -81,7 +81,7 @@ export function ProductFilters({
       className={joinClasses(
         'w-full min-w-0 self-start overflow-x-hidden',
         variant === 'panel'
-          ? 'fashion-surface space-y-7 rounded-lg bg-[var(--color-paper)] p-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
+          ? 'space-y-7 border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
           : 'space-y-6',
       )}
     >
@@ -129,7 +129,7 @@ export function ProductFilters({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search styles"
-            className="h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
+            className="h-11 w-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
           />
           {query ? (
             <Button

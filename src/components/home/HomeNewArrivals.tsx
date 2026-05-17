@@ -14,13 +14,13 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
   return (
     <section className="fashion-container py-10 lg:py-16">
       <div className="grid gap-8 border-y border-[var(--color-line)] py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {collageProducts.map((product, index) => (
             <Link
               key={product.productId}
               to="/products/$slug"
               params={{ slug: product.slug }}
-              className={`group overflow-hidden rounded-lg bg-[var(--color-line)] ${
+              className={`group overflow-hidden rounded-[var(--radius-image)] bg-[var(--color-surface)] ${
                 index === 0 ? 'row-span-2' : ''
               }`}
             >
@@ -54,14 +54,14 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
                 className="flex items-center justify-between gap-5 py-4 text-sm transition duration-150 ease-out hover:translate-x-1"
               >
                 <span>
-                  <span className="block font-medium text-[var(--color-ink)]">
+                  <span className="block font-normal text-[var(--color-ink)]">
                     {product.title}
                   </span>
                   <span className="mt-1 block text-[var(--color-muted)]">
                     {product.categoryLabel}
                   </span>
                 </span>
-                <span className="font-medium text-[var(--color-ink)]">
+                <span className="font-normal text-[var(--color-ink)]">
                   {formatPrice(product.sellingPricePaise)}
                 </span>
               </Link>

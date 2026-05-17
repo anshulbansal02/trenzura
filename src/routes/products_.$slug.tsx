@@ -89,7 +89,7 @@ function ProductPreviewPage() {
         Back to shop
       </Link>
 
-      <section className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:gap-14">
+      <section className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:gap-16">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <ProductGallery product={product} />
         </div>
@@ -103,7 +103,7 @@ function ProductPreviewPage() {
           <div className="flex items-start justify-between gap-5">
             <div>
               <p className="fashion-eyebrow">{product.categoryLabel}</p>
-              <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+              <h1 className="fashion-display mt-2 text-3xl leading-tight sm:text-[2.55rem]">
                 {product.title}
               </h1>
             </div>

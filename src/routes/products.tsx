@@ -101,7 +101,7 @@ function ProductsPage() {
       <div className="mb-10 flex flex-col gap-5 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="fashion-eyebrow">Fresh drops, every week</p>
-          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+          <h1 className="fashion-display mt-2 text-3xl leading-tight sm:text-[2.55rem]">
             Shop the collection
           </h1>
         </div>
@@ -126,6 +126,23 @@ function ProductsPage() {
               search={resolvedSearch}
               onSearchChange={updateSearch}
             />
+            <Dialog.Trigger
+              render={
+                <button
+                  type="button"
+                  className="mb-6 inline-flex h-11 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
+                  aria-label="Open product filters"
+                />
+              }
+            >
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
+              Filters
+              {activeFilters.length > 0 ? (
+                <span className="grid min-w-5 place-items-center bg-[var(--color-primary)] px-1.5 text-xs text-[var(--color-paper)]">
+                  {activeFilters.length}
+                </span>
+              ) : null}
+            </Dialog.Trigger>
             <ProductGrid products={results.products} />
           </section>
           <div className="hidden lg:block">
@@ -138,23 +155,6 @@ function ProductsPage() {
             />
           </div>
         </div>
-        <Dialog.Trigger
-          render={
-            <button
-              type="button"
-              className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.6rem)] right-5 z-30 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-paper)] shadow-sm transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
-              aria-label="Open product filters"
-            />
-          }
-        >
-          <SlidersHorizontal className="size-4" aria-hidden="true" />
-          Filters
-          {activeFilters.length > 0 ? (
-            <span className="grid min-w-5 place-items-center rounded-full bg-[var(--color-paper)] px-1.5 text-xs text-[var(--color-primary)]">
-              {activeFilters.length}
-            </span>
-          ) : null}
-        </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 lg:hidden" />
           <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center lg:hidden">

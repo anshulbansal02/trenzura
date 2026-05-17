@@ -92,7 +92,7 @@ export function ProductPurchasePanel({
     <>
       <div
         className={joinClasses(
-          isQuickLook ? '' : 'fashion-surface rounded-lg bg-[var(--color-paper)] p-4 lg:p-5',
+          isQuickLook ? '' : 'border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5',
         )}
       >
       <div className="flex items-start justify-between gap-5">
