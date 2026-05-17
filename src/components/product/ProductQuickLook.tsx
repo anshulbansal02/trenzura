@@ -66,7 +66,6 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                 <ProductPurchasePanel
                   product={product}
                   variant="quickLook"
-                  onAdded={() => onOpenChange(false)}
                 />
                 <p className="mt-5 border-t border-[var(--color-line)] pt-4 text-sm leading-6 text-[var(--color-muted)]">
                   {product.description}

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ShoppingBag, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { formatPrice } from '../../lib/format'
 import { ProductMedia } from '../product/ProductMedia'
@@ -10,20 +10,33 @@ export function AddToBagToast() {
   const cart = useOptionalCart()
   const dismissAddedItem = cart?.dismissAddedItem
   const openCart = cart?.openCart
+  const closeTimerRef = useRef<number | null>(null)
   const [visibleItem, setVisibleItem] = useState<AddedCartItem | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   const closeToast = useCallback(() => {
     setIsVisible(false)
-    window.setTimeout(() => {
+
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current)
+    }
+
+    closeTimerRef.current = window.setTimeout(() => {
       dismissAddedItem?.()
       setVisibleItem(null)
+      closeTimerRef.current = null
     }, 180)
   }, [dismissAddedItem])
 
   useEffect(() => {
     if (!cart?.addedItem) return
 
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+
+    setIsVisible(false)
     setVisibleItem(cart.addedItem)
     const frame = window.requestAnimationFrame(() => setIsVisible(true))
 
@@ -37,12 +50,21 @@ export function AddToBagToast() {
     return () => window.clearTimeout(timeout)
   }, [closeToast, isVisible, visibleItem])
 
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current)
+      }
+    },
+    [],
+  )
+
   if (!cart || !visibleItem) return null
 
   return (
     <div
       aria-live="polite"
-      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 shadow-sm transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
+      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 shadow-sm transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
         isVisible
           ? 'translate-y-0 opacity-100 sm:translate-y-0'
           : 'translate-y-2 opacity-0 sm:translate-y-2'

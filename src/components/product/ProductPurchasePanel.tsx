@@ -1,7 +1,7 @@
 import { Button } from '@base-ui/react/button'
 import { useNavigate } from '@tanstack/react-router'
 import { Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
 import type { Product } from '../../data/products'
@@ -9,24 +9,27 @@ import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/an
 import { formatPrice, joinClasses, standardShippingPaise } from '../../lib/format'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
 
+const addedMessageDurationMs = 4200
+
 type ProductPurchasePanelProps = {
   product: Product
   variant?: 'default' | 'quickLook'
-  onAdded?: () => void
 }
 
 export function ProductPurchasePanel({
   product,
   variant = 'default',
-  onAdded,
 }: ProductPurchasePanelProps) {
   const isQuickLook = variant === 'quickLook'
   const availableSizes = useMemo(
     () => product.sizes.filter((size) => size.stockAvailable > 0),
     [product.sizes],
   )
-  const [selectedSize, setSelectedSize] = useState(availableSizes[0]?.label ?? '')
+  const defaultSize = availableSizes[0]?.label ?? ''
+  const [selectedSize, setSelectedSize] = useState(defaultSize)
   const [quantity, setQuantity] = useState(1)
+  const [addedMessage, setAddedMessage] = useState('')
+  const addedMessageTimerRef = useRef<number | null>(null)
   const { addItem } = useCart()
   const navigate = useNavigate()
   const selectedInventory = availableSizes.find((size) => size.label === selectedSize)
@@ -34,9 +37,19 @@ export function ProductPurchasePanel({
   const canAddToCart = Boolean(selectedInventory && quantity >= 1 && quantity <= maxQuantity)
 
   useEffect(() => {
-    setSelectedSize(availableSizes[0]?.label ?? '')
+    setSelectedSize(defaultSize)
     setQuantity(1)
-  }, [availableSizes, product.productId])
+    setAddedMessage('')
+  }, [defaultSize, product.productId])
+
+  useEffect(
+    () => () => {
+      if (addedMessageTimerRef.current) {
+        window.clearTimeout(addedMessageTimerRef.current)
+      }
+    },
+    [],
+  )
 
   function addCurrentSelection() {
     if (!canAddToCart) return
@@ -47,7 +60,7 @@ export function ProductPurchasePanel({
       source: isQuickLook ? 'quick_look' : 'product_page',
     })
     addItem({ product, size: selectedSize, quantity })
-    onAdded?.()
+    showAddedMessage()
   }
 
   function buyCurrentSelection() {
@@ -60,6 +73,18 @@ export function ProductPurchasePanel({
     })
     addItem({ product, size: selectedSize, quantity })
     void navigate({ to: '/checkout' })
+  }
+
+  function showAddedMessage() {
+    if (addedMessageTimerRef.current) {
+      window.clearTimeout(addedMessageTimerRef.current)
+    }
+
+    setAddedMessage('Added to bag')
+    addedMessageTimerRef.current = window.setTimeout(() => {
+      setAddedMessage('')
+      addedMessageTimerRef.current = null
+    }, addedMessageDurationMs)
   }
 
   return (
@@ -174,6 +199,12 @@ export function ProductPurchasePanel({
         ) : null}
       </div>
 
+      {addedMessage ? (
+        <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">
+          {addedMessage}
+        </p>
+      ) : null}
+
       {!isQuickLook ? (
         <div className="mt-5">
           <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
@@ -238,8 +269,14 @@ export function ProductPurchasePanel({
               <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
                 {selectedSize ? `${product.title} - ${selectedSize}` : product.title}
               </p>
-              <p className="mt-0.5 text-sm text-[var(--color-muted)]">
-                {formatPrice(product.sellingPricePaise)}
+              <p
+                role={addedMessage ? 'status' : undefined}
+                className={joinClasses(
+                  'mt-0.5 text-sm',
+                  addedMessage ? 'font-semibold text-emerald-700' : 'text-[var(--color-muted)]',
+                )}
+              >
+                {addedMessage || formatPrice(product.sellingPricePaise)}
               </p>
             </div>
             <div className="flex gap-2">
