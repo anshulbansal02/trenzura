@@ -8,7 +8,8 @@
     "#shared/*": "./shared/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "PORTLESS_TLD=localhost PORTLESS_HTTPS=0 PORTLESS_PORT=80 portless trenzura --app-port 37149 pnpm run dev:app",
+    "dev:app": "vite dev",
     "sync:products": "tsx scripts/sync-products.ts",
     "sync:images:r2": "tsx scripts/sync-drive-images-to-r2.ts",
     "sync:images:manifest": "tsx scripts/sync-drive-images-to-r2.ts --manifest-only",
@@ -22,7 +23,8 @@
     "build:ci": "vite build",
     "prebuild": "pnpm prepare:generated",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "PORTLESS_TLD=localhost PORTLESS_HTTPS=0 PORTLESS_PORT=80 portless preview.trenzura --app-port 39217 pnpm run preview:app",
+    "preview:app": "vite preview",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
@@ -46,6 +48,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "portless": "^0.13.0",
     "sharp": "0.34.5",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",

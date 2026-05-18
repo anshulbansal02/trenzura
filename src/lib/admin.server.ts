@@ -407,7 +407,12 @@ async function requireAdminEmail() {
 
 function resolveLocalAdminEmail(env: AdminEnv) {
   const host = getRequestHost()
-  const isLocalHost = host.startsWith('localhost') || host.startsWith('127.0.0.1')
+  const hostname = normalizeRequestHostname(host)
+  const isLocalHost =
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1'
   const email = env.adminDevEmail?.toLowerCase()
 
   if (!env.adminDevBypass || !isLocalDevRuntime() || !isLocalHost || !email) return null
@@ -416,6 +421,15 @@ function resolveLocalAdminEmail(env: AdminEnv) {
   }
 
   return email
+}
+
+function normalizeRequestHostname(host: string) {
+  if (host.startsWith('[')) {
+    const closingBracket = host.indexOf(']')
+    if (closingBracket > 1) return host.slice(1, closingBracket).toLowerCase()
+  }
+
+  return (host.split(':')[0] ?? '').toLowerCase()
 }
 
 function isLocalDevRuntime() {

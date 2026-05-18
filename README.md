@@ -11,6 +11,15 @@ pnpm install
 pnpm dev
 ```
 
+The storefront uses Portless for a stable named local URL:
+
+```text
+http://trenzura.localhost
+```
+
+See `docs/local-development.md` for local URLs and Supabase ports. Do not use standard dev ports
+such as `3000`, `4000`, `8000`, or `8080` for this project.
+
 ## Building
 
 To build this application:
