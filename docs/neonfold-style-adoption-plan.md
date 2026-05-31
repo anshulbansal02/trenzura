@@ -384,6 +384,8 @@ Open audit items before calling the full goal complete:
 - Re-run `pnpm typecheck` and `pnpm build` after the final layout pass.
 - Verify admin on QA after Cloudflare Access/email delivery is working; the local admin page renders
   and has been visually checked, but the protected QA route remains externally gated.
+- Re-run admin screenshots after the latest admin layout polish. The route returns `200` locally and
+  build checks pass, but the browser transport was unavailable during this pass.
 - Re-check production/QA pages after deployment because live product images and CDN behavior are part
   of the visual result.
 

@@ -60,7 +60,7 @@ export function AdminActionPanel({
           <div className="flex size-10 shrink-0 items-center justify-center bg-[var(--color-ink)] text-[var(--color-paper)]">
             <Rocket className="size-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-medium text-[var(--color-ink)]">
               Publish catalog
             </h2>
@@ -81,7 +81,7 @@ export function AdminActionPanel({
                 key={environment}
                 type="button"
                 onClick={() => onPublishEnvironmentChange(environment)}
-                className={`h-10 border px-3 text-sm font-medium uppercase transition ${
+                className={`h-10 border px-3 text-sm font-medium uppercase transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
                   publishEnvironment === environment
                     ? 'border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-muted)] hover:text-[var(--color-ink)]'
@@ -107,7 +107,7 @@ export function AdminActionPanel({
         <Button
           type="submit"
           disabled={publishStatus === 'loading'}
-          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
+          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500 disabled:active:scale-100"
         >
           {publishStatus === 'loading' ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
@@ -121,7 +121,7 @@ export function AdminActionPanel({
           type="button"
           onClick={onRefreshPublishStatus}
           disabled={publishStatus === 'loading'}
-          className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
+          className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500 disabled:active:scale-100"
         >
           <RefreshCw className="size-4" aria-hidden="true" />
           Refresh publish status
@@ -174,7 +174,7 @@ export function AdminActionPanel({
           <div className="flex size-10 shrink-0 items-center justify-center bg-[var(--color-ink)] text-[var(--color-paper)]">
             <RotateCw className="size-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-medium text-[var(--color-ink)]">
               Retry shipment
             </h2>
@@ -196,7 +196,7 @@ export function AdminActionPanel({
         <Button
           type="submit"
           disabled={retryStatus === 'loading'}
-          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
+          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500 disabled:active:scale-100"
         >
           {retryStatus === 'loading' ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />

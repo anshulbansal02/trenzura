@@ -1,10 +1,7 @@
 import { Button } from '@base-ui/react/button'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn, useServerFn } from '@tanstack/react-start'
-import {
-  RefreshCw,
-  ShieldCheck,
-} from 'lucide-react'
+import { RefreshCw, ShieldCheck } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 
@@ -166,63 +163,65 @@ function AdminPage() {
   }
 
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
+    <main className="px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto max-w-[90rem]">
-      <div className="mb-7 flex flex-col gap-5 border-b border-[var(--color-line)] pb-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)]">
-            <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
-            {dashboard.adminEmail}
+        <div className="mb-7 grid gap-5 border-b border-[var(--color-line)] pb-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="min-w-0">
+            <div className="inline-flex max-w-full items-center gap-2 border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)]">
+              <ShieldCheck className="size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
+              <span className="min-w-0 truncate">{dashboard.adminEmail}</span>
+            </div>
+            <h1 className="mt-4 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
+              Admin
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
+              Order, payment, shipment, integration, and inventory signals from Supabase ops views.
+            </p>
           </div>
-          <h1 className="mt-4 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">Admin</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-            Order, payment, shipment, integration, and inventory signals from Supabase ops views.
-          </p>
+          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+            <p className="text-xs font-medium text-[var(--color-muted)]">
+              Updated {formatAdminDateTime(dashboard.loadedAt)}
+            </p>
+            <Button
+              type="button"
+              onClick={refreshDashboard}
+              className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
+            >
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Refresh
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)]">
-            Updated {formatAdminDateTime(dashboard.loadedAt)}
-          </p>
-          <Button
-            type="button"
-            onClick={refreshDashboard}
-            className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
-          >
-            <RefreshCw className="size-4" aria-hidden="true" />
-            Refresh
-          </Button>
-        </div>
-      </div>
 
-      <AdminMetrics dashboard={dashboard} />
+        <AdminMetrics dashboard={dashboard} />
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0">
-          <AdminViewTabs
-            activeView={activeView}
-            counts={dashboard.shownCounts}
-            onChange={setActiveView}
+        <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+          <div className="min-w-0">
+            <AdminViewTabs
+              activeView={activeView}
+              counts={dashboard.shownCounts}
+              onChange={setActiveView}
+            />
+            <AdminDataTable dashboard={dashboard} activeView={activeView} rows={activeRows} />
+          </div>
+
+          <AdminActionPanel
+            publishEnvironment={publishEnvironment}
+            publishConfirmation={publishConfirmation}
+            publishStatus={publishStatus}
+            publishMessage={publishMessage}
+            publishRuns={publishRuns}
+            onPublishEnvironmentChange={setPublishEnvironment}
+            onPublishConfirmationChange={setPublishConfirmation}
+            onPublishSubmit={submitPublishCatalog}
+            onRefreshPublishStatus={refreshPublishStatus}
+            orderNumber={orderNumber}
+            retryStatus={retryStatus}
+            retryMessage={retryMessage}
+            onOrderNumberChange={setOrderNumber}
+            onRetrySubmit={submitRetry}
           />
-          <AdminDataTable dashboard={dashboard} activeView={activeView} rows={activeRows} />
-        </div>
-
-        <AdminActionPanel
-          publishEnvironment={publishEnvironment}
-          publishConfirmation={publishConfirmation}
-          publishStatus={publishStatus}
-          publishMessage={publishMessage}
-          publishRuns={publishRuns}
-          onPublishEnvironmentChange={setPublishEnvironment}
-          onPublishConfirmationChange={setPublishConfirmation}
-          onPublishSubmit={submitPublishCatalog}
-          onRefreshPublishStatus={refreshPublishStatus}
-          orderNumber={orderNumber}
-          retryStatus={retryStatus}
-          retryMessage={retryMessage}
-          onOrderNumberChange={setOrderNumber}
-          onRetrySubmit={submitRetry}
-        />
-      </section>
+        </section>
       </div>
     </main>
   )

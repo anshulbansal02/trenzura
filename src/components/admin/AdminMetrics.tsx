@@ -14,7 +14,7 @@ export function AdminMetrics({ dashboard }: AdminMetricsProps) {
     dashboard.shownCounts.integrationErrors
 
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-px border border-[var(--color-line)] bg-[var(--color-line)] md:grid-cols-4">
       <MetricCard
         label="Open issues"
         value={criticalCount}
@@ -55,15 +55,17 @@ function MetricCard({
   Icon: LucideIcon
 }) {
   return (
-    <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+    <div className="min-w-0 bg-[var(--color-surface)] p-3 sm:p-4">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-medium text-[var(--color-muted)]">{label}</p>
+        <p className="min-w-0 text-xs font-medium uppercase leading-4 tracking-[0.08em] text-[var(--color-muted)] sm:text-sm sm:normal-case sm:tracking-normal">
+          {label}
+        </p>
         <Icon
-          className={`size-5 ${tone === 'alert' ? 'text-[var(--color-primary)]' : 'text-[var(--color-accent-muted)]'}`}
+          className={`size-5 shrink-0 ${tone === 'alert' ? 'text-[var(--color-primary)]' : 'text-[var(--color-accent-muted)]'}`}
           aria-hidden="true"
         />
       </div>
-      <p className="mt-3 text-3xl font-medium text-[var(--color-ink)]">{value}</p>
+      <p className="mt-3 text-3xl font-medium leading-none text-[var(--color-ink)]">{value}</p>
     </div>
   )
 }
