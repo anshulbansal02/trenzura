@@ -21,7 +21,7 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
         <Link
           to="/products/$slug"
           params={{ slug: featureProduct.slug }}
-          className="group relative aspect-[5/4] overflow-hidden bg-[var(--color-surface)]"
+          className="group relative aspect-[5/4] overflow-hidden bg-[var(--color-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
         >
           <img
             {...getProductImageProps(featureProduct, 0, '(min-width: 1024px) 54vw, 100vw')}
@@ -43,7 +43,7 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
           </p>
           <Link
             to="/products"
-            className="mt-7 inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-6 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            className="mt-7 inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-6 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             Shop new arrivals
           </Link>
@@ -55,7 +55,7 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
                   key={product.productId}
                   to="/products/$slug"
                   params={{ slug: product.slug }}
-                  className="group block"
+                  className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   <div className="aspect-[4/5] overflow-hidden bg-[var(--color-surface)]">
                     <img

@@ -42,7 +42,7 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={() => setQuickLookOpen(true)}
           aria-label={`Quick look at ${product.title}`}
-          className="absolute bottom-3 right-3 inline-flex h-9 translate-y-1 items-center gap-1.5 border border-[var(--color-line)] bg-[var(--color-paper)]/92 px-3 text-xs font-medium text-[var(--color-ink)] opacity-0 backdrop-blur-sm transition duration-300 ease-out hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] group-hover/card:translate-y-0 group-hover/card:opacity-100 focus:translate-y-0 focus:opacity-100 active:scale-[0.98]"
+          className="absolute bottom-3 right-3 inline-flex h-9 translate-y-1 items-center gap-1.5 border border-[var(--color-line)] bg-[var(--color-paper)]/92 px-3 text-xs font-medium text-[var(--color-ink)] opacity-0 backdrop-blur-sm transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] group-hover/card:translate-y-0 group-hover/card:opacity-100 focus:translate-y-0 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.98]"
         >
           <Eye className="size-3.5" aria-hidden="true" />
           Quick look
