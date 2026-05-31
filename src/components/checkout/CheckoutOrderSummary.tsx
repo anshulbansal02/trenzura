@@ -25,9 +25,9 @@ export function CheckoutOrderSummary({
   hasConfirmedTotal,
 }: CheckoutOrderSummaryProps) {
   return (
-    <aside className="fashion-surface order-first self-start rounded-lg bg-[var(--color-paper)] p-5 lg:order-none lg:sticky lg:top-24">
+    <aside className="order-first self-start border border-[var(--color-line)] bg-[var(--color-paper)] p-5 lg:order-none lg:sticky lg:top-24">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-serif text-2xl text-[var(--color-ink)]">Order summary</h2>
+        <h2 className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">Order summary</h2>
         <p className="text-sm text-[var(--color-muted)]">
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
         </p>
@@ -40,14 +40,14 @@ export function CheckoutOrderSummary({
             <div className="min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[var(--color-ink)]">
+                  <p className="text-sm font-medium text-[var(--color-ink)]">
                     {line.product.title}
                   </p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">
                     Size {line.size} / Qty {line.quantity}
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-[var(--color-ink)]">
+                <p className="text-sm font-medium text-[var(--color-ink)]">
                   {formatPrice(line.product.sellingPricePaise * line.quantity)}
                 </p>
               </div>
@@ -62,7 +62,7 @@ export function CheckoutOrderSummary({
           <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
         ) : null}
         <SummaryLine label="Shipping" value={formatShippingAmount(summaryTotals.shipping)} />
-        <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
+        <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-medium text-[var(--color-ink)]">
           <span>Total</span>
           <span>{formatPrice(summaryTotals.total)}</span>
         </div>

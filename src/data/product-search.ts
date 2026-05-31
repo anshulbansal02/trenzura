@@ -1,7 +1,7 @@
 import { create, insertMultiple, search } from '@orama/orama'
 
 import type { Product } from './product-schema'
-import { products } from './products'
+import { categoryLabels, productCategories, products } from './products'
 
 export type ProductSort = 'recommended' | 'newest' | 'price-asc' | 'price-desc' | 'discount-desc'
 
@@ -101,7 +101,7 @@ export function getSmartSearchLabels(query: string) {
   const labels: string[] = []
 
   if (intent.category) {
-    labels.push(intent.category === 'sets' ? 'Sets' : 'Kurtis')
+    labels.push(categoryLabels[intent.category] ?? intent.category)
   }
 
   for (const size of intent.sizes) {
@@ -246,6 +246,9 @@ type SearchIntent = {
 }
 
 const sizeTokens = new Set(['S', 'M', 'L', 'XL', 'XXL'])
+const coOrdSetCategory = productCategories.find((category) => category.includes('set'))
+const kurtiCategory = productCategories.find((category) => category.includes('kurti'))
+const shortTopCategory = productCategories.find((category) => category.includes('short'))
 
 function parseSearchIntent(query: string): SearchIntent {
   let normalizedQuery = query.toLowerCase().trim()
@@ -295,9 +298,11 @@ function parseSearchIntent(query: string): SearchIntent {
   }
 
   if (/\b(?:sets?|coordinated)\b/.test(normalizedQuery)) {
-    category = 'sets'
-  } else if (/\b(?:kurti|kurtis)\b/.test(normalizedQuery)) {
-    category = 'kurtis'
+    category = coOrdSetCategory
+  } else if (/\b(?:short\s+tops?|tops?)\b/.test(normalizedQuery)) {
+    category = shortTopCategory
+  } else if (/\b(?:kurti|kurtis|kurta|kurtas)\b/.test(normalizedQuery)) {
+    category = kurtiCategory
   }
 
   const searchTerm = normalizedQuery

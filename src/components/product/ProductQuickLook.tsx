@@ -28,7 +28,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/45 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="relative max-h-[100svh] w-full overflow-y-auto rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-6xl sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="relative max-h-[100svh] w-full overflow-y-auto border border-[var(--color-line)] bg-[var(--color-paper)] outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-6xl sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
               <div className="min-w-0">
                 <Dialog.Title className="truncate font-serif text-2xl text-[var(--color-ink)]">
@@ -37,11 +37,11 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                 <Dialog.Description className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-muted)]">
                   <span>{product.categoryLabel}</span>
                   <span aria-hidden="true">/</span>
-                  <span className="font-semibold text-[var(--color-ink)]">
+                  <span className="font-medium text-[var(--color-ink)]">
                     {formatPrice(product.sellingPricePaise)}
                   </span>
                   {product.discountPercent > 0 ? (
-                    <span className="font-semibold text-[var(--color-primary)]">
+                    <span className="font-medium text-[var(--color-primary)]">
                       Save {formatPrice(product.mrpPaise - product.sellingPricePaise)}
                     </span>
                   ) : null}
@@ -50,7 +50,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
               <div className="flex shrink-0 items-center gap-2">
                 <Dialog.Close
                   aria-label="Close quick look"
-                  className="grid size-10 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                  className="grid size-10 place-items-center border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   <X className="size-4" aria-hidden="true" />
                 </Dialog.Close>
@@ -62,7 +62,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                 <ProductGallery product={product} imageFit="contain" variant="quickLook" />
               </div>
 
-              <section className="rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-4 lg:sticky lg:top-24 lg:self-start lg:p-5">
+              <section className="border border-[var(--color-line)] bg-[var(--color-paper)] p-4 lg:sticky lg:top-24 lg:self-start lg:p-5">
                 <ProductPurchasePanel
                   product={product}
                   variant="quickLook"
@@ -77,7 +77,7 @@ export function ProductQuickLook({ product, open, onOpenChange }: ProductQuickLo
                   to="/products/$slug"
                   params={{ slug: product.slug }}
                   onClick={() => onOpenChange(false)}
-                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:bg-white hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-blush)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                 >
                   More about this piece
                   <ArrowRight className="size-4" aria-hidden="true" />

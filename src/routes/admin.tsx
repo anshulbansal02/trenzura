@@ -166,26 +166,27 @@ function AdminPage() {
   }
 
   return (
-    <main className="fashion-container py-8 lg:py-10">
+    <main className="px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[90rem]">
       <div className="mb-7 flex flex-col gap-5 border-b border-[var(--color-line)] pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)]">
+          <div className="inline-flex items-center gap-2 border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)]">
             <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
             {dashboard.adminEmail}
           </div>
-          <h1 className="fashion-display mt-4 text-4xl sm:text-5xl">Admin</h1>
+          <h1 className="mt-4 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">Admin</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
             Order, payment, shipment, integration, and inventory signals from Supabase ops views.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs font-semibold text-[var(--color-muted)]">
+          <p className="text-xs font-medium text-[var(--color-muted)]">
             Updated {formatAdminDateTime(dashboard.loadedAt)}
           </p>
           <Button
             type="button"
             onClick={refreshDashboard}
-            className="fashion-button-secondary h-10 gap-2 px-4"
+            className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
             Refresh
@@ -222,6 +223,7 @@ function AdminPage() {
           onRetrySubmit={submitRetry}
         />
       </section>
+      </div>
     </main>
   )
 }

@@ -1,6 +1,6 @@
 import { Dialog } from '@base-ui/react/dialog'
 import { Expand, X } from 'lucide-react'
-import { useEffect, useRef, useState, type MouseEvent, type UIEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type UIEvent } from 'react'
 
 import type { Product } from '../../data/products'
 import { joinClasses } from '../../lib/format'
@@ -33,7 +33,6 @@ export function ProductGallery({
   const isQuickLook = variant === 'quickLook'
   const canMagnify = !isQuickLook && imageFit === 'cover'
   const activeImage = getProductImage(product, activeIndex)
-  const activeImageProps = getProductImageProps(product, activeIndex, '(min-width: 1024px) 50vw, 100vw')
 
   useEffect(() => {
     setActiveIndex(0)
@@ -95,18 +94,20 @@ export function ProductGallery({
               }}
               className="relative aspect-[4/5] min-w-full max-w-full shrink-0 snap-center overflow-hidden"
             >
-              <img
-                {...getProductImageProps(product, index, '100vw')}
+              <GalleryImage
+                product={product}
+                index={index}
+                sizes="100vw"
                 alt={index === 0 ? product.imageAlt : ''}
                 className={joinClasses(
-                  'h-full w-full',
-                  imageFit === 'contain' ? 'object-contain' : 'object-cover',
+                  'h-full w-full text-transparent',
+                  imageFit === 'contain' ? 'object-contain' : 'object-cover object-top',
                 )}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
                 fetchPriority={index === 0 ? 'high' : undefined}
               />
-              <span className="absolute bottom-3 right-3 grid size-10 place-items-center rounded-full bg-[var(--color-paper)]/90 text-[var(--color-ink)] shadow-sm backdrop-blur">
+              <span className="absolute bottom-3 right-3 grid size-10 place-items-center bg-[var(--color-paper)]/90 text-[var(--color-ink)] backdrop-blur">
                 <Expand className="size-4" aria-hidden="true" />
               </span>
             </button>
@@ -125,16 +126,18 @@ export function ProductGallery({
                 aria-pressed={activeIndex === index}
                 onClick={() => showMobileImage(index)}
                 className={joinClasses(
-                  'aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
+                  'relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   activeIndex === index
                     ? 'border-[var(--color-primary)]'
                     : 'border-transparent',
                 )}
               >
-                <img
-                  {...getProductImageProps(product, index, '64px')}
+                <GalleryImage
+                  product={product}
+                  index={index}
+                  sizes="64px"
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover text-transparent"
                   loading="lazy"
                   decoding="async"
                 />
@@ -156,22 +159,26 @@ export function ProductGallery({
           <div
             data-gallery-frame
             className={joinClasses(
-              'quick-gallery-main overflow-hidden rounded-[var(--radius-image)]',
+              'quick-gallery-main relative overflow-hidden rounded-[var(--radius-image)]',
               isQuickLook
                 ? 'h-[min(42svh,390px)] bg-[var(--color-surface)] sm:h-[min(54svh,520px)] lg:h-[min(62vh,620px)]'
                 : 'cursor-zoom-in bg-[var(--color-line)]',
             )}
           >
-            <img
-              {...activeImageProps}
+            <GalleryImage
+              product={product}
+              index={activeIndex}
+              sizes="(min-width: 1024px) 50vw, 100vw"
               alt={product.imageAlt}
               loading="eager"
               decoding="async"
               fetchPriority="high"
               className={joinClasses(
-                'h-full w-full',
-                isQuickLook ? 'aspect-[4/5] lg:aspect-auto' : 'aspect-[4/5] lg:aspect-[5/6]',
-                imageFit === 'contain' ? 'object-contain' : 'object-cover',
+                'h-full w-full text-transparent',
+                isQuickLook
+                  ? 'aspect-[4/5] lg:aspect-auto'
+                  : 'aspect-[4/5] lg:h-[calc(100svh-var(--site-header-height)-2rem)] lg:min-h-[680px]',
+                imageFit === 'contain' ? 'object-contain' : 'object-cover object-top',
               )}
             />
           </div>
@@ -179,7 +186,7 @@ export function ProductGallery({
             <div
               aria-hidden="true"
               className={joinClasses(
-                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-[var(--color-paper)] bg-[var(--color-surface)] shadow-sm ring-2 ring-[var(--color-primary)]/15 transition-opacity duration-150 lg:block',
+                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden border-2 border-[var(--color-paper)] bg-[var(--color-surface)] ring-2 ring-[var(--color-primary)]/15 transition-opacity duration-150 lg:block',
                 magnifier.active ? 'opacity-100' : 'opacity-0',
               )}
               style={{
@@ -190,8 +197,11 @@ export function ProductGallery({
               <img
                 src={activeImage}
                 alt=""
-                className="absolute max-w-none object-cover"
+                className="absolute max-w-none object-cover text-transparent"
                 draggable={false}
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
                 style={{
                   height: `${magnifier.height}px`,
                   left: `${MAGNIFIER_SIZE / 2 - magnifier.x}px`,
@@ -217,16 +227,18 @@ export function ProductGallery({
                 aria-pressed={activeIndex === index}
                 onClick={() => setActiveIndex(index)}
                 className={joinClasses(
-                  'aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 xl:w-20',
+                  'relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[var(--radius-image)] border bg-[var(--color-surface)] transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 xl:w-20',
                   activeIndex === index
                     ? 'border-[var(--color-primary)]'
                     : 'border-transparent hover:border-[var(--color-line)]',
                 )}
               >
-                <img
-                  {...getProductImageProps(product, index, '(min-width: 1280px) 80px, 64px')}
+                <GalleryImage
+                  product={product}
+                  index={index}
+                  sizes="(min-width: 1280px) 80px, 64px"
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover text-transparent"
                   loading="lazy"
                   decoding="async"
                 />
@@ -244,17 +256,19 @@ export function ProductGallery({
               <Dialog.Title className="sr-only">{product.title} images</Dialog.Title>
               <Dialog.Close
                 aria-label="Close image viewer"
-                className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur transition active:scale-95"
+                className="absolute right-2 top-2 z-10 grid size-11 place-items-center bg-[var(--color-paper)]/92 text-[var(--color-ink)] backdrop-blur transition active:scale-95"
               >
                 <X className="size-5" aria-hidden="true" />
               </Dialog.Close>
               <div className="flex snap-x snap-mandatory overflow-x-auto">
                 {product.images.map((image, index) => (
-                  <div key={image} className="flex h-[82svh] w-full shrink-0 snap-center items-center">
-                    <img
-                      {...getProductImageProps(product, index, '100vw')}
+                  <div key={image} className="relative flex h-[82svh] w-full shrink-0 snap-center items-center overflow-hidden">
+                    <GalleryImage
+                      product={product}
+                      index={index}
+                      sizes="100vw"
                       alt={index === 0 ? product.imageAlt : ''}
-                      className="max-h-full w-full object-contain"
+                      className="max-h-full w-full object-contain text-transparent"
                       loading="lazy"
                       decoding="async"
                     />
@@ -265,6 +279,57 @@ export function ProductGallery({
           </Dialog.Viewport>
         </Dialog.Portal>
       </Dialog.Root>
+    </>
+  )
+}
+
+type GalleryImageProps = {
+  alt: string
+  className: string
+  decoding?: 'async' | 'auto' | 'sync'
+  draggable?: boolean
+  fetchPriority?: 'auto' | 'high' | 'low'
+  index: number
+  loading?: 'eager' | 'lazy'
+  product: Product
+  sizes: string
+  style?: CSSProperties
+}
+
+function GalleryImage({
+  alt,
+  className,
+  decoding,
+  draggable,
+  fetchPriority,
+  index,
+  loading,
+  product,
+  sizes,
+  style,
+}: GalleryImageProps) {
+  const [broken, setBroken] = useState(false)
+
+  return (
+    <>
+      {broken ? (
+        <div className="absolute inset-0 bg-[var(--color-surface)]">
+          <div className="absolute inset-x-0 bottom-0 h-[38%] bg-[var(--color-blush)]/60" />
+          <div className="absolute inset-x-0 bottom-[38%] h-[7%] bg-[var(--color-line-strong)]" />
+          <div className="absolute bottom-0 right-0 h-[22%] w-[38%] bg-[var(--color-primary)]/85" />
+        </div>
+      ) : null}
+      <img
+        {...getProductImageProps(product, index, sizes)}
+        alt={alt}
+        className={joinClasses(className, broken ? 'opacity-0' : 'opacity-100')}
+        decoding={decoding}
+        draggable={draggable}
+        fetchPriority={fetchPriority}
+        loading={loading}
+        onError={() => setBroken(true)}
+        style={style}
+      />
     </>
   )
 }

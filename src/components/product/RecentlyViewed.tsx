@@ -85,17 +85,17 @@ export function RecentlyViewedRail({
     <section className={joinClasses(className)}>
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="fashion-eyebrow">
+          <p className="text-[0.6875rem] font-medium uppercase leading-4 tracking-[0.12em] text-[var(--color-muted)]">
             {recentProducts.length > 0 ? 'Continue browsing' : 'From the edit'}
           </p>
-          <h2 className={joinClasses('fashion-display mt-2', compact ? 'text-2xl' : 'text-3xl')}>
+          <h2 className={joinClasses('mt-2 font-serif font-normal leading-none text-[var(--color-ink)]', compact ? 'text-3xl' : 'text-5xl')}>
             {heading}
           </h2>
         </div>
         {!compact ? (
           <Link
             to="/products"
-            className="hidden text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] sm:inline"
+            className="hidden text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:underline sm:inline"
           >
             View all
           </Link>
@@ -115,9 +115,9 @@ export function RecentlyViewedRail({
             onClick={onProductClick}
             className="group min-w-0"
           >
-            <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
+            <ProductMedia product={product} className="aspect-[4/5]" hoverZoom />
             <div className="mt-3 min-w-0">
-              <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
+              <p className="truncate text-sm font-medium text-[var(--color-ink)]">
                 {product.title}
               </p>
               <p className="mt-1 text-sm text-[var(--color-muted)]">

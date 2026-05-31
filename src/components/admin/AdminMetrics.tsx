@@ -55,15 +55,15 @@ function MetricCard({
   Icon: LucideIcon
 }) {
   return (
-    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-sm">
+    <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-semibold text-[var(--color-muted)]">{label}</p>
+        <p className="text-sm font-medium text-[var(--color-muted)]">{label}</p>
         <Icon
           className={`size-5 ${tone === 'alert' ? 'text-[var(--color-primary)]' : 'text-[var(--color-accent-muted)]'}`}
           aria-hidden="true"
         />
       </div>
-      <p className="mt-3 text-3xl font-semibold text-[var(--color-ink)]">{value}</p>
+      <p className="mt-3 text-3xl font-medium text-[var(--color-ink)]">{value}</p>
     </div>
   )
 }

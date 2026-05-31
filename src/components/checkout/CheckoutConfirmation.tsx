@@ -15,17 +15,17 @@ type CheckoutConfirmationProps = {
 
 export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirmationProps) {
   return (
-    <main className="fashion-container py-12 lg:py-16">
+    <main className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
       <section className="mx-auto max-w-3xl text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-accent-muted)] text-white">
+        <span className="mx-auto grid size-14 place-items-center bg-[var(--color-accent-muted)] text-[var(--color-paper)]">
           {confirmation.needsReview ? (
             <AlertTriangle className="size-6" aria-hidden="true" />
           ) : (
             <CheckCircle2 className="size-6" aria-hidden="true" />
           )}
         </span>
-        <p className="fashion-eyebrow mt-6">Order {confirmation.orderNumber}</p>
-        <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+        <p className="mt-6 text-sm font-medium text-[var(--color-muted)]">Order {confirmation.orderNumber}</p>
+        <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
           {confirmation.needsReview ? 'Payment received' : 'Order confirmed'}
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--color-muted)]">
@@ -33,7 +33,7 @@ export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirma
         </p>
       </section>
 
-      <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-lg bg-[var(--color-paper)] p-5">
+      <section className="mx-auto mt-10 max-w-3xl border-y border-[var(--color-line)] py-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <ConfirmationLine label="Order number" value={confirmation.orderNumber} />
           <ConfirmationLine label="Payment reference" value={confirmation.paymentId ?? 'Recorded'} />
@@ -56,7 +56,7 @@ export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirma
             render={
               <Link
                 to="/products"
-                className="fashion-button-secondary h-11 justify-center px-5"
+                className="inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-200 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
               />
             }
           >
@@ -70,11 +70,11 @@ export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirma
 
 function ConfirmationLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-left">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+    <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-left">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-muted)]">
         {label}
       </p>
-      <p className="mt-2 break-words text-sm font-semibold text-[var(--color-ink)]">{value}</p>
+      <p className="mt-2 break-words text-sm font-medium text-[var(--color-ink)]">{value}</p>
     </div>
   )
 }

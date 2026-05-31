@@ -260,213 +260,227 @@ function CheckoutPage() {
 
   if (lines.length === 0) {
     return (
-      <main className="mx-auto flex min-h-[70svh] max-w-3xl items-center justify-center px-5 py-16 text-center sm:px-8">
-        <div>
-          <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-3xl">Your bag is empty</h1>
-          <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
-            Choose a style and size to begin your order.
-          </p>
-          <Button
-            nativeButton={false}
-            render={
-              <Link
-                to="/products"
-                className="fashion-button-primary mt-7 h-11 px-5"
-              />
-            }
-          >
-            Continue shopping
-          </Button>
-        </div>
+      <main className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto flex min-h-[58svh] max-w-3xl items-center border-b border-[var(--color-line)] pb-10 text-center">
+          <div className="mx-auto">
+            <p className="text-sm font-medium text-[var(--color-muted)]">Checkout</p>
+            <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
+              Your bag is empty
+            </h1>
+            <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
+              Choose a style and size to begin your order.
+            </p>
+            <Button
+              nativeButton={false}
+              render={
+                <Link
+                  to="/products"
+                  className="mt-7 inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
+                />
+              }
+            >
+              Continue shopping
+            </Button>
+          </div>
+        </section>
       </main>
     )
   }
 
   return (
-    <main className="fashion-container pb-36 pt-10 lg:py-14">
-      <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+    <main className="px-4 pb-36 pt-8 sm:px-6 sm:pt-8 lg:px-8 lg:pb-20 lg:pt-4">
+      <div className="mx-auto max-w-[75rem]">
+        <div className="border-b border-[var(--color-line)] pb-7">
+          <p className="text-sm font-medium text-[var(--color-muted)]">Checkout</p>
+          <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
             Delivery and payment
           </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--color-muted)]">
+            Add your delivery details, review your bag, and pay securely when everything looks right.
+          </p>
         </div>
-        <p className="fashion-copy max-w-xl">
-          Add your delivery details, review your bag, and pay securely when everything looks right.
-        </p>
-      </div>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <form id="checkout-form" onSubmit={submitCheckout} className="space-y-8">
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Contact</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <CheckoutField
-                label="Email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                enterKeyHint="next"
-                value={form.email}
-                onChange={(value) => updateField('email', value)}
-              />
-              <CheckoutField
-                label="Phone"
-                type="tel"
-                placeholder="98765 43210"
-                autoComplete="tel"
-                enterKeyHint="next"
-                value={form.phone}
-                onChange={(value) => updateField('phone', value)}
-              />
-            </div>
-          </section>
-
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Delivery</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <CheckoutField
-                label="Full name"
-                placeholder="Aarav Sharma"
-                autoComplete="name"
-                enterKeyHint="next"
-                value={form.fullName}
-                onChange={(value) => updateField('fullName', value)}
-              />
-              <CheckoutField
-                label="Pincode"
-                inputMode="numeric"
-                placeholder="400001"
-                autoComplete="postal-code"
-                enterKeyHint="next"
-                value={form.pincode}
-                onChange={(value) => updateField('pincode', value)}
-              />
-              <CheckoutField
-                label="Address"
-                placeholder="Flat 12, Palm Grove Apartments, MG Road"
-                autoComplete="street-address"
-                enterKeyHint="next"
-                value={form.addressLine}
-                onChange={(value) => updateField('addressLine', value)}
-                className="sm:col-span-2"
-              />
-              <CheckoutField
-                label="Landmark"
-                placeholder="Near City Mall"
-                enterKeyHint="next"
-                value={form.landmark}
-                onChange={(value) => updateField('landmark', value)}
-                required={false}
-              />
-              <CheckoutField
-                label="City"
-                placeholder="Mumbai"
-                autoComplete="address-level2"
-                enterKeyHint="next"
-                value={form.city}
-                onChange={(value) => updateField('city', value)}
-              />
-              <CheckoutField
-                label="State"
-                placeholder="Maharashtra"
-                autoComplete="address-level1"
-                enterKeyHint="done"
-                value={form.state}
-                onChange={(value) => updateField('state', value)}
-              />
-            </div>
-          </section>
-
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-full bg-[var(--color-ink)] text-[var(--color-paper)]">
-                <CreditCard className="size-4" aria-hidden="true" />
-              </span>
-              <h2 className="font-serif text-2xl text-[var(--color-ink)]">Payment</h2>
-            </div>
-            <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
-                <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
-                Razorpay secure checkout
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
-                from this page so the payment step stays quick.
-              </p>
-              <div className="mt-4 grid gap-2 text-xs font-semibold text-[var(--color-muted)] sm:grid-cols-3">
-                {['Review details', 'Pay in Razorpay', 'Instant confirmation'].map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {status !== 'idle' || message ? (
-              <CheckoutNotice status={status} message={message} total={summaryTotals.total} />
-            ) : null}
-          </section>
-
-          <div className="hidden flex-col-reverse gap-3 sm:flex sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={clearCart}
-              disabled={isCheckoutBusy}
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
-            >
-              Clear bag
-            </button>
-            <Button
-              type="submit"
-              disabled={isCheckoutBusy}
-              className="fashion-button-primary h-12 min-w-52 gap-2 px-6"
-            >
-              {isCheckoutBusy ? (
-                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <CreditCard className="size-4" aria-hidden="true" />
-              )}
-              {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
-            </Button>
-          </div>
-
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-sm backdrop-blur-xl sm:hidden">
-            <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-[var(--color-muted)]">
-                  Total
-                </p>
-                <p className="mt-0.5 text-base font-semibold text-[var(--color-ink)]">
-                  {formatPrice(activePendingOrder?.totals.total ?? total)}
+        <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <form id="checkout-form" onSubmit={submitCheckout} className="grid gap-10">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Contact</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Used for order confirmation and payment prefill.
                 </p>
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CheckoutField
+                  label="Email"
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  enterKeyHint="next"
+                  value={form.email}
+                  onChange={(value) => updateField('email', value)}
+                />
+                <CheckoutField
+                  label="Phone"
+                  type="tel"
+                  placeholder="98765 43210"
+                  autoComplete="tel"
+                  enterKeyHint="next"
+                  value={form.phone}
+                  onChange={(value) => updateField('phone', value)}
+                />
+              </div>
+            </section>
+
+            <section className="border-t border-[var(--color-line)] pt-8">
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Delivery</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Share a complete address so dispatch stays quick.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CheckoutField
+                  label="Full name"
+                  placeholder="Aarav Sharma"
+                  autoComplete="name"
+                  enterKeyHint="next"
+                  value={form.fullName}
+                  onChange={(value) => updateField('fullName', value)}
+                />
+                <CheckoutField
+                  label="Pincode"
+                  inputMode="numeric"
+                  placeholder="400001"
+                  autoComplete="postal-code"
+                  enterKeyHint="next"
+                  value={form.pincode}
+                  onChange={(value) => updateField('pincode', value)}
+                />
+                <CheckoutField
+                  label="Address"
+                  placeholder="Flat 12, Palm Grove Apartments, MG Road"
+                  autoComplete="street-address"
+                  enterKeyHint="next"
+                  value={form.addressLine}
+                  onChange={(value) => updateField('addressLine', value)}
+                  className="sm:col-span-2"
+                />
+                <CheckoutField
+                  label="Landmark"
+                  placeholder="Near City Mall"
+                  enterKeyHint="next"
+                  value={form.landmark}
+                  onChange={(value) => updateField('landmark', value)}
+                  required={false}
+                />
+                <CheckoutField
+                  label="City"
+                  placeholder="Mumbai"
+                  autoComplete="address-level2"
+                  enterKeyHint="next"
+                  value={form.city}
+                  onChange={(value) => updateField('city', value)}
+                />
+                <CheckoutField
+                  label="State"
+                  placeholder="Maharashtra"
+                  autoComplete="address-level1"
+                  enterKeyHint="done"
+                  value={form.state}
+                  onChange={(value) => updateField('state', value)}
+                />
+              </div>
+            </section>
+
+            <section className="border-t border-[var(--color-line)] pt-8">
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Payment</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Review the payable total before opening Razorpay.
+                </p>
+              </div>
+              <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+                <p className="flex items-center gap-2 text-sm font-medium text-[var(--color-ink)]">
+                  <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
+                  Razorpay secure checkout
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                  Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
+                  from this page so the payment step stays quick.
+                </p>
+                <div className="mt-4 grid gap-2 text-xs font-medium text-[var(--color-muted)] sm:grid-cols-3">
+                  {['Review details', 'Pay in Razorpay', 'Instant confirmation'].map((label) => (
+                    <span
+                      key={label}
+                      className="border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {status !== 'idle' || message ? (
+                <CheckoutNotice status={status} message={message} total={summaryTotals.total} />
+              ) : null}
+            </section>
+
+            <div className="hidden flex-col-reverse gap-3 border-t border-[var(--color-line)] pt-8 sm:flex sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={clearCart}
+                disabled={isCheckoutBusy}
+                className="text-sm font-medium text-[var(--color-muted)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
+              >
+                Clear bag
+              </button>
               <Button
                 type="submit"
                 disabled={isCheckoutBusy}
-                className="fashion-button-primary h-12 min-w-36 gap-2 px-5"
+                className="inline-flex h-12 min-w-52 items-center justify-center gap-2 bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
               >
                 {isCheckoutBusy ? (
                   <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
                 ) : (
                   <CreditCard className="size-4" aria-hidden="true" />
                 )}
-                {getMobilePayButtonLabel(status)}
+                {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
               </Button>
             </div>
-          </div>
-        </form>
 
-        <CheckoutOrderSummary
-          lines={lines}
-          itemCount={itemCount}
-          savings={savings}
-          summaryTotals={summaryTotals}
-          hasConfirmedTotal={Boolean(activePendingOrder)}
-        />
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm sm:hidden">
+              <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                    Total
+                  </p>
+                  <p className="mt-0.5 text-base font-medium text-[var(--color-ink)]">
+                    {formatPrice(activePendingOrder?.totals.total ?? total)}
+                  </p>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isCheckoutBusy}
+                  className="inline-flex h-12 min-w-36 items-center justify-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
+                >
+                  {isCheckoutBusy ? (
+                    <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <CreditCard className="size-4" aria-hidden="true" />
+                  )}
+                  {getMobilePayButtonLabel(status)}
+                </Button>
+              </div>
+            </div>
+          </form>
+
+          <CheckoutOrderSummary
+            lines={lines}
+            itemCount={itemCount}
+            savings={savings}
+            summaryTotals={summaryTotals}
+            hasConfirmedTotal={Boolean(activePendingOrder)}
+          />
+        </div>
       </div>
     </main>
   )

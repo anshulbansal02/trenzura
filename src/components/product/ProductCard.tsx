@@ -15,33 +15,34 @@ export function ProductCard({ product }: ProductCardProps) {
   const [quickLookOpen, setQuickLookOpen] = useState(false)
 
   return (
-    <div className="group/card transition duration-300 ease-out">
-      <div className="relative overflow-hidden rounded-[var(--radius-image)] bg-[var(--color-surface)]">
+    <article className="group/card">
+      <div className="relative overflow-hidden bg-[var(--color-surface)]">
         <Link
           to="/products/$slug"
           params={{ slug: product.slug }}
           className="group block focus:outline-none"
         >
-          <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
-          {product.featured ? (
-            <span className="absolute left-3 top-3 bg-[var(--color-paper)]/94 px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-ink)] backdrop-blur">
-              Most wanted
-            </span>
-          ) : null}
-          {product.discountPercent > 0 ? (
-            <span className="absolute right-3 top-3 bg-[var(--color-accent-muted)] px-3 py-1.5 text-[0.68rem] font-medium uppercase text-[var(--color-paper)]">
-              Save {product.discountPercent}%
-            </span>
-          ) : null}
-          <div className="absolute bottom-3 left-3 bg-[var(--color-paper)]/94 px-3 py-2 text-xs font-medium text-[var(--color-ink)] opacity-0 backdrop-blur transition duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100">
-            <span>View details</span>
-          </div>
+          <ProductMedia product={product} className="aspect-[2/3]" hoverZoom />
+          <span className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 sm:bottom-auto sm:top-3 sm:items-start">
+            {product.featured ? (
+              <span className="max-w-[7rem] bg-[var(--color-paper)]/92 px-2 py-1 text-[0.625rem] font-medium uppercase leading-4 tracking-[0.08em] text-[var(--color-ink)] backdrop-blur-sm sm:max-w-none sm:px-2.5 sm:text-[0.6875rem] sm:tracking-[0.12em]">
+                Most wanted
+              </span>
+            ) : (
+              <span />
+            )}
+            {product.discountPercent > 0 ? (
+              <span className="shrink-0 bg-[var(--color-accent-muted)] px-2 py-1 text-[0.625rem] font-medium uppercase leading-4 tracking-[0.08em] text-[var(--color-paper)] sm:px-2.5 sm:text-[0.6875rem] sm:tracking-[0.12em]">
+                Save {product.discountPercent}%
+              </span>
+            ) : null}
+          </span>
         </Link>
         <button
           type="button"
           onClick={() => setQuickLookOpen(true)}
           aria-label={`Quick look at ${product.title}`}
-          className="absolute bottom-3 right-3 inline-flex h-10 items-center gap-1.5 border border-[var(--color-line)] bg-[var(--color-paper)]/94 px-3 text-xs font-medium text-[var(--color-ink)] backdrop-blur transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-white hover:text-[var(--color-primary)] active:scale-[0.98]"
+          className="absolute bottom-3 right-3 inline-flex h-9 translate-y-1 items-center gap-1.5 border border-[var(--color-line)] bg-[var(--color-paper)]/92 px-3 text-xs font-medium text-[var(--color-ink)] opacity-0 backdrop-blur-sm transition duration-300 ease-out hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] group-hover/card:translate-y-0 group-hover/card:opacity-100 focus:translate-y-0 focus:opacity-100 active:scale-[0.98]"
         >
           <Eye className="size-3.5" aria-hidden="true" />
           Quick look
@@ -52,18 +53,18 @@ export function ProductCard({ product }: ProductCardProps) {
         params={{ slug: product.slug }}
         className="group block focus:outline-none"
       >
-        <div className="mt-3 grid gap-2">
-          <div className="flex items-start justify-between gap-4">
+        <div className="mt-2 grid gap-1.5 sm:mt-3">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="min-w-0">
-              <h3 className="text-sm font-normal text-[var(--color-ink)] group-focus-visible:underline">
-                {product.title}
-              </h3>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
+              <p className="text-[0.6875rem] font-medium uppercase leading-4 tracking-[0.12em] text-[var(--color-muted)]">
                 {product.categoryLabel}
               </p>
+              <h3 className="mt-1 text-sm font-medium leading-snug text-[var(--color-ink)] group-focus-visible:underline sm:text-base">
+                {product.title}
+              </h3>
             </div>
-            <div className="shrink-0 text-right">
-              <p className="text-sm font-normal text-[var(--color-ink)]">
+            <div className="shrink-0 sm:text-right">
+              <p className="text-sm font-medium text-[var(--color-ink)]">
                 {formatPrice(product.sellingPricePaise)}
               </p>
               {product.discountPercent > 0 ? (
@@ -74,7 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           {product.discountPercent > 0 ? (
-            <p className="text-xs font-normal text-[var(--color-accent-muted)]">
+            <p className="text-xs font-medium text-[var(--color-accent-muted)]">
               Save {formatPrice(product.mrpPaise - product.sellingPricePaise)} today
             </p>
           ) : null}
@@ -86,6 +87,6 @@ export function ProductCard({ product }: ProductCardProps) {
         open={quickLookOpen}
         onOpenChange={setQuickLookOpen}
       />
-    </div>
+    </article>
   )
 }

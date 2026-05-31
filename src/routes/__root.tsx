@@ -4,6 +4,7 @@ import { AddToBagToast } from '../components/cart/AddToBagToast'
 import { CartDrawer } from '../components/cart/CartDrawer'
 import { CartProvider } from '../components/cart/CartProvider'
 import { MobileBottomNav } from '../components/layout/MobileBottomNav'
+import { SiteFooter } from '../components/layout/SiteFooter'
 import { SiteHeader } from '../components/layout/SiteHeader'
 import { RouteNotFound } from '../components/layout/RouteBoundaries'
 import { createUmamiHeadScripts } from '../lib/analytics'
@@ -34,6 +35,20 @@ export const Route = createRootRoute({
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'preload',
+        href: '/assets/fonts/neonfold/geist-latin.woff2',
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'preload',
+        href: '/assets/fonts/neonfold/instrument-serif-latin.woff2',
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
       },
       {
         rel: 'icon',
@@ -79,6 +94,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <div id="page-content" tabIndex={-1}>
             {children}
           </div>
+          <SiteFooter />
           <AddToBagToast />
           <CartDrawer />
           <MobileBottomNav />

@@ -25,24 +25,24 @@ export function AdminDataTable({
   rows: AdminDashboard['views'][AdminViewKey]
 }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] shadow-sm">
+    <section className="overflow-hidden border border-[var(--color-line)] bg-[var(--color-surface)]">
       <div className="flex flex-col gap-2 border-b border-[var(--color-line)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-[var(--color-ink)]">
+          <h2 className="text-base font-medium text-[var(--color-ink)]">
             {getAdminViewLabel(activeView)}
           </h2>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             {getAdminViewDescription(activeView)}
           </p>
         </div>
-        <p className="text-xs font-semibold text-[var(--color-muted)]">
+        <p className="text-xs font-medium text-[var(--color-muted)]">
           {dashboard.shownCounts[activeView]} shown
         </p>
       </div>
       {rows.length === 0 ? (
         <div className="px-4 py-12 text-center">
           <PackageCheck className="mx-auto size-8 text-[var(--color-accent-muted)]" aria-hidden="true" />
-          <p className="mt-3 text-sm font-semibold text-[var(--color-ink)]">No rows to review</p>
+          <p className="mt-3 text-sm font-medium text-[var(--color-ink)]">No rows to review</p>
         </div>
       ) : activeView === 'integrationErrors' ? (
         <IntegrationErrorsTable rows={rows as AdminIntegrationErrorRow[]} />
@@ -75,7 +75,7 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
             {rows.map((row) => (
               <tr key={`${row.order_number}-${row.created_at}`} className="border-t border-[var(--color-line)]">
                 <TableCell>
-                  <p className="font-semibold text-[var(--color-ink)]">{row.order_number}</p>
+                  <p className="font-medium text-[var(--color-ink)]">{row.order_number}</p>
                   <StatusBadge value={row.order_status} />
                 </TableCell>
                 <TableCell>
@@ -129,7 +129,7 @@ function IntegrationErrorsTable({ rows }: { rows: AdminIntegrationErrorRow[] }) 
                 className="border-t border-[var(--color-line)]"
               >
                 <TableCell>
-                  <p className="font-semibold text-[var(--color-ink)]">{row.source || '-'}</p>
+                  <p className="font-medium text-[var(--color-ink)]">{row.source || '-'}</p>
                   <StatusBadge value={row.status || '-'} />
                 </TableCell>
                 <TableCell>{row.event_type || '-'}</TableCell>
@@ -166,7 +166,7 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
             {rows.map((row) => (
               <tr key={row.variant_id} className="border-t border-[var(--color-line)]">
                 <TableCell>
-                  <p className="font-semibold text-[var(--color-ink)]">{row.title}</p>
+                  <p className="font-medium text-[var(--color-ink)]">{row.title}</p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">{row.slug}</p>
                 </TableCell>
                 <TableCell>
@@ -175,7 +175,7 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
                 </TableCell>
                 <TableCell>{row.category}</TableCell>
                 <TableCell>
-                  <span className="text-base font-semibold text-[var(--color-primary)]">
+                  <span className="text-base font-medium text-[var(--color-primary)]">
                     {row.stock_available}
                   </span>
                 </TableCell>
@@ -198,12 +198,12 @@ function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
         <article key={`${row.order_number}-${row.created_at}`} className="px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="break-words text-sm font-semibold text-[var(--color-ink)]">
+              <p className="break-words text-sm font-medium text-[var(--color-ink)]">
                 {row.order_number}
               </p>
               <StatusBadge value={row.order_status} />
             </div>
-            <p className="shrink-0 text-sm font-semibold text-[var(--color-ink)]">
+            <p className="shrink-0 text-sm font-medium text-[var(--color-ink)]">
               {typeof row.total_amount_paise === 'number'
                 ? formatPrice(row.total_amount_paise)
                 : '-'}
@@ -251,12 +251,12 @@ function IntegrationErrorMobileCards({ rows }: { rows: AdminIntegrationErrorRow[
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="break-words text-sm font-semibold text-[var(--color-ink)]">
+              <p className="break-words text-sm font-medium text-[var(--color-ink)]">
                 {row.source || '-'}
               </p>
               <StatusBadge value={row.status || '-'} />
             </div>
-            <p className="shrink-0 text-xs font-semibold text-[var(--color-muted)]">
+            <p className="shrink-0 text-xs font-medium text-[var(--color-muted)]">
               {formatAdminDateTime(row.created_at)}
             </p>
           </div>
@@ -280,12 +280,12 @@ function LowStockMobileCards({ rows }: { rows: AdminLowStockVariantRow[] }) {
         <article key={row.variant_id} className="px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="break-words text-sm font-semibold text-[var(--color-ink)]">
+              <p className="break-words text-sm font-medium text-[var(--color-ink)]">
                 {row.title}
               </p>
               <p className="mt-1 break-words text-xs text-[var(--color-muted)]">{row.slug}</p>
             </div>
-            <p className="shrink-0 text-lg font-semibold text-[var(--color-primary)]">
+            <p className="shrink-0 text-lg font-medium text-[var(--color-primary)]">
               {row.stock_available}
             </p>
           </div>
@@ -310,14 +310,14 @@ function LowStockMobileCards({ rows }: { rows: AdminLowStockVariantRow[] }) {
 function MobileField({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[0.68rem] font-semibold uppercase text-[var(--color-muted)]">{label}</p>
+      <p className="text-[0.68rem] font-medium uppercase text-[var(--color-muted)]">{label}</p>
       <div className="mt-1 text-[var(--color-ink-soft)]">{children}</div>
     </div>
   )
 }
 
 function TableHead({ children }: { children: ReactNode }) {
-  return <th className="px-4 py-3 font-semibold">{children}</th>
+  return <th className="px-4 py-3 font-medium">{children}</th>
 }
 
 function TableCell({ children }: { children: ReactNode }) {
@@ -330,7 +330,7 @@ function StatusBadge({ value }: { value: string }) {
 
   return (
     <span
-      className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+      className={`mt-2 inline-flex px-2 py-1 text-xs font-medium ${
         alert ? 'bg-red-50 text-red-800' : 'bg-emerald-50 text-emerald-800'
       }`}
     >

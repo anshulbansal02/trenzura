@@ -15,15 +15,18 @@ type HomeCategoryTilesProps = {
 
 export function HomeCategoryTiles({ categoryLabels, tiles }: HomeCategoryTilesProps) {
   return (
-    <section className="fashion-container py-12 lg:py-16">
-      <div className="mb-7 flex items-end justify-between gap-6">
+    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mx-auto max-w-[90rem]">
+      <div className="mb-8 flex flex-col justify-between gap-5 border-b border-[var(--color-line)] pb-6 md:flex-row md:items-end">
         <div>
-          <p className="fashion-eyebrow">Kurtis crafted for every mood</p>
-          <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">Shop by style</h2>
+          <p className="text-sm font-medium text-[var(--color-muted)]">Kurtis crafted for every mood</p>
+          <h2 className="mt-2 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
+            Shop by style
+          </h2>
         </div>
         <Link
           to="/products"
-          className="hidden text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] sm:inline"
+          className="hidden text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:underline sm:inline"
         >
           View all
         </Link>
@@ -34,7 +37,7 @@ export function HomeCategoryTiles({ categoryLabels, tiles }: HomeCategoryTilesPr
             key={category}
             to="/products"
             search={{ category }}
-            className="group relative overflow-hidden rounded-[var(--radius-image)] bg-[var(--color-surface)]"
+            className="group relative overflow-hidden bg-[var(--color-surface)]"
           >
             <img
               {...getProductImageProps(product, 0, '(min-width: 768px) 33vw, 100vw')}
@@ -45,11 +48,14 @@ export function HomeCategoryTiles({ categoryLabels, tiles }: HomeCategoryTilesPr
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgb(28_46_74_/_0.62))]" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-[var(--color-paper)]">
-              <p className="text-xs font-semibold uppercase text-[var(--color-paper)]/82">Shop</p>
-              <h2 className="mt-2 text-xl font-normal">{categoryLabels[category]}</h2>
+              <p className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-[var(--color-paper)]/82">Shop</p>
+              <h2 className="mt-2 font-serif text-3xl font-normal leading-none">
+                {categoryLabels[category]}
+              </h2>
             </div>
           </Link>
         ))}
+      </div>
       </div>
     </section>
   )
