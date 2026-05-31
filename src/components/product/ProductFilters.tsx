@@ -81,14 +81,14 @@ export function ProductFilters({
       className={joinClasses(
         'w-full min-w-0 self-start overflow-x-hidden',
         variant === 'panel'
-          ? 'space-y-7 border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5 lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
+          ? 'space-y-7 bg-[var(--color-paper)] lg:sticky lg:top-[calc(var(--site-header-height)+var(--sticky-panel-gap))] lg:max-h-[calc(100svh-var(--site-header-height)-(var(--sticky-panel-gap)*2))] lg:overflow-y-auto lg:overscroll-contain'
           : 'space-y-6',
       )}
     >
       {showHeader ? (
         <div className="flex items-start justify-between gap-3 border-b border-[var(--color-line)] pb-5">
           <div>
-            <p className="text-base font-semibold text-[var(--color-ink)]">Filters</p>
+            <p className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">Filters</p>
             <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
               Narrow by style, size, price, and availability.
             </p>
@@ -106,7 +106,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="shrink-0 text-sm font-bold text-[var(--color-primary)] transition hover:text-[var(--color-primary-dark)]"
+              className="shrink-0 text-sm font-medium text-[var(--color-primary)] transition hover:text-[var(--color-primary-dark)]"
             >
               Reset
             </button>
@@ -115,7 +115,7 @@ export function ProductFilters({
       ) : null}
 
       <div className="space-y-2">
-        <label htmlFor={searchInputId} className="text-sm font-semibold text-[var(--color-ink)]">
+        <label htmlFor={searchInputId} className="text-sm font-medium text-[var(--color-ink)]">
           Search
         </label>
         <div className="relative">
@@ -129,14 +129,14 @@ export function ProductFilters({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search styles"
-            className="h-11 w-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
+            className="h-11 w-full border border-[var(--color-line)] bg-[var(--color-paper)] pl-10 pr-11 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-primary)] focus:bg-[var(--color-surface-soft)]"
           />
           {query ? (
             <Button
               type="button"
               aria-label="Clear search"
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
+              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
             >
               <X className="size-4" aria-hidden="true" />
             </Button>
@@ -152,7 +152,7 @@ export function ProductFilters({
           }
           className="space-y-3"
         >
-          <p className="text-sm font-semibold text-[var(--color-ink)]">Category</p>
+          <p className="text-sm font-medium text-[var(--color-ink)]">Category</p>
           {categories.map((category) => (
             <label
               key={category}
@@ -179,12 +179,12 @@ export function ProductFilters({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-[var(--color-ink)]">Size</p>
+          <p className="text-sm font-medium text-[var(--color-ink)]">Size</p>
           {search.sizes.length > 0 ? (
             <button
               type="button"
               onClick={() => onSearchChange({ sizes: [] })}
-              className="text-xs font-bold text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
+              className="text-xs font-medium text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
             >
               Clear
             </button>
@@ -205,7 +205,7 @@ export function ProductFilters({
                   })
                 }
                 className={joinClasses(
-                  'h-9 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
+                  'h-9 border text-sm font-medium transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                   isSelected
                     ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
                     : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)]',
@@ -219,7 +219,7 @@ export function ProductFilters({
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-semibold text-[var(--color-ink)]">Price</p>
+        <p className="text-sm font-medium text-[var(--color-ink)]">Price</p>
         <div className="grid min-w-0 grid-cols-2 gap-2">
           <label className="min-w-0 space-y-1">
             <span className="text-xs text-[var(--color-muted)]">Min</span>
@@ -231,7 +231,7 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ minPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-[var(--color-surface-soft)]"
             />
           </label>
           <label className="min-w-0 space-y-1">
@@ -244,14 +244,14 @@ export function ProductFilters({
               onChange={(event) =>
                 onSearchChange({ maxPrice: rupeesToPaise(Number(event.currentTarget.value)) })
               }
-              className="h-10 w-full min-w-0 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-white focus:shadow-sm"
+              className="h-10 w-full min-w-0 border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out focus:border-[var(--color-primary)] focus:bg-[var(--color-surface-soft)]"
             />
           </label>
         </div>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-semibold text-[var(--color-ink)]">Availability</p>
+        <p className="text-sm font-medium text-[var(--color-ink)]">Availability</p>
         <div className="space-y-2">
           <FilterCheckbox
             checked={search.inStockOnly}
@@ -271,8 +271,8 @@ export function ProductFilters({
           value={search.sort}
           onValueChange={(sort) => onSearchChange({ sort: sort as ProductSort })}
         >
-          <Select.Label className="text-sm font-semibold text-[var(--color-ink)]">Sort</Select.Label>
-          <Select.Trigger className="mt-3 flex h-10 w-full items-center justify-between rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-left text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-white hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 data-[popup-open]:border-[var(--color-primary)]">
+          <Select.Label className="text-sm font-medium text-[var(--color-ink)]">Sort</Select.Label>
+          <Select.Trigger className="mt-3 flex h-10 w-full items-center justify-between border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-left text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 data-[popup-open]:border-[var(--color-primary)]">
             <Select.Value>
               {(value: ProductSort | null) => (value ? sortLabels[value] : sortLabels.recommended)}
             </Select.Value>
@@ -282,13 +282,13 @@ export function ProductFilters({
           </Select.Trigger>
           <Select.Portal>
             <Select.Positioner sideOffset={6}>
-              <Select.Popup className="min-w-[var(--anchor-width)] rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-1 shadow-sm outline-none transition duration-150 ease-out data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
+              <Select.Popup className="min-w-[var(--anchor-width)] border border-[var(--color-line)] bg-[var(--color-paper)] p-1 outline-none transition duration-150 ease-out data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
                 {Object.entries(sortLabels).map(([value, label]) => (
                   <Select.Item
                     key={value}
                     value={value}
                     className={joinClasses(
-                      'flex cursor-default items-center justify-between rounded-full px-3 py-2 text-sm text-[var(--color-muted)] outline-none transition duration-150 ease-out',
+                      'flex cursor-default items-center justify-between px-3 py-2 text-sm text-[var(--color-muted)] outline-none transition duration-150 ease-out',
                       'data-[highlighted]:bg-[var(--color-canvas)] data-[selected]:text-[var(--color-ink)]',
                     )}
                   >
@@ -322,7 +322,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)]"
+              className="text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
             >
               Reset filters
             </button>
@@ -332,7 +332,7 @@ export function ProductFilters({
           <Button
             type="button"
             onClick={onDone}
-            className="fashion-button-primary mt-4 h-12 w-full px-5"
+            className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
           >
             Show {resultCount} {resultCount === 1 ? 'style' : 'styles'}
           </Button>

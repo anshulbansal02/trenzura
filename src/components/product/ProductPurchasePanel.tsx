@@ -14,11 +14,13 @@ const addedMessageDurationMs = 4200
 
 type ProductPurchasePanelProps = {
   product: Product
+  showPrice?: boolean
   variant?: 'default' | 'quickLook'
 }
 
 export function ProductPurchasePanel({
   product,
+  showPrice = true,
   variant = 'default',
 }: ProductPurchasePanelProps) {
   const isQuickLook = variant === 'quickLook'
@@ -95,84 +97,86 @@ export function ProductPurchasePanel({
           isQuickLook ? '' : 'border-y border-[var(--color-line)] bg-[var(--color-paper)] py-5',
         )}
       >
-      <div className="flex items-start justify-between gap-5">
-        <div>
-          <p className="text-2xl font-semibold text-[var(--color-primary)]">
-            {formatPrice(product.sellingPricePaise)}
-          </p>
-          {product.discountPercent > 0 ? (
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              <span className="line-through">{formatPrice(product.mrpPaise)}</span>
-              <span className="ml-2 font-bold text-[var(--color-primary)]">
-                {product.discountPercent}% off
-              </span>
-            </p>
-          ) : null}
-        </div>
-        <p className="rounded-full bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-semibold uppercase text-[var(--color-accent-muted)]">
-          {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
-        </p>
-      </div>
-      <div className="mt-6">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-[var(--color-ink)]">Select size</p>
-          {product.sizeChart.length > 0 && !isQuickLook ? (
-            <div className="ml-auto flex shrink-0 items-center gap-2 text-right">
-              <FitConfidenceHelper product={product} onSelectSize={setSelectedSize} />
-              <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
-              <a
-                href="#size-chart"
-                className="inline-flex items-center text-xs font-semibold leading-4 text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:decoration-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
-              >
-                Size chart
-              </a>
+        {showPrice ? (
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="text-2xl font-medium text-[var(--color-primary)]">
+                {formatPrice(product.sellingPricePaise)}
+              </p>
+              {product.discountPercent > 0 ? (
+                <p className="mt-1 text-sm text-[var(--color-muted)]">
+                  <span className="line-through">{formatPrice(product.mrpPaise)}</span>
+                  <span className="ml-2 font-medium text-[var(--color-primary)]">
+                    {product.discountPercent}% off
+                  </span>
+                </p>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-        <div className="mt-3 grid grid-cols-5 gap-2">
-          {product.sizes.map((size) => {
-            const isSelected = selectedSize === size.label
-            const isAvailable = size.stockAvailable > 0
+            <p className="bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-accent-muted)]">
+              {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
+            </p>
+          </div>
+        ) : null}
+        <div className={showPrice ? 'mt-6' : ''}>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-[var(--color-ink)]">Select size</p>
+            {product.sizeChart.length > 0 && !isQuickLook ? (
+              <div className="ml-auto flex shrink-0 items-center gap-2 text-right">
+                <FitConfidenceHelper product={product} onSelectSize={setSelectedSize} />
+                <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
+                <a
+                  href="#size-chart"
+                  className="inline-flex items-center text-xs font-medium leading-4 text-[var(--color-muted)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                >
+                  Size chart
+                </a>
+              </div>
+            ) : null}
+          </div>
+          <div className="mt-3 grid grid-cols-5 gap-2">
+            {product.sizes.map((size) => {
+              const isSelected = selectedSize === size.label
+              const isAvailable = size.stockAvailable > 0
 
-            return (
-              <button
-                key={size.label}
-                type="button"
-                disabled={!isAvailable}
-                aria-pressed={isSelected}
-                onClick={() => {
-                  setSelectedSize(size.label)
-                  setQuantity(1)
-                  trackAnalyticsEvent('size_select', {
-                    ...createProductAnalyticsPayload(product),
-                    size: size.label,
-                    source: isQuickLook ? 'quick_look' : 'product_page',
-                  })
-                }}
-                className={joinClasses(
-                  'h-11 rounded-full border text-sm font-bold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
-                  isSelected
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
-                    : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-white',
-                  !isAvailable &&
-                    'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:border-[var(--color-line)]',
-                )}
-              >
-                {size.label}
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={size.label}
+                  type="button"
+                  disabled={!isAvailable}
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    setSelectedSize(size.label)
+                    setQuantity(1)
+                    trackAnalyticsEvent('size_select', {
+                      ...createProductAnalyticsPayload(product),
+                      size: size.label,
+                      source: isQuickLook ? 'quick_look' : 'product_page',
+                    })
+                  }}
+                  className={joinClasses(
+                    'h-11 border text-sm font-medium transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
+                    isSelected
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                      : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)]',
+                    !isAvailable &&
+                      'cursor-not-allowed border-[var(--color-line)] bg-stone-100 text-stone-500 hover:border-[var(--color-line)]',
+                  )}
+                >
+                  {size.label}
+                </button>
+              )
+            })}
+          </div>
+          {selectedInventory ? (
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
+              {selectedInventory.stockAvailable <= 3
+                ? `Only ${selectedInventory.stockAvailable} left in ${selectedInventory.label}`
+                : `${selectedInventory.stockAvailable} available in ${selectedInventory.label}`}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-red-700">This product is currently sold out.</p>
+          )}
         </div>
-        {selectedInventory ? (
-          <p className="mt-2 text-xs text-[var(--color-muted)]">
-            {selectedInventory.stockAvailable <= 3
-              ? `Only ${selectedInventory.stockAvailable} left in ${selectedInventory.label}`
-              : `${selectedInventory.stockAvailable} available in ${selectedInventory.label}`}
-          </p>
-        ) : (
-          <p className="mt-2 text-xs text-red-700">This product is currently sold out.</p>
-        )}
-      </div>
 
       <div
         className={joinClasses(
@@ -184,7 +188,7 @@ export function ProductPurchasePanel({
           type="button"
           disabled={!canAddToCart}
           onClick={addCurrentSelection}
-          className="fashion-button-primary h-12 px-5"
+          className="inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
         >
           Add to bag
         </Button>
@@ -193,7 +197,7 @@ export function ProductPurchasePanel({
             type="button"
             disabled={!canAddToCart}
             onClick={buyCurrentSelection}
-            className="fashion-button-secondary h-12 px-5 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
+            className="inline-flex h-12 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-200 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
           >
             Buy now
           </Button>
@@ -201,15 +205,15 @@ export function ProductPurchasePanel({
       </div>
 
       {addedMessage ? (
-        <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">
+        <p role="status" className="mt-3 text-sm font-medium text-emerald-700">
           {addedMessage}
         </p>
       ) : null}
 
       {!isQuickLook ? (
         <div className="mt-5">
-          <p className="text-sm font-semibold text-[var(--color-ink)]">Quantity</p>
-          <div className="mt-3 inline-flex h-11 items-center overflow-hidden rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]">
+          <p className="text-sm font-medium text-[var(--color-ink)]">Quantity</p>
+          <div className="mt-3 inline-flex h-11 items-center overflow-hidden border border-[var(--color-line)] bg-[var(--color-paper)]">
             <button
               type="button"
               disabled={quantity <= 1}
@@ -219,7 +223,7 @@ export function ProductPurchasePanel({
             >
               <Minus className="size-4" aria-hidden="true" />
             </button>
-            <span className="w-10 text-center text-sm font-semibold text-[var(--color-ink)]">
+            <span className="w-10 text-center text-sm font-medium text-[var(--color-ink)]">
               {quantity}
             </span>
             <button
@@ -267,17 +271,17 @@ export function ProductPurchasePanel({
       </div>
 
       {!isQuickLook ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-sm backdrop-blur-xl sm:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm sm:hidden">
           <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
+              <p className="truncate text-sm font-medium text-[var(--color-ink)]">
                 {selectedSize ? `${product.title} - ${selectedSize}` : product.title}
               </p>
               <p
                 role={addedMessage ? 'status' : undefined}
                 className={joinClasses(
                   'mt-0.5 text-sm',
-                  addedMessage ? 'font-semibold text-emerald-700' : 'text-[var(--color-muted)]',
+                  addedMessage ? 'font-medium text-emerald-700' : 'text-[var(--color-muted)]',
                 )}
               >
                 {addedMessage || formatPrice(product.sellingPricePaise)}
@@ -288,7 +292,7 @@ export function ProductPurchasePanel({
                 type="button"
                 disabled={!canAddToCart}
                 onClick={addCurrentSelection}
-                className="fashion-button-secondary h-12 px-4 disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500 disabled:shadow-none"
+                className="inline-flex h-12 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm font-medium text-[var(--color-ink)] transition duration-200 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
               >
                 Add
               </Button>
@@ -296,7 +300,7 @@ export function ProductPurchasePanel({
                 type="button"
                 disabled={!canAddToCart}
                 onClick={buyCurrentSelection}
-                className="fashion-button-primary h-12 px-5"
+                className="inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
               >
                 Buy
               </Button>

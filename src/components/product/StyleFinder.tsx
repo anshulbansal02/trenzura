@@ -63,8 +63,8 @@ export function StyleFinder({
   const triggerClasses =
     triggerClassName ??
     (triggerVariant === 'primary'
-      ? 'fashion-button-primary h-12 px-5'
-      : 'fashion-button-secondary h-12 gap-2 px-5')
+      ? 'inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]'
+      : 'inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]')
 
   function updateAnswer(nextAnswers: Partial<StyleFinderAnswers>) {
     setAnswers((currentAnswers) => ({
@@ -92,10 +92,10 @@ export function StyleFinder({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto border border-[var(--color-line)] bg-[var(--color-paper)] outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-start justify-between gap-5 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
               <div>
-                <Dialog.Title className="font-serif text-2xl text-[var(--color-ink)]">
+                <Dialog.Title className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">
                   Help me choose
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
@@ -105,7 +105,7 @@ export function StyleFinder({
               </div>
               <Dialog.Close
                 aria-label="Close style finder"
-                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[var(--color-blush)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+                className="grid size-10 shrink-0 place-items-center border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 <X className="size-4" aria-hidden="true" />
               </Dialog.Close>
@@ -176,7 +176,7 @@ export function StyleFinder({
                         })
                         setOpen(false)
                       }}
-                      className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-primary)] hover:shadow-sm"
+                      className="group border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-150 ease-out hover:border-[var(--color-primary)]"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
                       <div className="mt-3">
@@ -196,7 +196,7 @@ export function StyleFinder({
                         <ul className="mt-3 space-y-1.5 text-xs leading-5 text-[var(--color-muted)]">
                           {reasons.map((reason) => (
                             <li key={reason} className="flex gap-2">
-                              <span className="mt-2 size-1 rounded-full bg-[var(--color-primary)]" />
+                              <span className="mt-2 size-1 bg-[var(--color-primary)]" />
                               <span>{reason}</span>
                             </li>
                           ))}
@@ -241,10 +241,10 @@ function OptionGroup<T extends string>({
               aria-pressed={isSelected}
               onClick={() => onChange(option.value)}
               className={joinClasses(
-                'min-h-9 rounded-full border px-3 text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
+                'min-h-9 border px-3 text-sm font-medium transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                 isSelected
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
-                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-white',
+                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)]',
               )}
             >
               {option.label}

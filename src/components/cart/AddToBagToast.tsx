@@ -64,20 +64,20 @@ export function AddToBagToast() {
   return (
     <div
       aria-live="polite"
-      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 shadow-sm transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
+      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-200 ease-out sm:bottom-5 sm:left-auto sm:right-5 sm:translate-x-0 ${
         isVisible
           ? 'translate-y-0 opacity-100 sm:translate-y-0'
           : 'translate-y-2 opacity-0 sm:translate-y-2'
       }`}
     >
       <div className="grid grid-cols-[64px_1fr_auto] gap-3">
-        <ProductMedia product={visibleItem.product} className="aspect-[4/5] rounded-lg" />
+        <ProductMedia product={visibleItem.product} className="aspect-[4/5]" />
         <div className="min-w-0 py-1">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-[var(--color-primary)]">
+          <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-primary)]">
             <ShoppingBag className="size-3.5" aria-hidden="true" />
             Added to bag
           </p>
-          <p className="mt-1 truncate text-sm font-semibold text-[var(--color-ink)]">
+          <p className="mt-1 truncate text-sm font-medium text-[var(--color-ink)]">
             {visibleItem.product.title}
           </p>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
@@ -89,7 +89,7 @@ export function AddToBagToast() {
           type="button"
           aria-label="Dismiss add to bag message"
           onClick={closeToast}
-          className="grid size-8 place-items-center rounded-full text-[var(--color-muted)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+          className="grid size-8 place-items-center text-[var(--color-muted)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
         >
           <X className="size-4" aria-hidden="true" />
         </button>
@@ -101,14 +101,14 @@ export function AddToBagToast() {
             closeToast()
             openCart?.()
           }}
-          className="h-10 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)]"
+          className="h-10 border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-ink)]"
         >
           View bag
         </button>
         <Link
           to="/checkout"
           onClick={closeToast}
-          className="fashion-button-primary h-10 px-4"
+          className="inline-flex h-10 items-center justify-center bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
         >
           Checkout
         </Link>

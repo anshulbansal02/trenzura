@@ -5,10 +5,10 @@ export function HomeEmptyCatalog() {
   return (
     <main className="pb-24 sm:pb-0">
       <section className="border-b border-[var(--color-line)] bg-[var(--color-paper)]">
-        <div className="fashion-container flex min-h-[72svh] items-center py-16">
+        <div className="mx-auto flex min-h-[72svh] max-w-[90rem] items-center px-4 py-16 sm:px-6 lg:px-8">
           <div className="max-w-xl">
-            <p className="fashion-eyebrow">Catalog pending</p>
-            <h1 className="fashion-display mt-4 text-4xl leading-[1.04] sm:text-5xl">
+            <p className="text-sm font-medium text-[var(--color-muted)]">Catalog pending</p>
+            <h1 className="mt-4 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
               Trenzura
             </h1>
             <p className="mt-6 max-w-lg text-base leading-7 text-[var(--color-muted)] sm:text-lg">
@@ -16,7 +16,7 @@ export function HomeEmptyCatalog() {
             </p>
             <Button
               nativeButton={false}
-              render={<Link to="/products" className="fashion-button-primary mt-8 h-12 px-6" />}
+              render={<Link to="/products" className="mt-8 inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]" />}
             >
               View products
             </Button>

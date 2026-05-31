@@ -41,7 +41,7 @@ export function CheckoutNotice({ status, message, total }: CheckoutNoticeProps) 
 
   return (
     <div
-      className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+      className={`mt-4 border px-4 py-3 text-sm ${
         isError
           ? 'border-red-200 bg-red-50 text-red-800'
           : isCancelled
@@ -50,7 +50,7 @@ export function CheckoutNotice({ status, message, total }: CheckoutNoticeProps) 
       }`}
       aria-live="polite"
     >
-      <p className="font-semibold text-[var(--color-ink)]">{title}</p>
+      <p className="font-medium text-[var(--color-ink)]">{title}</p>
       <p className="mt-1 leading-6">{copy}</p>
     </div>
   )

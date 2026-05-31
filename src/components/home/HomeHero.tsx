@@ -1,94 +1,65 @@
 import { Button } from '@base-ui/react/button'
 import { Link } from '@tanstack/react-router'
 
-import type { Product } from '../../data/products'
-import { formatPrice } from '../../lib/format'
-import { getProductImageProps } from '../../lib/product-images'
 import { StyleFinder } from '../product/StyleFinder'
 
-type HomeHeroProps = {
-  gallery: Product[]
-  minPricePaise: number
-}
+const heroSlides = [
+  {
+    src: '/assets/hero/trenzura-everyday-elegance-01.jpg',
+    alt: 'Trenzura everyday elegance campaign featuring kurtis, co-ord sets, short tops, and up to 20 percent off the new collection.',
+  },
+  {
+    src: '/assets/hero/trenzura-rooted-tradition-01.jpg',
+    alt: 'Trenzura rooted in tradition campaign with a woman wearing a dusty blush printed kurti.',
+  },
+  {
+    src: '/assets/hero/trenzura-rooted-tradition-02.jpg',
+    alt: 'Trenzura rooted in tradition campaign with a woman wearing a yellow floral ethnic top.',
+  },
+]
 
-export function HomeHero({ gallery, minPricePaise }: HomeHeroProps) {
+export function HomeHero() {
   return (
-    <section className="relative overflow-hidden border-b border-[var(--color-line)] bg-[var(--color-paper)]">
-      <div className="fashion-container grid min-h-[76svh] gap-8 py-7 lg:grid-cols-[minmax(0,0.66fr)_minmax(560px,1fr)] lg:items-stretch lg:py-9">
-        <div className="flex items-center py-8 lg:py-14">
-          <div className="max-w-xl">
-            <p className="fashion-eyebrow">Fresh drops, every week</p>
-            <h1 className="fashion-display mt-4 text-4xl leading-[1.05] sm:text-5xl lg:text-[3.75rem]">
-              Trenzura
-            </h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-[var(--color-muted)] sm:text-lg">
-              Easy short tops, kurtis, and coordinated sets with happy color, clean fits, and
-              prices made for repeat shopping.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                nativeButton={false}
-                render={
-                  <Link
-                    to="/products"
-                    search={{ sort: 'newest' }}
-                    className="fashion-button-primary h-12 px-6"
-                  />
-                }
-              >
-                Shop new arrivals
-              </Button>
-              <StyleFinder
-                triggerLabel="Find my style"
-                triggerClassName="fashion-button-secondary h-12 gap-2 px-6"
-              />
-            </div>
-            <div className="mt-9 grid grid-cols-3 border-y border-[var(--color-line)] text-center">
-              <div className="border-r border-[var(--color-line)] py-3 pr-3">
-                <p className="text-lg font-normal text-[var(--color-ink)]">
-                  {formatPrice(minPricePaise)}+
-                </p>
-                <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Easy buys</p>
-              </div>
-              <div className="border-r border-[var(--color-line)] px-3 py-3">
-                <p className="text-lg font-normal text-[var(--color-ink)]">7 days</p>
-                <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Exchanges</p>
-              </div>
-              <div className="py-3 pl-3">
-                <p className="text-lg font-normal text-[var(--color-ink)]">1-2 days</p>
-                <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">Ships fast</p>
+    <section>
+      <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
+        <h1 className="sr-only">Trenzura - Everyday ethnic wear for the modern woman</h1>
+        <div className="relative aspect-[2/1] overflow-hidden bg-[#f5eadc] sm:aspect-[16/7] lg:aspect-[5/2] xl:max-h-[590px]">
+          {heroSlides.map((slide, index) => (
+            <img
+              key={slide.src}
+              src={slide.src}
+              alt={slide.alt}
+              className={`absolute inset-0 block h-full w-full object-cover object-center opacity-0 [animation:trenzura-hero-fade_15s_linear_infinite] [will-change:opacity] ${
+                index === 0 ? 'motion-reduce:opacity-100' : 'motion-reduce:hidden'
+              }`}
+              style={{ animationDelay: `${index * 5}s` }}
+              loading="eager"
+              decoding="async"
+            />
+          ))}
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
+            <div className="mx-auto flex max-w-[90rem] justify-end px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+              <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      to="/products"
+                      search={{ sort: 'newest' }}
+                      className="inline-flex h-9 items-center justify-center bg-[var(--color-primary)] px-3 text-xs font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] sm:h-10 sm:px-5 sm:text-sm"
+                    />
+                  }
+                >
+                  Shop new arrivals
+                </Button>
+                <StyleFinder
+                  triggerLabel="Find my style"
+                  triggerClassName="inline-flex h-9 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-3 text-xs font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] sm:h-10 sm:px-5 sm:text-sm"
+                />
               </div>
             </div>
           </div>
-        </div>
-        <div className="grid min-h-[520px] gap-2 sm:grid-cols-[0.7fr_1fr_0.7fr] lg:min-h-[660px]">
-          {gallery.map((product, index) => (
-            <Link
-              key={product.productId}
-              to="/products/$slug"
-              params={{ slug: product.slug }}
-              className={`group relative overflow-hidden rounded-[var(--radius-image)] bg-[var(--color-surface)] ${
-                index === 1 ? 'sm:my-0' : 'hidden sm:block sm:my-10'
-              }`}
-            >
-              <img
-                {...getProductImageProps(
-                  product,
-                  0,
-                  index === 1 ? '(min-width: 1024px) 36vw, 100vw' : '22vw',
-                )}
-                alt={product.imageAlt}
-                loading={index === 1 ? undefined : 'lazy'}
-                decoding="async"
-                fetchPriority={index === 1 ? 'high' : undefined}
-                className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(28_46_74_/_0.58)] to-transparent p-4 text-white">
-                <p className="text-xs font-semibold">{index === 1 ? 'Most wanted' : 'New in'}</p>
-                <p className="mt-1 text-sm font-medium">{product.title}</p>
-              </div>
-            </Link>
-          ))}
         </div>
       </div>
     </section>

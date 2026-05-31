@@ -31,21 +31,21 @@ export function AdminViewTabs({
 }) {
   return (
     <div className="mb-3 overflow-x-auto">
-      <div className="inline-flex min-w-max rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-1">
+      <div className="inline-flex min-w-max border border-[var(--color-line)] bg-[var(--color-surface)] p-1">
         {adminTabs.map(({ key, label, Icon }) => (
           <button
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-10 items-center gap-2 px-3 text-sm font-medium transition ${
               activeView === key
-                ? 'bg-[var(--color-ink)] text-[var(--color-paper)] shadow-sm'
+                ? 'bg-[var(--color-ink)] text-[var(--color-paper)]'
                 : 'text-[var(--color-muted)] hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)]'
             }`}
           >
             <Icon className="size-4" aria-hidden="true" />
             {label}
-            <span className="rounded-full bg-current/10 px-2 py-0.5 text-xs">
+            <span className="bg-current/10 px-2 py-0.5 text-xs">
               {counts[key]}
             </span>
           </button>

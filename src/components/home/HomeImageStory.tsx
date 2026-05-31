@@ -8,41 +8,72 @@ type HomeImageStoryProps = {
 }
 
 export function HomeImageStory({ products }: HomeImageStoryProps) {
+  const featureProduct = products[0]
+  const supportingProducts = products.slice(1, 4)
+
+  if (!featureProduct) {
+    return null
+  }
+
   return (
-    <section className="fashion-container py-10 lg:py-16">
-      <div className="mb-7 flex items-end justify-between gap-6">
-        <div>
-          <p className="fashion-eyebrow">The cotton edit</p>
-          <h2 className="fashion-display mt-2 text-2xl sm:text-3xl">Color, print, repeat</h2>
-        </div>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((product, index) => (
+    <section className="border-y border-[var(--color-line)] px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mx-auto grid max-w-[90rem] gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <Link
+          to="/products/$slug"
+          params={{ slug: featureProduct.slug }}
+          className="group relative aspect-[5/4] overflow-hidden bg-[var(--color-surface)]"
+        >
+          <img
+            {...getProductImageProps(featureProduct, 0, '(min-width: 1024px) 54vw, 100vw')}
+            alt={featureProduct.imageAlt}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.02]"
+          />
+        </Link>
+
+        <div className="lg:pl-10">
+          <p className="text-sm font-medium text-[var(--color-muted)]">The cotton edit</p>
+          <h2 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
+            Color, print, repeat
+          </h2>
+          <p className="mt-5 max-w-xl text-base leading-7 text-[var(--color-muted)]">
+            Pick easy silhouettes with enough polish for everyday plans, festive lunches, and
+            weekend dressing.
+          </p>
           <Link
-            key={product.productId}
-            to="/products/$slug"
-            params={{ slug: product.slug }}
-            className={`group relative min-h-80 overflow-hidden rounded-[var(--radius-image)] bg-[var(--color-surface)] ${
-              index % 2 === 0 ? 'lg:mt-8' : ''
-            }`}
+            to="/products"
+            className="mt-7 inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-6 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
           >
-            <img
-              {...getProductImageProps(
-                product,
-                index % product.images.length,
-                '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw',
-              )}
-              alt={product.imageAlt}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.025]"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgb(28_46_74_/_0.6)] to-transparent p-4 text-white">
-              <p className="text-xs font-semibold uppercase">{product.categoryLabel}</p>
-              <h2 className="mt-1 text-base font-normal">{product.title}</h2>
-            </div>
+            Shop new arrivals
           </Link>
-        ))}
+
+          {supportingProducts.length > 0 ? (
+            <div className="mt-9 grid grid-cols-3 gap-3">
+              {supportingProducts.map((product) => (
+                <Link
+                  key={product.productId}
+                  to="/products/$slug"
+                  params={{ slug: product.slug }}
+                  className="group block"
+                >
+                  <div className="aspect-[4/5] overflow-hidden bg-[var(--color-surface)]">
+                    <img
+                      {...getProductImageProps(product, 0, '(min-width: 1024px) 12vw, 30vw')}
+                      alt={product.imageAlt}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover object-top transition duration-500 ease-out group-hover:scale-[1.02]"
+                    />
+                  </div>
+                  <p className="mt-2 truncate text-sm font-medium text-[var(--color-ink)]">
+                    {product.title}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   )
