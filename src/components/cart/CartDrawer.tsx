@@ -51,7 +51,7 @@ export function CartDrawer() {
               </div>
               <Drawer.Close
                 aria-label="Close cart"
-                className="inline-flex size-9 items-center justify-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
+                className="inline-flex size-9 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
               >
                 <X className="size-4" aria-hidden="true" />
               </Drawer.Close>
