@@ -16,7 +16,12 @@ export function HomeEmptyCatalog() {
             </p>
             <Button
               nativeButton={false}
-              render={<Link to="/products" className="mt-8 inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]" />}
+              render={
+                <Link
+                  to="/products"
+                  className="mt-8 inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
+                />
+              }
             >
               View products
             </Button>

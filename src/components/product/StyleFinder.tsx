@@ -63,8 +63,8 @@ export function StyleFinder({
   const triggerClasses =
     triggerClassName ??
     (triggerVariant === 'primary'
-      ? 'inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]'
-      : 'inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]')
+      ? 'inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]'
+      : 'inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]')
 
   function updateAnswer(nextAnswers: Partial<StyleFinderAnswers>) {
     setAnswers((currentAnswers) => ({
@@ -94,7 +94,7 @@ export function StyleFinder({
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center p-0 sm:items-center sm:p-6">
           <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto border border-[var(--color-line)] bg-[var(--color-paper)] outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-start justify-between gap-5 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
-              <div>
+              <div className="min-w-0">
                 <Dialog.Title className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">
                   Help me choose
                 </Dialog.Title>
@@ -155,7 +155,7 @@ export function StyleFinder({
                   <button
                     type="button"
                     onClick={() => setAnswers(getDefaultStyleFinderAnswers())}
-                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-primary)]"
+                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                   >
                     Reset
                   </button>
@@ -176,7 +176,7 @@ export function StyleFinder({
                         })
                         setOpen(false)
                       }}
-                      className="group border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-150 ease-out hover:border-[var(--color-primary)]"
+                      className="group border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-150 ease-out hover:border-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
                       <div className="mt-3">

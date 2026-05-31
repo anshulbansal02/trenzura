@@ -28,7 +28,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
 
   return (
     <main className="mx-auto grid min-h-[55svh] max-w-[90rem] place-items-center px-4 py-16 sm:px-6 lg:px-8">
-      <section className="max-w-2xl border-b border-[var(--color-line)] pb-10 text-center">
+      <section className="w-full max-w-2xl border-b border-[var(--color-line)] pb-10 text-center">
         <span className="mx-auto grid size-12 place-items-center bg-red-50 text-red-700">
           <AlertTriangle className="size-5" aria-hidden="true" />
         </span>
@@ -40,7 +40,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
           <Button
             type="button"
             onClick={reset}
-            className="inline-flex h-11 items-center justify-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
+            className="inline-flex h-11 items-center justify-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
             Try again
@@ -50,7 +50,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
             render={
               <Link
                 to="/products"
-                className="inline-flex h-11 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                className="inline-flex h-11 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
               />
             }
           >
@@ -66,7 +66,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
 export function RouteNotFound() {
   return (
     <main className="mx-auto grid min-h-[55svh] max-w-[90rem] place-items-center px-4 py-16 sm:px-6 lg:px-8">
-      <section className="max-w-2xl border-b border-[var(--color-line)] pb-10 text-center">
+      <section className="w-full max-w-2xl border-b border-[var(--color-line)] pb-10 text-center">
         <p className="text-sm font-medium text-[var(--color-muted)]">404</p>
         <h1 className="mt-2 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
           Page not found
@@ -80,7 +80,7 @@ export function RouteNotFound() {
             render={
               <Link
                 to="/products"
-                className="inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
+                className="inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
               />
             }
           >
@@ -91,7 +91,7 @@ export function RouteNotFound() {
             render={
               <Link
                 to="/"
-                className="inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                className="inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
               />
             }
           >
