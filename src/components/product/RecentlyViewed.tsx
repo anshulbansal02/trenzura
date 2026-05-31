@@ -95,7 +95,7 @@ export function RecentlyViewedRail({
         {!compact ? (
           <Link
             to="/products"
-            className="hidden text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:underline sm:inline"
+            className="hidden text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 sm:inline"
           >
             View all
           </Link>
@@ -113,7 +113,7 @@ export function RecentlyViewedRail({
             to="/products/$slug"
             params={{ slug: product.slug }}
             onClick={onProductClick}
-            className="group min-w-0"
+            className="group min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
           >
             <ProductMedia product={product} className="aspect-[4/5]" hoverZoom />
             <div className="mt-3 min-w-0">

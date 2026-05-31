@@ -68,7 +68,7 @@ export function ProductResultsHeader({
                 saleOnly: false,
               })
             }
-            className="min-h-9 px-3 text-sm font-medium text-[var(--color-muted)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
+            className="min-h-9 px-3 text-sm font-medium text-[var(--color-muted)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             Clear all
           </button>

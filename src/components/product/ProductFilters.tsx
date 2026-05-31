@@ -106,7 +106,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="shrink-0 text-sm font-medium text-[var(--color-primary)] transition hover:text-[var(--color-primary-dark)]"
+              className="shrink-0 text-sm font-medium text-[var(--color-primary)] transition duration-150 ease-out hover:text-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Reset
             </button>
@@ -136,7 +136,7 @@ export function ProductFilters({
               type="button"
               aria-label="Clear search"
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
+              className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-95"
             >
               <X className="size-4" aria-hidden="true" />
             </Button>
@@ -184,7 +184,7 @@ export function ProductFilters({
             <button
               type="button"
               onClick={() => onSearchChange({ sizes: [] })}
-              className="text-xs font-medium text-[var(--color-muted)] transition hover:text-[var(--color-primary)]"
+              className="text-xs font-medium text-[var(--color-muted)] transition duration-150 ease-out hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Clear
             </button>
@@ -322,7 +322,7 @@ export function ProductFilters({
                   saleOnly: false,
                 })
               }
-              className="text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
+              className="text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Reset filters
             </button>
@@ -332,7 +332,7 @@ export function ProductFilters({
           <Button
             type="button"
             onClick={onDone}
-            className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
+            className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             Show {resultCount} {resultCount === 1 ? 'style' : 'styles'}
           </Button>

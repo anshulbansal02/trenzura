@@ -100,7 +100,7 @@ export function ProductGallery({
                 setActiveIndex(index)
                 setViewerOpen(true)
               }}
-              className="relative aspect-[4/5] min-w-full max-w-full shrink-0 snap-center overflow-hidden"
+              className="relative aspect-[4/5] min-w-full max-w-full shrink-0 snap-center overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-inset"
             >
               <GalleryImage
                 product={product}
@@ -272,7 +272,7 @@ export function ProductGallery({
               <Dialog.Title className="sr-only">{product.title} images</Dialog.Title>
               <Dialog.Close
                 aria-label="Close image viewer"
-                className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur transition active:scale-95 sm:right-4 sm:top-4"
+                className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur transition duration-150 ease-out hover:bg-[var(--color-paper)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-95 sm:right-4 sm:top-4"
               >
                 <X className="size-5" aria-hidden="true" />
               </Dialog.Close>
