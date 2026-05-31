@@ -111,7 +111,7 @@ Neonfold's shop page leads with:
 - Big editorial title and description.
 - Horizontal category navigation.
 - Count and selected filters.
-- Collapsible desktop filter rail.
+- Desktop filter rail.
 - Four-column product grid on large screens.
 
 Trenzura's shop page currently leads with:
@@ -153,7 +153,7 @@ The current structure is usable, but it feels like a filter interface first and 
   - Optional small reveal animation for section entrance.
 - Reduce badges, shadows, pills, and nested surfaces.
 - Promote category navigation and collection story before filters.
-- Make filters collapsible on desktop and drawer-based on mobile.
+- Keep filters persistent on desktop per the current Trenzura direction, and drawer-based on mobile.
 - Increase grid density to `2` columns on mobile/tablet and `4` columns on large screens where
   product imagery supports it.
 
@@ -266,7 +266,7 @@ Work:
 
 - Move collection title and description into a larger editorial intro.
 - Add horizontal category navigation above the grid.
-- Make desktop filters collapsible instead of always-present.
+- Keep desktop filters persistent and visually quiet instead of toggle-driven.
 - Keep mobile filters as a drawer, but align drawer styling with Neonfold: left-side, square-edged,
   bordered panel.
 - Update active filter chips from rounded pills to bordered rectangular chips.
@@ -274,7 +274,7 @@ Work:
   - `grid-cols-2` by default.
   - `lg:grid-cols-4` on large screens.
 - Simplify product cards:
-  - `aspect-[4/5]` image.
+  - `aspect-[2/3]` image for the current Trenzura catalog so full outfits are less likely to crop.
   - No card shell.
   - Minimal tags.
   - Quick look appears on hover.
@@ -352,6 +352,40 @@ Risk:
   - Cart drawer.
   - Quick look.
   - Checkout first step.
+
+## Current Implementation Audit
+
+Last local visual audit: `2026-05-31`.
+
+Evidence collected:
+
+- Home desktop and mobile screenshots: simple banner hero, fixed header, mobile bottom navigation,
+  editorial section headers, and 2-column mobile flow render without obvious overlap.
+- Products desktop and mobile screenshots: editorial intro, horizontal category navigation,
+  persistent desktop filter rail, mobile filter trigger, 4-column desktop grid, and 2-column mobile
+  grid render with the current catalog images.
+- Product detail desktop and mobile screenshots: two-column desktop product page, mobile gallery,
+  sticky mobile purchase bar, round expand control, and round magnifier render correctly.
+- Quick look desktop interaction: backdrop is present, body scroll is locked, modal opens, and the
+  product image uses `contain` so the full item can be inspected.
+- Checkout desktop screenshot: bordered checkout form, order summary, typography, and spacing match
+  the new restrained commerce language.
+- Cart drawer mobile screenshot: drawer opens from the bag action, quantity controls and totals fit
+  cleanly, and the checkout action stays visible without overlap.
+- Checkout mobile screenshot: order summary is compact below the `sm` breakpoint, the duplicate final
+  total is removed from the summary, and the sticky Pay bar carries the payable total without covering
+  summary content.
+- Admin desktop and mobile screenshots: metrics, tabs, responsive order cards, and action panels keep
+  the same restrained panel language with no page-level horizontal overflow locally.
+- Static source check: no `@apply` rules are present.
+
+Open audit items before calling the full goal complete:
+
+- Re-run `pnpm typecheck` and `pnpm build` after the final layout pass.
+- Verify admin on QA after Cloudflare Access/email delivery is working; the local admin page renders
+  and has been visually checked, but the protected QA route remains externally gated.
+- Re-check production/QA pages after deployment because live product images and CDN behavior are part
+  of the visual result.
 
 ## Recommended First Build Slice
 
