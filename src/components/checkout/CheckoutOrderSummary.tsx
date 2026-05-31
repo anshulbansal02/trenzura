@@ -33,9 +33,9 @@ export function CheckoutOrderSummary({
         </p>
       </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
         {lines.map((line) => (
-          <div key={line.id} className="grid grid-cols-[72px_1fr] gap-3">
+          <div key={line.id} className="grid grid-cols-[64px_1fr] gap-3 sm:grid-cols-[72px_1fr]">
             <ProductMedia product={line.product} className="aspect-[4/5]" />
             <div className="min-w-0">
               <div className="flex items-start justify-between gap-3">
@@ -56,23 +56,23 @@ export function CheckoutOrderSummary({
         ))}
       </div>
 
-      <div className="mt-6 space-y-2 border-t border-[var(--color-line)] pt-5 text-sm">
+      <div className="mt-5 space-y-2 border-t border-[var(--color-line)] pt-4 text-sm sm:mt-6 sm:pt-5">
         <SummaryLine label="Subtotal" value={formatPrice(summaryTotals.subtotal)} />
         {savings > 0 && !hasConfirmedTotal ? (
           <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
         ) : null}
         <SummaryLine label="Shipping" value={formatShippingAmount(summaryTotals.shipping)} />
-        <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-medium text-[var(--color-ink)]">
+        <div className="hidden items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-medium text-[var(--color-ink)] sm:flex">
           <span>Total</span>
           <span>{formatPrice(summaryTotals.total)}</span>
         </div>
         {hasConfirmedTotal ? (
-          <p className="flex items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)]">
+          <p className="hidden items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)] sm:flex">
             <PackageCheck className="size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
             Your bag total has been confirmed for this order.
           </p>
         ) : (
-          <p className="pt-2 text-xs leading-5 text-[var(--color-muted)]">
+          <p className="hidden pt-2 text-xs leading-5 text-[var(--color-muted)] sm:block">
             {getFreeShippingMessage(summaryTotals.subtotal)}
           </p>
         )}
