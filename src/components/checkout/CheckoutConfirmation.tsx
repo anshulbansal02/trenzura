@@ -56,7 +56,7 @@ export function CheckoutConfirmation({ confirmation, message }: CheckoutConfirma
             render={
               <Link
                 to="/products"
-                className="inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-200 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                className="inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
               />
             }
           >
@@ -74,7 +74,7 @@ function ConfirmationLine({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-muted)]">
         {label}
       </p>
-      <p className="mt-2 break-words text-sm font-medium text-[var(--color-ink)]">{value}</p>
+      <p className="mt-2 break-words text-sm font-medium leading-6 text-[var(--color-ink)]">{value}</p>
     </div>
   )
 }

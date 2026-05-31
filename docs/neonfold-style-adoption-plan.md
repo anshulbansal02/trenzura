@@ -378,6 +378,9 @@ Evidence collected:
 - Admin desktop and mobile screenshots: metrics, tabs, responsive order cards, and action panels keep
   the same restrained panel language with no page-level horizontal overflow locally.
 - Static source check: no `@apply` rules are present.
+- Secondary surfaces source pass: add-to-bag toast, route boundaries, checkout confirmation, empty
+  catalog, style finder, and fit helper now use the same squared controls, focus rings, and
+  150ms interaction timing.
 
 Open audit items before calling the full goal complete:
 
@@ -386,6 +389,8 @@ Open audit items before calling the full goal complete:
   and has been visually checked, but the protected QA route remains externally gated.
 - Re-run admin screenshots after the latest admin layout polish. The route returns `200` locally and
   build checks pass, but the browser transport was unavailable during this pass.
+- Re-run screenshots for secondary surfaces after the latest polish pass. SSR route checks passed,
+  but add-to-bag toast and modal surfaces still need interactive browser verification.
 - Re-check production/QA pages after deployment because live product images and CDN behavior are part
   of the visual result.
 

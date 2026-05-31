@@ -70,7 +70,7 @@ export function AddToBagToast() {
           : 'translate-y-2 opacity-0 sm:translate-y-2'
       }`}
     >
-      <div className="grid grid-cols-[64px_1fr_auto] gap-3">
+      <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-3">
         <ProductMedia product={visibleItem.product} className="aspect-[4/5]" />
         <div className="min-w-0 py-1">
           <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-primary)]">
@@ -89,7 +89,7 @@ export function AddToBagToast() {
           type="button"
           aria-label="Dismiss add to bag message"
           onClick={closeToast}
-          className="grid size-8 place-items-center text-[var(--color-muted)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+          className="grid size-8 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-95"
         >
           <X className="size-4" aria-hidden="true" />
         </button>
@@ -101,14 +101,14 @@ export function AddToBagToast() {
             closeToast()
             openCart?.()
           }}
-          className="h-10 border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-medium text-[var(--color-ink)] transition hover:border-[var(--color-ink)]"
+          className="h-10 border border-[var(--color-line)] bg-[var(--color-surface)] text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
         >
           View bag
         </button>
         <Link
           to="/checkout"
           onClick={closeToast}
-          className="inline-flex h-10 items-center justify-center bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition hover:bg-[var(--color-primary-dark)]"
+          className="inline-flex h-10 items-center justify-center bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
         >
           Checkout
         </Link>
