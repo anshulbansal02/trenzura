@@ -25,8 +25,8 @@ export function AdminDataTable({
   rows: AdminDashboard['views'][AdminViewKey]
 }) {
   return (
-    <section className="overflow-hidden border border-[var(--color-line)] bg-[var(--color-surface)]">
-      <div className="flex flex-col gap-2 border-b border-[var(--color-line)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden border border-[var(--color-line)] bg-[var(--color-paper)]">
+      <div className="flex flex-col gap-2 border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-medium text-[var(--color-ink)]">
             {getAdminViewLabel(activeView)}
@@ -40,7 +40,7 @@ export function AdminDataTable({
         </p>
       </div>
       {rows.length === 0 ? (
-        <div className="px-4 py-12 text-center">
+        <div className="bg-[var(--color-surface)] px-4 py-12 text-center">
           <PackageCheck className="mx-auto size-8 text-[var(--color-accent-muted)]" aria-hidden="true" />
           <p className="mt-3 text-sm font-medium text-[var(--color-ink)]">No rows to review</p>
         </div>
@@ -71,9 +71,9 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
               <TableHead>Created</TableHead>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-[var(--color-surface)]">
             {rows.map((row) => (
-              <tr key={`${row.order_number}-${row.created_at}`} className="border-t border-[var(--color-line)]">
+              <tr key={`${row.order_number}-${row.created_at}`} className="border-t border-[var(--color-line)] transition duration-150 ease-out hover:bg-[var(--color-paper)]">
                 <TableCell>
                   <p className="font-medium text-[var(--color-ink)]">{row.order_number}</p>
                   <StatusBadge value={row.order_status} />
@@ -122,11 +122,11 @@ function IntegrationErrorsTable({ rows }: { rows: AdminIntegrationErrorRow[] }) 
               <TableHead>Created</TableHead>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-[var(--color-surface)]">
             {rows.map((row) => (
               <tr
                 key={`${row.source}-${row.event_type}-${row.order_number}-${row.created_at}`}
-                className="border-t border-[var(--color-line)]"
+                className="border-t border-[var(--color-line)] transition duration-150 ease-out hover:bg-[var(--color-paper)]"
               >
                 <TableCell>
                   <p className="font-medium text-[var(--color-ink)]">{row.source || '-'}</p>
@@ -162,9 +162,9 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
               <TableHead>Status</TableHead>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-[var(--color-surface)]">
             {rows.map((row) => (
-              <tr key={row.variant_id} className="border-t border-[var(--color-line)]">
+              <tr key={row.variant_id} className="border-t border-[var(--color-line)] transition duration-150 ease-out hover:bg-[var(--color-paper)]">
                 <TableCell>
                   <p className="font-medium text-[var(--color-ink)]">{row.title}</p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">{row.slug}</p>
@@ -330,7 +330,7 @@ function StatusBadge({ value }: { value: string }) {
 
   return (
     <span
-      className={`mt-2 inline-flex px-2 py-1 text-xs font-medium ${
+      className={`mt-2 inline-flex border px-2 py-1 text-xs font-medium ${
         alert ? 'bg-red-50 text-red-800' : 'bg-emerald-50 text-emerald-800'
       }`}
     >
