@@ -33,6 +33,14 @@ export function ProductGallery({
   const isQuickLook = variant === 'quickLook'
   const canMagnify = !isQuickLook && imageFit === 'cover'
   const activeImage = getProductImage(product, activeIndex)
+  const magnifierLeft = Math.min(
+    Math.max(MAGNIFIER_SIZE / 2, magnifier.width - MAGNIFIER_SIZE / 2),
+    Math.max(MAGNIFIER_SIZE / 2, magnifier.x),
+  )
+  const magnifierTop = Math.min(
+    Math.max(MAGNIFIER_SIZE / 2, magnifier.height - MAGNIFIER_SIZE / 2),
+    Math.max(MAGNIFIER_SIZE / 2, magnifier.y),
+  )
 
   useEffect(() => {
     setActiveIndex(0)
@@ -107,7 +115,7 @@ export function ProductGallery({
                 decoding="async"
                 fetchPriority={index === 0 ? 'high' : undefined}
               />
-              <span className="absolute bottom-3 right-3 grid size-10 place-items-center bg-[var(--color-paper)]/90 text-[var(--color-ink)] backdrop-blur">
+              <span className="absolute right-3 top-3 grid size-10 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur">
                 <Expand className="size-4" aria-hidden="true" />
               </span>
             </button>
@@ -156,10 +164,13 @@ export function ProductGallery({
             canMagnify ? 'lg:z-10' : '',
           )}
         >
-          <div
+          <button
+            type="button"
+            aria-label={`Open larger image of ${product.title}`}
+            onClick={() => setViewerOpen(true)}
             data-gallery-frame
             className={joinClasses(
-              'quick-gallery-main relative overflow-hidden rounded-[var(--radius-image)]',
+              'quick-gallery-main relative block w-full overflow-hidden rounded-[var(--radius-image)] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
               isQuickLook
                 ? 'h-[min(42svh,390px)] bg-[var(--color-surface)] sm:h-[min(54svh,520px)] lg:h-[min(62vh,620px)]'
                 : 'cursor-zoom-in bg-[var(--color-line)]',
@@ -181,17 +192,22 @@ export function ProductGallery({
                 imageFit === 'contain' ? 'object-contain' : 'object-cover object-top',
               )}
             />
-          </div>
+            {!isQuickLook ? (
+              <span className="absolute right-4 top-4 grid size-10 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur">
+                <Expand className="size-4" aria-hidden="true" />
+              </span>
+            ) : null}
+          </button>
           {canMagnify ? (
             <div
               aria-hidden="true"
               className={joinClasses(
-                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden border-2 border-[var(--color-paper)] bg-[var(--color-surface)] ring-2 ring-[var(--color-primary)]/15 transition-opacity duration-150 lg:block',
+                'pointer-events-none absolute z-10 hidden size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-[var(--color-paper)] bg-[var(--color-surface)] ring-2 ring-[var(--color-primary)]/15 transition-opacity duration-150 lg:block',
                 magnifier.active ? 'opacity-100' : 'opacity-0',
               )}
               style={{
-                left: `${magnifier.x}px`,
-                top: `${magnifier.y}px`,
+                left: `${magnifierLeft}px`,
+                top: `${magnifierTop}px`,
               }}
             >
               <img
@@ -250,23 +266,23 @@ export function ProductGallery({
 
       <Dialog.Root open={viewerOpen} onOpenChange={setViewerOpen}>
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-50 bg-stone-950/86 backdrop-blur-sm transition duration-150 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 lg:hidden" />
-          <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-center justify-center p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:hidden">
+          <Dialog.Backdrop className="fixed inset-0 z-50 bg-stone-950/86 backdrop-blur-sm transition duration-150 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+          <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-center justify-center p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-6">
             <Dialog.Popup className="relative flex h-full w-full flex-col justify-center outline-none">
               <Dialog.Title className="sr-only">{product.title} images</Dialog.Title>
               <Dialog.Close
                 aria-label="Close image viewer"
-                className="absolute right-2 top-2 z-10 grid size-11 place-items-center bg-[var(--color-paper)]/92 text-[var(--color-ink)] backdrop-blur transition active:scale-95"
+                className="absolute right-2 top-2 z-10 grid size-11 place-items-center rounded-full bg-[var(--color-paper)]/92 text-[var(--color-ink)] shadow-sm backdrop-blur transition active:scale-95 sm:right-4 sm:top-4"
               >
                 <X className="size-5" aria-hidden="true" />
               </Dialog.Close>
               <div className="flex snap-x snap-mandatory overflow-x-auto">
                 {product.images.map((image, index) => (
-                  <div key={image} className="relative flex h-[82svh] w-full shrink-0 snap-center items-center overflow-hidden">
+                  <div key={image} className="relative flex h-[82svh] w-full shrink-0 snap-center items-center overflow-hidden sm:h-[88svh]">
                     <GalleryImage
                       product={product}
                       index={index}
-                      sizes="100vw"
+                      sizes="(min-width: 1024px) 80vw, 100vw"
                       alt={index === 0 ? product.imageAlt : ''}
                       className="max-h-full w-full object-contain text-transparent"
                       loading="lazy"

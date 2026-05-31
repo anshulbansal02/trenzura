@@ -71,7 +71,7 @@ export function SiteHeader() {
           <Link
             to="/products"
             aria-label="Search products"
-            className="flex size-10 items-center justify-center text-[var(--color-ink)] transition duration-150 ease-out hover:bg-[var(--color-surface)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+            className="flex size-10 items-center justify-center rounded-full text-[var(--color-ink)] transition duration-150 ease-out hover:bg-[var(--color-surface)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
           >
             <Search className="size-4" aria-hidden="true" />
           </Link>
