@@ -30,6 +30,14 @@ export const Route = createRootRoute({
         name: 'theme-color',
         content: '#1C2E4A',
       },
+      {
+        name: 'application-name',
+        content: siteName,
+      },
+      {
+        name: 'apple-mobile-web-app-title',
+        content: siteName,
+      },
     ],
     links: [
       {
@@ -56,12 +64,19 @@ export const Route = createRootRoute({
         href: '/favicon.svg',
       },
       {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: '/icon-32.png',
+      },
+      {
         rel: 'alternate icon',
         href: '/favicon.ico',
       },
       {
         rel: 'apple-touch-icon',
-        href: '/apple-touch-icon.svg',
+        sizes: '180x180',
+        href: '/apple-touch-icon.png',
       },
       {
         rel: 'mask-icon',
