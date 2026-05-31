@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Trenzura",
   "short_name": "Trenzura",
-  "description": "Printed kurtis and coordinated sets from Trenzura.",
+  "description": "Short tops, kurtis, and coordinated sets from Trenzura.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F4F2ED",
   "theme_color": "#1C2E4A",
@@ -11,13 +13,19 @@
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon.svg",
-      "sizes": "180x180",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

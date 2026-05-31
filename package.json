@@ -16,6 +16,7 @@
     "validate:catalog-assets": "tsx scripts/validate-catalog-assets.ts",
     "publish:catalog": "pnpm sync:images:manifest && pnpm sync:products && pnpm validate:catalog-assets && pnpm sync:images:r2:upload && tsx scripts/sync-products-to-supabase.ts",
     "prepare:generated": "tsx scripts/ensure-generated-catalog.ts",
+    "generate:favicons": "tsx scripts/generate-favicons.ts",
     "pretypecheck": "pnpm prepare:generated",
     "typecheck": "tsc --noEmit",
     "prebuild:ci": "pnpm prepare:generated",
