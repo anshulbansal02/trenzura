@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Product } from '../../data/products'
-import { getProduct, getProductVariant } from '../../data/products'
+import { getProductSize, getProductVariantById } from '../../data/products'
 import { trackAnalyticsEvent } from '../../lib/analytics'
 
 export type CartLine = {
@@ -94,11 +94,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () =>
       cartLines
         .map((line) => {
-          const product = getProduct(line.productId)
+          const product = getProductVariantById(line.variantId)
           if (!product) return null
 
-          const variant = getProductVariant(product, line.variantId)
-          const maxQuantity = variant?.stockAvailable ?? 0
+          const size = getProductSize(product, line.size)
+          const maxQuantity = size?.stockAvailable ?? 0
 
           if (maxQuantity < 1) return null
 
@@ -106,7 +106,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ...line,
             product,
             maxQuantity,
-            quantity: Math.min(line.quantity, maxQuantity),
+            quantity: clampQuantity(line.quantity, maxQuantity, product.minOrderQuantity),
           }
         })
         .filter((line): line is CartLineWithProduct => Boolean(line)),
@@ -127,12 +127,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   )
 
   const addItem = useCallback(({ product, size, quantity = 1 }: AddCartItemInput) => {
-    const sizeInventory = product.sizes.find((item) => item.label === size)
+    const sizeInventory = getProductSize(product, size)
     if (!sizeInventory || sizeInventory.stockAvailable < 1) return
 
     const maxQuantity = sizeInventory.stockAvailable
-    const id = createCartLineId(product.productId, sizeInventory.variantId)
-    const safeQuantity = clampQuantity(quantity, maxQuantity)
+    const id = createCartLineId(product.productId, product.variantId, size)
+    const safeQuantity = clampQuantity(quantity, maxQuantity, product.minOrderQuantity)
 
     setCartLines((currentLines) => {
       const existingLine = currentLines.find((line) => line.id === id)
@@ -143,7 +143,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           {
             id,
             productId: product.productId,
-            variantId: sizeInventory.variantId,
+            variantId: product.variantId,
             size,
             quantity: safeQuantity,
           },
@@ -154,7 +154,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         line.id === id
           ? {
               ...line,
-              quantity: clampQuantity(line.quantity + safeQuantity, maxQuantity),
+              quantity: clampQuantity(line.quantity + safeQuantity, maxQuantity, product.minOrderQuantity),
             }
           : line,
       )
@@ -170,13 +170,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         .map((line) => {
           if (line.id !== id) return line
 
-          const product = getProduct(line.productId)
+          const product = getProductVariantById(line.variantId)
           const maxQuantity =
-            product?.sizes.find((size) => size.variantId === line.variantId)?.stockAvailable ?? 0
+            product?.sizes.find((size) => size.label === line.size)?.stockAvailable ?? 0
+          const minQuantity = product?.minOrderQuantity ?? 1
 
           return {
             ...line,
-            quantity: clampQuantity(quantity, maxQuantity),
+            quantity: clampQuantity(quantity, maxQuantity, minQuantity),
           }
         })
         .filter((line) => line.quantity > 0),
@@ -248,13 +249,13 @@ export function useOptionalCart() {
   return useContext(CartContext)
 }
 
-export function createCartLineId(productId: string, variantId: string) {
-  return `${productId}:${variantId}`
+export function createCartLineId(productId: string, variantId: string, size: string) {
+  return `${productId}:${variantId}:${size.trim().toLowerCase()}`
 }
 
-function clampQuantity(quantity: number, maxQuantity: number) {
+function clampQuantity(quantity: number, maxQuantity: number, minQuantity = 1) {
   if (maxQuantity < 1) return 0
-  return Math.min(Math.max(Math.trunc(quantity), 1), maxQuantity)
+  return Math.min(Math.max(Math.trunc(quantity), minQuantity), maxQuantity)
 }
 
 function isStoredCartLine(value: unknown): value is CartLine {

@@ -4,7 +4,7 @@ export type ShippingConfig = {
 }
 
 export const shippingConfig = {
-  freeShippingThresholdPaise: 50000,
+  freeShippingThresholdPaise: 49900,
   standardShippingPaise: 10000,
 } satisfies ShippingConfig
 

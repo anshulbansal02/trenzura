@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
-import { featuredProducts, getProduct, type Product } from '../../data/products'
+import { featuredProducts, getProductVariantById, type Product } from '../../data/products'
 import { formatPrice, joinClasses } from '../../lib/format'
 import { ProductMedia } from './ProductMedia'
 
@@ -22,13 +22,13 @@ type RecentlyViewedRailProps = {
 export function rememberRecentlyViewedProduct(product: Product) {
   if (typeof window === 'undefined') return
 
-  const currentProductIds = readStoredProductIds()
-  const nextProductIds = [
-    product.productId,
-    ...currentProductIds.filter((productId) => productId !== product.productId),
+  const currentVariantIds = readStoredVariantIds()
+  const nextVariantIds = [
+    product.variantId,
+    ...currentVariantIds.filter((variantId) => variantId !== product.variantId),
   ].slice(0, maxStoredProducts)
 
-  window.localStorage.setItem(recentProductsStorageKey, JSON.stringify(nextProductIds))
+  window.localStorage.setItem(recentProductsStorageKey, JSON.stringify(nextVariantIds))
   window.dispatchEvent(new Event(recentProductsEvent))
 }
 
@@ -38,10 +38,10 @@ export function useRecentlyViewedProducts(excludeProductId?: string, limit = 4) 
   useEffect(() => {
     function refreshRecentProducts() {
       setRecentProducts(
-        readStoredProductIds()
-          .map((productId) => getProduct(productId))
+        readStoredVariantIds()
+          .map((variantId) => getProductVariantById(variantId))
           .filter((product): product is Product => Boolean(product))
-          .filter((product) => product.productId !== excludeProductId)
+          .filter((product) => product.variantId !== excludeProductId)
           .slice(0, limit),
       )
     }
@@ -73,7 +73,7 @@ export function RecentlyViewedRail({
   const fallbackProducts =
     fallback === 'featured'
       ? featuredProducts
-          .filter((product) => product.productId !== excludeProductId)
+          .filter((product) => product.variantId !== excludeProductId)
           .slice(0, limit)
       : []
   const products = recentProducts.length > 0 ? recentProducts : fallbackProducts
@@ -109,7 +109,7 @@ export function RecentlyViewedRail({
       >
         {products.map((product) => (
           <Link
-            key={product.productId}
+            key={product.variantId}
             to="/products/$slug"
             params={{ slug: product.slug }}
             onClick={onProductClick}
@@ -131,7 +131,7 @@ export function RecentlyViewedRail({
   )
 }
 
-function readStoredProductIds() {
+function readStoredVariantIds() {
   if (typeof window === 'undefined') return []
 
   try {
@@ -141,7 +141,7 @@ function readStoredProductIds() {
     const parsedValue = JSON.parse(storedValue)
     if (!Array.isArray(parsedValue)) return []
 
-    return parsedValue.filter((productId): productId is string => typeof productId === 'string')
+    return parsedValue.filter((variantId): variantId is string => typeof variantId === 'string')
   } catch {
     return []
   }

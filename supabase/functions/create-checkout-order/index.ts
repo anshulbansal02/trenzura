@@ -25,17 +25,30 @@ type CustomerInput = {
 
 type ProductRow = {
   product_id: string
-  slug: string
   title: string
-  images: string[]
-  mrp_paise: number
-  selling_price_paise: number
   active: boolean
 }
 
 type VariantRow = {
   variant_id: string
   product_id: string
+  product_code: string
+  slug: string
+  title: string
+  images: string[]
+  mrp_paise: number
+  selling_price_paise: number
+  min_order_quantity: number
+  package_length_cm: number | null
+  package_breadth_cm: number | null
+  package_height_cm: number | null
+  package_weight_kg: number | null
+  active: boolean
+}
+
+type VariantSizeRow = {
+  inventory_id: string
+  variant_id: string
   size_label: string
   stock_available: number
   active: boolean
@@ -72,23 +85,37 @@ Deno.serve(async (request) => {
     const variantIds = [...new Set(items.map((item) => item.variantId))]
     const { data: products, error: productError } = await supabase
       .from('products')
-      .select('product_id,slug,title,images,mrp_paise,selling_price_paise,active')
+      .select('product_id,title,active')
       .in('product_id', productIds)
 
     if (productError) throw productError
 
     const { data: variants, error: variantError } = await supabase
       .from('product_variants')
-      .select('variant_id,product_id,size_label,stock_available,active')
+      .select('variant_id,product_id,product_code,slug,title,images,mrp_paise,selling_price_paise,min_order_quantity,package_length_cm,package_breadth_cm,package_height_cm,package_weight_kg,active')
       .in('variant_id', variantIds)
 
     if (variantError) throw variantError
+
+    const inventoryIds = items.map((item) => createInventoryId(item.variantId, item.size))
+    const { data: variantSizes, error: variantSizeError } = await supabase
+      .from('product_variant_sizes')
+      .select('inventory_id,variant_id,size_label,stock_available,active')
+      .in('inventory_id', inventoryIds)
+
+    if (variantSizeError) throw variantSizeError
 
     const productById = new Map(
       ((products ?? []) as ProductRow[]).map((product) => [product.product_id, product]),
     )
     const variantById = new Map(
       ((variants ?? []) as VariantRow[]).map((variant) => [variant.variant_id, variant]),
+    )
+    const variantSizeById = new Map(
+      ((variantSizes ?? []) as VariantSizeRow[]).map((variantSize) => [
+        variantSize.inventory_id,
+        variantSize,
+      ]),
     )
     const orderItems = items.map((item) => {
       const product = productById.get(item.productId)
@@ -100,19 +127,37 @@ Deno.serve(async (request) => {
       if (
         !variant ||
         !variant.active ||
-        variant.product_id !== product.product_id ||
-        variant.size_label !== item.size
+        variant.product_id !== product.product_id
       ) {
-        throw new CheckoutError(`${product.title} is unavailable in ${item.size}`, 400)
+        throw new CheckoutError(`${product.title} is unavailable`, 400)
       }
 
-      if (variant.stock_available < 1) {
-        throw new CheckoutError(`${product.title} is sold out in ${item.size}`, 400)
+      const inventoryId = createInventoryId(item.variantId, item.size)
+      const variantSize = variantSizeById.get(inventoryId)
+
+      if (
+        !variantSize ||
+        !variantSize.active ||
+        variantSize.variant_id !== variant.variant_id ||
+        variantSize.size_label !== item.size
+      ) {
+        throw new CheckoutError(`${variant.title} is unavailable in ${item.size}`, 400)
       }
 
-      if (item.quantity > variant.stock_available) {
+      if (item.quantity < variant.min_order_quantity) {
         throw new CheckoutError(
-          `Only ${variant.stock_available} item(s) available in ${item.size}`,
+          `Minimum order quantity for ${variant.title} is ${variant.min_order_quantity}`,
+          400,
+        )
+      }
+
+      if (variantSize.stock_available < 1) {
+        throw new CheckoutError(`${variant.title} is sold out in ${item.size}`, 400)
+      }
+
+      if (item.quantity > variantSize.stock_available) {
+        throw new CheckoutError(
+          `Only ${variantSize.stock_available} item(s) available in ${item.size}`,
           400,
         )
       }
@@ -120,15 +165,22 @@ Deno.serve(async (request) => {
       return {
         product_id: product.product_id,
         variant_id: variant.variant_id,
-        product_slug: product.slug,
-        title: product.title,
-        size_label: variant.size_label,
+        inventory_id: variantSize.inventory_id,
+        product_slug: variant.slug,
+        variant_slug: variant.slug,
+        product_code: variant.product_code,
+        title: variant.title,
+        size_label: variantSize.size_label,
         quantity: item.quantity,
-        unit_selling_price_paise: product.selling_price_paise,
-        unit_mrp_paise: product.mrp_paise,
-        discount_amount_paise: Math.max(0, product.mrp_paise - product.selling_price_paise),
-        line_total_paise: product.selling_price_paise * item.quantity,
-        primary_image_url: product.images[0] ?? null,
+        unit_selling_price_paise: variant.selling_price_paise,
+        unit_mrp_paise: variant.mrp_paise,
+        discount_amount_paise: Math.max(0, variant.mrp_paise - variant.selling_price_paise),
+        line_total_paise: variant.selling_price_paise * item.quantity,
+        primary_image_url: variant.images[0] ?? null,
+        package_length_cm: variant.package_length_cm,
+        package_breadth_cm: variant.package_breadth_cm,
+        package_height_cm: variant.package_height_cm,
+        package_weight_kg: variant.package_weight_kg,
       }
     })
     const subtotal = orderItems.reduce((total, item) => total + item.line_total_paise, 0)
@@ -262,6 +314,10 @@ function normalizeCartItems(value: unknown): CartItemInput[] {
 
     return { productId, variantId, size, quantity }
   })
+}
+
+function createInventoryId(variantId: string, size: string) {
+  return `${variantId}:${size.trim().toLowerCase()}`
 }
 
 function normalizeCustomer(value: unknown): CustomerInput {

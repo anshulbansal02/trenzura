@@ -164,7 +164,7 @@ export function StyleFinder({
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {results.map(({ product, reasons }) => (
                     <Link
-                      key={product.productId}
+                      key={product.variantId}
                       to="/products/$slug"
                       params={{ slug: product.slug }}
                       onClick={() => {

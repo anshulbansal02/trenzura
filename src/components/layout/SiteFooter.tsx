@@ -1,14 +1,19 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, RefreshCcw, ShieldCheck, ShoppingBag, Truck, type LucideIcon } from 'lucide-react'
+import { RefreshCcw, ShieldCheck, ShoppingBag, Truck, type LucideIcon } from 'lucide-react'
 
 import { formatPrice } from '../../lib/format'
 import type { ProductSearchState } from '../../lib/product-search-url'
 import { shippingConfig } from '../../lib/shipping'
+import { RazorpayLogo } from '../payment/RazorpayLogo'
 
 type FooterLink =
   | {
       label: string
       to: '/checkout'
+    }
+  | {
+      label: string
+      to: '/about' | '/shipping-returns' | '/contact' | '/terms' | '/privacy'
     }
   | {
       label: string
@@ -26,19 +31,19 @@ const footerSections: Array<{ links: FooterLink[]; title: string }> = [
     ],
   },
   {
-    title: 'Categories',
+    title: 'Company',
     links: [
-      { label: 'Kurti', to: '/products' as const, search: { category: 'kurti' } },
-      { label: 'Co-ord sets', to: '/products' as const, search: { category: 'co-ord-sets' } },
-      { label: 'Short Top', to: '/products' as const, search: { category: 'short-top' } },
+      { label: 'About', to: '/about' as const },
+      { label: 'Contact', to: '/contact' as const },
+      { label: 'Shipping & returns', to: '/shipping-returns' as const },
     ],
   },
   {
-    title: 'Support',
+    title: 'Legal',
     links: [
+      { label: 'Terms', to: '/terms' as const },
+      { label: 'Privacy', to: '/privacy' as const },
       { label: 'Checkout', to: '/checkout' as const },
-      { label: 'Size chart', to: '/products' as const },
-      { label: 'Secure payment', to: '/checkout' as const },
     ],
   },
 ]
@@ -52,19 +57,17 @@ const footerBenefits: Array<{ Icon: LucideIcon; copy: string; title: string }> =
   {
     Icon: Truck,
     title: 'Clear shipping',
-    copy: `${formatPrice(shippingConfig.standardShippingPaise)} shipping below ${formatPrice(
-      shippingConfig.freeShippingThresholdPaise,
-    )}.`,
+    copy: `Free shipping above ${formatPrice(shippingConfig.freeShippingThresholdPaise)}.`,
   },
   {
     Icon: RefreshCcw,
-    title: 'Easy exchanges',
-    copy: '7-day size exchanges on eligible pieces.',
+    title: 'Returns',
+    copy: '7-day returns on eligible pieces after delivery.',
   },
   {
     Icon: ShoppingBag,
-    title: 'Easy shopping',
-    copy: 'Available sizes are shown before you add to bag.',
+    title: 'Order review',
+    copy: 'Size, quantity, shipping, and total are shown before payment.',
   },
 ]
 
@@ -72,49 +75,38 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--color-line)] bg-[var(--color-paper)] px-4 pb-28 pt-10 sm:px-6 sm:pb-10 lg:px-8">
       <div className="mx-auto grid max-w-[90rem] gap-10">
-        <div className="grid items-center gap-7 py-5 md:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] md:py-8">
+        <div className="py-5 md:py-8">
           <div>
             <p className="text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
-              Fresh drops and fit notes
+              Trenzura
             </p>
             <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-none text-[var(--color-ink)] sm:text-5xl">
-              Easy pieces for repeat plans.
+              Everyday Indian wear, kept straightforward.
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-muted)] sm:text-base">
-              Short tops, kurtis, and coordinated sets with happy color, clean fits, and prices made
-              for repeat shopping.
+              Short tops, kurtis, and coordinated sets with clear prices, size selection, secure
+              checkout, and delivery details shown before payment.
             </p>
           </div>
-          <form className="flex w-full items-center border border-[var(--color-line)] bg-[var(--color-paper)]" aria-label="Join Trenzura updates">
-            <label className="sr-only" htmlFor="footer-newsletter-email">
-              Email address
-            </label>
-            <input
-              id="footer-newsletter-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Email address"
-              className="h-14 min-w-0 flex-1 bg-transparent px-4 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)] focus:bg-[var(--color-surface-soft)]"
-            />
-            <button
-              type="button"
-              aria-label="Join Trenzura updates"
-              className="grid h-14 w-14 shrink-0 place-items-center bg-[var(--color-primary)] text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
-            >
-              <ArrowRight className="size-5" aria-hidden="true" />
-            </button>
-          </form>
         </div>
 
         <div className="flex flex-col justify-between gap-8 border-t border-[var(--color-line)] pt-8 text-sm text-[var(--color-muted)] md:flex-row">
           <div>
-            <Link to="/" className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">
-              Trenzura
+            <Link
+              to="/"
+              aria-label="Trenzura home"
+              className="inline-flex transition duration-150 ease-out hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+            >
+              <img
+                src="/favicon.svg"
+                alt="Trenzura"
+                className="size-12"
+              />
             </Link>
             <p className="mt-3 max-w-sm leading-6">
-              Everyday Indian wear with straightforward sizing, quick checkout, and easy exchanges.
+              Everyday Indian wear with straightforward sizing, clear checkout, and eligible returns.
             </p>
+            <RazorpayBadge />
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             {footerSections.map((section) => (
@@ -163,9 +155,22 @@ export function SiteFooter() {
 
         <div className="flex flex-col justify-between gap-3 border-t border-[var(--color-line)] pt-6 text-xs text-[var(--color-muted)] sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} Trenzura. All rights reserved.</p>
-          <p>Built for clear sizing, quick checkout, and repeat shopping.</p>
+          <p className="inline-flex items-center gap-2">
+            <span>Secure checkout powered by</span>
+            <RazorpayLogo className="h-3.5 w-auto" />
+          </p>
         </div>
       </div>
     </footer>
+  )
+}
+
+function RazorpayBadge() {
+  return (
+    <div className="mt-5 inline-flex items-center gap-2 border border-[var(--color-line)] bg-[var(--color-surface-soft)] px-3 py-2 text-xs font-medium text-[var(--color-ink)]">
+      <span>Secure checkout powered by</span>
+      <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
+      <RazorpayLogo className="h-4 w-auto" />
+    </div>
   )
 }

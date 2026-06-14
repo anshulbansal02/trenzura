@@ -15,6 +15,7 @@ drop table if exists public.shipments;
 drop table if exists public.payments;
 drop table if exists public.order_items;
 drop table if exists public.orders;
+drop table if exists public.product_variant_sizes;
 drop table if exists public.product_variants;
 drop table if exists public.product_sizes;
 drop table if exists public.payment_events;
@@ -26,10 +27,34 @@ create table public.products (
   title text not null,
   category text not null,
   description text not null,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.product_variants (
+  variant_id text primary key,
+  product_id text not null references public.products(product_id) on delete restrict,
+  product_code text not null,
+  slug text not null unique,
+  title text not null,
+  color text,
+  tag text,
+  brand text,
   images text[] not null default '{}',
   mrp_paise integer not null check (mrp_paise >= 0),
   selling_price_paise integer not null check (selling_price_paise >= 0),
   size_chart jsonb not null default '[]'::jsonb,
+  attributes jsonb not null default '[]'::jsonb,
+  min_order_quantity integer not null default 1 check (min_order_quantity > 0),
+  fulfillment_by text,
+  shipping_provider text,
+  package_length_cm numeric,
+  package_breadth_cm numeric,
+  package_height_cm numeric,
+  package_weight_kg numeric,
+  hsn text,
+  tax_code text,
   active boolean not null default true,
   featured boolean not null default false,
   created_at timestamptz not null default now(),
@@ -37,15 +62,15 @@ create table public.products (
   check (selling_price_paise <= mrp_paise)
 );
 
-create table public.product_variants (
-  variant_id text primary key,
-  product_id text not null references public.products(product_id) on delete restrict,
+create table public.product_variant_sizes (
+  inventory_id text primary key,
+  variant_id text not null references public.product_variants(variant_id) on delete restrict,
   size_label text not null,
   stock_available integer not null default 0 check (stock_available >= 0),
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (product_id, size_label)
+  unique (variant_id, size_label)
 );
 
 create table public.orders (
@@ -81,7 +106,10 @@ create table public.order_items (
   order_id uuid not null references public.orders(id) on delete cascade,
   product_id text not null references public.products(product_id) on delete restrict,
   variant_id text not null references public.product_variants(variant_id) on delete restrict,
+  inventory_id text not null references public.product_variant_sizes(inventory_id) on delete restrict,
   product_slug text not null,
+  variant_slug text not null,
+  product_code text not null,
   title text not null,
   size_label text not null,
   quantity integer not null check (quantity > 0),
@@ -90,6 +118,10 @@ create table public.order_items (
   discount_amount_paise integer not null default 0 check (discount_amount_paise >= 0),
   line_total_paise integer not null check (line_total_paise >= 0),
   primary_image_url text,
+  package_length_cm numeric,
+  package_breadth_cm numeric,
+  package_height_cm numeric,
+  package_weight_kg numeric,
   created_at timestamptz not null default now(),
   check (line_total_paise = unit_selling_price_paise * quantity)
 );
@@ -160,6 +192,8 @@ create unique index integration_events_source_event_key_idx
 create index products_active_category_idx on public.products(active, category);
 create index products_slug_idx on public.products(slug);
 create index product_variants_product_id_idx on public.product_variants(product_id);
+create index product_variants_active_featured_idx on public.product_variants(active, featured);
+create index product_variant_sizes_variant_id_idx on public.product_variant_sizes(variant_id);
 create index orders_status_created_at_idx on public.orders(status, created_at desc);
 create index orders_order_number_idx on public.orders(order_number);
 create index order_items_order_id_idx on public.order_items(order_id);
@@ -184,6 +218,10 @@ for each row execute function public.set_updated_at();
 
 create trigger product_variants_set_updated_at
 before update on public.product_variants
+for each row execute function public.set_updated_at();
+
+create trigger product_variant_sizes_set_updated_at
+before update on public.product_variant_sizes
 for each row execute function public.set_updated_at();
 
 create trigger orders_set_updated_at
@@ -242,18 +280,23 @@ begin
   select jsonb_agg(
     jsonb_build_object(
       'variantId', oi.variant_id,
+      'inventoryId', oi.inventory_id,
+      'size', oi.size_label,
       'requested', oi.quantity,
-      'available', coalesce(pv.stock_available, 0)
+      'available', coalesce(pvs.stock_available, 0)
     )
   )
   into v_insufficient
   from public.order_items oi
   left join public.product_variants pv on pv.variant_id = oi.variant_id
+  left join public.product_variant_sizes pvs on pvs.inventory_id = oi.inventory_id
   where oi.order_id = p_order_id
     and (
       pv.variant_id is null
       or pv.active is false
-      or pv.stock_available < oi.quantity
+      or pvs.inventory_id is null
+      or pvs.active is false
+      or pvs.stock_available < oi.quantity
     );
 
   update public.payments
@@ -278,11 +321,11 @@ begin
     );
   end if;
 
-  update public.product_variants pv
-  set stock_available = pv.stock_available - oi.quantity
+  update public.product_variant_sizes pvs
+  set stock_available = pvs.stock_available - oi.quantity
   from public.order_items oi
   where oi.order_id = p_order_id
-    and oi.variant_id = pv.variant_id;
+    and oi.inventory_id = pvs.inventory_id;
 
   update public.orders
   set status = 'paid'
@@ -348,23 +391,29 @@ order by ie.created_at desc;
 create view public.ops_low_stock_variants as
 select
   p.product_id,
-  p.slug,
-  p.title,
   p.category,
   pv.variant_id,
-  pv.size_label,
-  pv.stock_available,
+  pv.slug,
+  pv.title,
+  pv.product_code,
+  pvs.inventory_id,
+  pvs.size_label,
+  pvs.stock_available,
+  pvs.active as size_active,
   pv.active as variant_active,
   p.active as product_active
-from public.product_variants pv
+from public.product_variant_sizes pvs
+join public.product_variants pv on pv.variant_id = pvs.variant_id
 join public.products p on p.product_id = pv.product_id
 where p.active = true
   and pv.active = true
-  and pv.stock_available <= 3
-order by pv.stock_available asc, p.title asc, pv.size_label asc;
+  and pvs.active = true
+  and pvs.stock_available <= 3
+order by pvs.stock_available asc, pv.title asc, pvs.size_label asc;
 
 alter table public.products enable row level security;
 alter table public.product_variants enable row level security;
+alter table public.product_variant_sizes enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.payments enable row level security;
@@ -373,6 +422,7 @@ alter table public.integration_events enable row level security;
 
 revoke all on public.products from anon, authenticated;
 revoke all on public.product_variants from anon, authenticated;
+revoke all on public.product_variant_sizes from anon, authenticated;
 revoke all on public.orders from anon, authenticated;
 revoke all on public.order_items from anon, authenticated;
 revoke all on public.payments from anon, authenticated;
