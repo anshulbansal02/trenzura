@@ -1,9 +1,15 @@
 import generatedProducts from '../generated/products.json'
 import type { Product } from './product-schema'
 
-export type { Product, ProductImageVariant, ProductSize, SizeChartRow } from './product-schema'
+export type {
+  Product,
+  ProductAttribute,
+  ProductImageVariant,
+  ProductSize,
+  SizeChartRow,
+} from './product-schema'
 
-export const products = generatedProducts as Product[]
+export const products = generatedProducts as unknown as Product[]
 
 export const productCategories = Array.from(
   new Set(products.map((product) => product.category)),
@@ -34,10 +40,18 @@ export function getProduct(productId: string) {
   return products.find((product) => product.productId === productId)
 }
 
+export function getProductVariantById(variantId: string) {
+  return products.find((product) => product.variantId === variantId)
+}
+
 export function getProductBySlug(slug: string) {
   return products.find((product) => product.slug === slug)
 }
 
-export function getProductVariant(product: Product, variantId: string) {
-  return product.sizes.find((size) => size.variantId === variantId)
+export function getProductGroupVariants(product: Product) {
+  return products.filter((item) => item.productId === product.productId)
+}
+
+export function getProductSize(product: Product, sizeLabel: string) {
+  return product.sizes.find((size) => size.label === sizeLabel)
 }

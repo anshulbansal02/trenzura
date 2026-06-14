@@ -1,21 +1,18 @@
 import { Accordion } from '@base-ui/react/accordion'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { ProductGallery } from '../components/product/ProductGallery'
 import { ProductCard } from '../components/product/ProductCard'
 import { ProductPurchasePanel } from '../components/product/ProductPurchasePanel'
-import { ProductReasons } from '../components/product/ProductReasons'
 import {
   RecentlyViewedRail,
   rememberRecentlyViewedProduct,
 } from '../components/product/RecentlyViewed'
-import { getProductBySlug, products } from '../data/products'
+import { getProductBySlug, getProductGroupVariants, products } from '../data/products'
 import { formatPrice } from '../lib/format'
 import { createPageMeta, createProductJsonLd } from '../lib/seo'
-
-const defaultProductAccordionValue = ['fit']
 
 export const Route = createFileRoute('/products_/$slug')({
   loader: ({ params }) => {
@@ -66,15 +63,15 @@ export const Route = createFileRoute('/products_/$slug')({
 
 function ProductPreviewPage() {
   const { product } = Route.useLoaderData()
+  const productVariants = getProductGroupVariants(product)
   const relatedProducts = products
     .filter(
       (item) =>
-        item.category === product.category && item.productId !== product.productId,
+        item.category === product.category && item.variantId !== product.variantId,
     )
     .slice(0, 4)
-  const availableSizeLabels = product.sizes
-    .filter((size) => size.stockAvailable > 0)
-    .map((size) => size.label)
+  const detailAttributes = product.attributes.filter((attribute) => attribute.section === 'details')
+  const disclosureAttributes = product.attributes.filter((attribute) => attribute.section === 'disclosure')
 
   useEffect(() => {
     rememberRecentlyViewedProduct(product)
@@ -88,7 +85,7 @@ function ProductPreviewPage() {
             <ProductGallery product={product} />
           </div>
 
-          <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
+          <div className="min-w-0">
             <nav
               aria-label="Product breadcrumb"
               className="mb-6 flex min-w-0 flex-wrap items-center gap-2 text-sm text-[var(--color-muted)]"
@@ -102,17 +99,19 @@ function ProductPreviewPage() {
               </span>
             </nav>
 
-            <section className="border-b border-[var(--color-line)] pb-7">
+            <section>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-medium text-[var(--color-muted)]">{product.categoryLabel}</p>
-                {product.featured ? (
+                {product.tag ? (
                   <p className="bg-[var(--color-surface)] px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-[var(--color-primary)]">
-                    Most wanted
+                    {product.tag}
                   </p>
                 ) : null}
-                <p className="bg-[var(--color-blush-surface)] px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-[var(--color-accent-muted)]">
-                  {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
-                </p>
+                {product.stockAvailable <= 0 ? (
+                  <p className="bg-[var(--color-blush-surface)] px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-[var(--color-accent-muted)]">
+                    Sold out
+                  </p>
+                ) : null}
               </div>
               <h1 className="mt-3 min-w-0 break-words font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl [overflow-wrap:anywhere]">
                 {product.title}
@@ -132,102 +131,99 @@ function ProductPreviewPage() {
                   </>
                 ) : null}
               </div>
-
-              <p className="mt-5 max-w-xl text-base leading-7 text-[var(--color-muted)]">
-                {product.description}
-              </p>
             </section>
+
+            {productVariants.length > 1 ? (
+              <section className="mt-6">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-sm font-medium text-[var(--color-ink)]">Color</p>
+                  {product.color ? (
+                    <p className="text-sm text-[var(--color-muted)]">{product.color}</p>
+                  ) : null}
+                </div>
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {productVariants.map((variant) => (
+                    <Link
+                      key={variant.variantId}
+                      to="/products/$slug"
+                      params={{ slug: variant.slug }}
+                      aria-current={variant.variantId === product.variantId ? 'page' : undefined}
+                      className={`relative aspect-[4/5] w-16 shrink-0 overflow-hidden border bg-[var(--color-surface)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
+                        variant.variantId === product.variantId
+                          ? 'border-[var(--color-primary)]'
+                          : 'border-transparent hover:border-[var(--color-line)]'
+                      }`}
+                    >
+                      <img
+                        src={variant.images[0]}
+                        alt={variant.color ?? variant.title}
+                        className="h-full w-full object-cover text-transparent"
+                        loading="lazy"
+                      />
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <div id="buy-panel" className="mt-7 scroll-mt-24">
               <ProductPurchasePanel product={product} showPrice={false} />
             </div>
 
-            <div className="mt-6">
-              <ProductReasons product={product} includeAvailability={false} />
-            </div>
-          </div>
-        </section>
+            {detailAttributes.length > 0 || disclosureAttributes.length > 0 ? (
+              <Accordion.Root
+                defaultValue={['product-details']}
+                className="mt-7 divide-y divide-[var(--color-line)]"
+              >
+                {detailAttributes.length > 0 ? (
+                  <AttributeAccordionItem
+                    value="product-details"
+                    title="Product Details"
+                    attributes={detailAttributes}
+                    description={product.description}
+                    initialVisibleCount={5}
+                  />
+                ) : null}
+                {disclosureAttributes.length > 0 ? (
+                  <AttributeAccordionItem
+                    value="product-disclosure"
+                    title="Product Disclosure"
+                    attributes={disclosureAttributes}
+                  />
+                ) : null}
+              </Accordion.Root>
+            ) : null}
 
-        <section className="mt-12 grid gap-10 border-y border-[var(--color-line)] py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.55fr)]">
-          <div>
-            <h2 className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">About this piece</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-              Designed for repeat wear: easy to style, comfortable through the day, and clear enough
-              to buy without guessing on fit, availability, or delivery.
-            </p>
-
-            <Accordion.Root
-              defaultValue={defaultProductAccordionValue}
-              className="mt-7 divide-y divide-[var(--color-line)]"
-            >
-              <Accordion.Item value="fit">
-                <Accordion.Header>
-                  <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-medium text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
-                    Fit and sizing
-                    <ChevronDown
-                      className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
-                      aria-hidden="true"
-                    />
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Panel className={accordionPanelClass}>
-                  <div className="pb-5">
-                    Available in {availableSizeLabels.join(', ')}. Measurements below are garment
-                    measurements, so compare them with a similar piece you already like before choosing
-                    a size.
-                  </div>
-                </Accordion.Panel>
-              </Accordion.Item>
-
-              <Accordion.Item value="delivery">
-                <Accordion.Header>
-                  <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-medium text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
-                    Delivery and exchanges
-                    <ChevronDown
-                      className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
-                      aria-hidden="true"
-                    />
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Panel className={accordionPanelClass}>
-                  <div className="pb-5">
-                    Ships within 1-2 business days. Tracking is shared after dispatch, and eligible
-                    size exchanges can be requested within 7 days.
-                  </div>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion.Root>
-          </div>
-
-          {product.sizeChart.length > 0 ? (
-            <div id="size-chart" className="scroll-mt-24">
-              <h2 className="text-sm font-medium text-[var(--color-ink)]">Size chart</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                Measurements are garment measurements. Pick your usual size for a regular fit.
-              </p>
-              <div className="mt-4 overflow-hidden border border-[var(--color-line)] bg-[var(--color-paper)]">
-                <table className="w-full text-left text-sm">
-                  <tbody>
-                    {product.sizeChart.map((row) => (
-                      <tr
-                        key={row.size}
-                        className="border-b border-[var(--color-line)] last:border-b-0"
-                      >
-                        <th className="w-20 bg-[var(--color-surface)] px-4 py-3 font-medium text-[var(--color-ink)]">
-                          {row.size}
-                        </th>
-                        <td className="px-4 py-3 text-[var(--color-muted)]">
-                          {Object.entries(row.measurements)
-                            .map(([label, value]) => `${label}: ${value}`)
-                            .join(' / ')}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {product.sizeChart.length > 0 ? (
+              <div id="size-chart" className="mt-8 scroll-mt-24">
+                <h2 className="text-sm font-medium text-[var(--color-ink)]">Size chart</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                  Measurements are garment measurements. Pick your usual size for a regular fit.
+                </p>
+                <div className="mt-4 overflow-hidden border border-[var(--color-line)] bg-[var(--color-paper)]">
+                  <table className="w-full text-left text-sm">
+                    <tbody>
+                      {product.sizeChart.map((row) => (
+                        <tr
+                          key={row.size}
+                          className="border-b border-[var(--color-line)] last:border-b-0"
+                        >
+                          <th className="w-20 bg-[var(--color-surface)] px-4 py-3 font-medium text-[var(--color-ink)]">
+                            {row.size}
+                          </th>
+                          <td className="px-4 py-3 text-[var(--color-muted)]">
+                            {Object.entries(row.measurements)
+                              .map(([label, value]) => `${label}: ${value}`)
+                              .join(' / ')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </section>
 
         {relatedProducts.length > 0 ? (
@@ -249,14 +245,14 @@ function ProductPreviewPage() {
             </div>
             <div className="mt-7 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((item) => (
-                <ProductCard key={item.productId} product={item} />
+                <ProductCard key={item.variantId} product={item} />
               ))}
             </div>
           </section>
         ) : null}
 
         <RecentlyViewedRail
-          excludeProductId={product.productId}
+          excludeProductId={product.variantId}
           limit={4}
           className="mt-14"
           title="Recently viewed"
@@ -269,3 +265,67 @@ function ProductPreviewPage() {
 
 const accordionPanelClass =
   'h-[var(--accordion-panel-height)] overflow-hidden text-sm leading-6 text-[var(--color-muted)] transition-[height,opacity] duration-200 ease-out data-[ending-style]:h-0 data-[ending-style]:opacity-0 data-[starting-style]:h-0 data-[starting-style]:opacity-0'
+
+function AttributeAccordionItem({
+  attributes,
+  description,
+  initialVisibleCount,
+  title,
+  value,
+}: {
+  attributes: Array<{ label: string; value: string }>
+  description?: string
+  initialVisibleCount?: number
+  title: string
+  value: string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const visibleCount = expanded || !initialVisibleCount
+    ? attributes.length
+    : Math.min(initialVisibleCount, attributes.length)
+  const visibleAttributes = attributes.slice(0, visibleCount)
+  const hiddenCount = attributes.length - visibleCount
+
+  return (
+    <Accordion.Item value={value}>
+      <Accordion.Header>
+        <Accordion.Trigger className="group flex w-full items-center justify-between py-4 text-left text-sm font-medium text-[var(--color-ink)] outline-none transition duration-150 ease-out hover:text-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
+          {title}
+          <ChevronDown
+            className="size-4 text-[var(--color-muted)] transition duration-150 ease-out group-data-panel-open:rotate-180"
+            aria-hidden="true"
+          />
+        </Accordion.Trigger>
+      </Accordion.Header>
+      <Accordion.Panel className={accordionPanelClass}>
+        <div className="pb-4">
+          {description ? (
+            <p className="whitespace-pre-line pb-4 text-sm leading-6 text-[var(--color-muted)]">
+              {description}
+            </p>
+          ) : null}
+          <dl className="divide-y divide-[var(--color-line)]">
+          {visibleAttributes.map((attribute) => (
+            <div
+              key={attribute.label}
+              className="grid grid-cols-[minmax(8rem,0.4fr)_1fr] gap-4 py-3 text-sm"
+            >
+              <dt className="text-[var(--color-muted)]">{attribute.label}</dt>
+              <dd className="whitespace-pre-line text-[var(--color-ink)]">{attribute.value}</dd>
+            </div>
+          ))}
+          </dl>
+          {hiddenCount > 0 || expanded ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((current) => !current)}
+              className="mt-3 text-sm font-medium text-[var(--color-primary)] underline-offset-4 transition hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+            >
+              {expanded ? 'Show less' : `Show more${hiddenCount > 0 ? ` (${hiddenCount})` : ''}`}
+            </button>
+          ) : null}
+        </div>
+      </Accordion.Panel>
+    </Accordion.Item>
+  )
+}

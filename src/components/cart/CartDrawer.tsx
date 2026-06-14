@@ -127,7 +127,7 @@ export function CartDrawer() {
                               <button
                                 type="button"
                                 aria-label={`Decrease ${line.product.title} quantity`}
-                                disabled={line.quantity <= 1}
+                                disabled={line.quantity <= line.product.minOrderQuantity}
                                 onClick={() => updateQuantity(line.id, line.quantity - 1)}
                                 className="grid h-full w-9 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
                               >
@@ -157,6 +157,10 @@ export function CartDrawer() {
                           {line.quantity >= line.maxQuantity ? (
                             <p className="mt-2 text-xs text-amber-700">
                               Only {line.maxQuantity} available in this size
+                            </p>
+                          ) : line.product.minOrderQuantity > 1 ? (
+                            <p className="mt-2 text-xs text-[var(--color-muted)]">
+                              Minimum order {line.product.minOrderQuantity}
                             </p>
                           ) : null}
                         </div>

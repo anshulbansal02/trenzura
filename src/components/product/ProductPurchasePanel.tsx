@@ -1,6 +1,6 @@
 import { Button } from '@base-ui/react/button'
 import { useNavigate } from '@tanstack/react-router'
-import { Minus, Plus, ShieldCheck, Truck, Undo2 } from 'lucide-react'
+import { CreditCard, Minus, Plus, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
@@ -8,6 +8,7 @@ import type { Product } from '../../data/products'
 import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, joinClasses } from '../../lib/format'
 import { shippingConfig } from '../../lib/shipping'
+import { RazorpayLogo } from '../payment/RazorpayLogo'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
 
 const addedMessageDurationMs = 4200
@@ -30,20 +31,21 @@ export function ProductPurchasePanel({
   )
   const defaultSize = availableSizes[0]?.label ?? ''
   const [selectedSize, setSelectedSize] = useState(defaultSize)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(product.minOrderQuantity)
   const [addedMessage, setAddedMessage] = useState('')
   const addedMessageTimerRef = useRef<number | null>(null)
   const { addItem } = useCart()
   const navigate = useNavigate()
   const selectedInventory = availableSizes.find((size) => size.label === selectedSize)
   const maxQuantity = selectedInventory?.stockAvailable ?? 0
-  const canAddToCart = Boolean(selectedInventory && quantity >= 1 && quantity <= maxQuantity)
+  const minQuantity = product.minOrderQuantity
+  const canAddToCart = Boolean(selectedInventory && quantity >= minQuantity && quantity <= maxQuantity)
 
   useEffect(() => {
     setSelectedSize(defaultSize)
-    setQuantity(1)
+    setQuantity(product.minOrderQuantity)
     setAddedMessage('')
-  }, [defaultSize, product.productId])
+  }, [defaultSize, product.minOrderQuantity, product.variantId])
 
   useEffect(
     () => () => {
@@ -112,9 +114,11 @@ export function ProductPurchasePanel({
                 </p>
               ) : null}
             </div>
-            <p className="bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-accent-muted)]">
-              {product.stockAvailable > 0 ? 'In stock' : 'Sold out'}
-            </p>
+            {product.stockAvailable <= 0 ? (
+              <p className="bg-[var(--color-blush-surface)] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-accent-muted)]">
+                Sold out
+              </p>
+            ) : null}
           </div>
         ) : null}
         <div className={showPrice ? 'mt-6' : ''}>
@@ -146,7 +150,7 @@ export function ProductPurchasePanel({
                   aria-pressed={isSelected}
                   onClick={() => {
                     setSelectedSize(size.label)
-                    setQuantity(1)
+                    setQuantity(product.minOrderQuantity)
                     trackAnalyticsEvent('size_select', {
                       ...createProductAnalyticsPayload(product),
                       size: size.label,
@@ -167,15 +171,13 @@ export function ProductPurchasePanel({
               )
             })}
           </div>
-          {selectedInventory ? (
+          {selectedInventory && minQuantity > 1 ? (
             <p className="mt-2 text-xs text-[var(--color-muted)]">
-              {selectedInventory.stockAvailable <= 3
-                ? `Only ${selectedInventory.stockAvailable} left in ${selectedInventory.label}`
-                : `${selectedInventory.stockAvailable} available in ${selectedInventory.label}`}
+              Minimum order {minQuantity}
             </p>
-          ) : (
+          ) : !selectedInventory ? (
             <p className="mt-2 text-xs text-red-700">This product is currently sold out.</p>
-          )}
+          ) : null}
         </div>
 
       <div
@@ -216,9 +218,9 @@ export function ProductPurchasePanel({
           <div className="mt-3 inline-flex h-11 items-center overflow-hidden border border-[var(--color-line)] bg-[var(--color-paper)]">
             <button
               type="button"
-              disabled={quantity <= 1}
+              disabled={quantity <= minQuantity}
               aria-label="Decrease quantity"
-              onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+              onClick={() => setQuantity((value) => Math.max(minQuantity, value - 1))}
               className="grid h-full w-11 place-items-center text-[var(--color-muted)] transition duration-150 ease-out hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-inset active:scale-95 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-400 disabled:active:scale-100"
             >
               <Minus className="size-4" aria-hidden="true" />
@@ -247,23 +249,30 @@ export function ProductPurchasePanel({
       >
         <p className="flex gap-3">
           <Truck className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
-          <span>Ships in 1-2 business days from the studio.</span>
+          <span>Ships in 1-2 business days after order confirmation.</span>
         </p>
         {!isQuickLook ? (
           <>
             <p className="flex gap-3">
-              <Undo2 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
-              <span>
-                {formatPrice(shippingConfig.standardShippingPaise)} shipping below{' '}
-                {formatPrice(shippingConfig.freeShippingThresholdPaise)} and easy 7-day exchanges.
-              </span>
+              <RotateCcw className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]" aria-hidden="true" />
+              <span>7-day returns on eligible pieces.</span>
             </p>
             <p className="flex gap-3">
               <ShieldCheck
                 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]"
                 aria-hidden="true"
               />
-              <span>Secure payment options at checkout.</span>
+              <span>Free shipping above {formatPrice(shippingConfig.freeShippingThresholdPaise)}.</span>
+            </p>
+            <p className="flex gap-3">
+              <CreditCard
+                className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]"
+                aria-hidden="true"
+              />
+              <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+                Secure checkout powered by
+                <RazorpayLogo className="h-4 w-auto" />
+              </span>
             </p>
           </>
         ) : null}

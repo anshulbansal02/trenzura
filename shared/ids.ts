@@ -1,5 +1,5 @@
-export function createVariantId(productId: string, size: string) {
-  return `${productId.trim()}:${size.trim().toLowerCase()}`
+export function createInventoryId(variantId: string, size: string) {
+  return `${variantId.trim()}:${size.trim().toLowerCase()}`
 }
 
 export function normalizeSlugPart(value: string) {

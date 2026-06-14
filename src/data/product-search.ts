@@ -25,7 +25,7 @@ export type ProductSearchResult = {
 export type ProductCategoryCounts = Record<string, number>
 
 type ProductSearchDocument = {
-  productId: string
+  variantId: string
   title: string
   description: string
   category: string
@@ -40,7 +40,7 @@ type ProductSearchDocument = {
 
 type ProductSearchIndex = Awaited<ReturnType<typeof createProductSearchIndex>>
 
-const productById = new Map(products.map((product) => [product.productId, product]))
+const productByVariantId = new Map(products.map((product) => [product.variantId, product]))
 let indexPromise: Promise<ProductSearchIndex> | undefined
 
 export async function searchProducts(input: ProductSearchInput): Promise<ProductSearchResult> {
@@ -75,7 +75,7 @@ export async function searchProducts(input: ProductSearchInput): Promise<Product
   })
 
   const matchedProducts = result.hits
-    .map((hit) => productById.get(hit.document.productId))
+    .map((hit) => productByVariantId.get(hit.document.variantId))
     .filter((product): product is Product => Boolean(product))
     .filter(filterProduct)
 
@@ -135,7 +135,7 @@ function getProductSearchIndex() {
 async function createProductSearchIndex() {
   const db = create({
     schema: {
-      productId: 'string',
+      variantId: 'string',
       title: 'string',
       description: 'string',
       category: 'string',
@@ -150,7 +150,7 @@ async function createProductSearchIndex() {
     sort: {
       enabled: true,
       unsortableProperties: [
-        'productId',
+        'variantId',
         'title',
         'description',
         'category',
@@ -167,7 +167,7 @@ async function createProductSearchIndex() {
 
 function toSearchDocument(product: Product): ProductSearchDocument {
   return {
-    productId: product.productId,
+    variantId: product.variantId,
     title: product.title,
     description: product.description,
     category: product.category,

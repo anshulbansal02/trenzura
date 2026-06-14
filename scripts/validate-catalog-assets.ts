@@ -5,6 +5,7 @@ import { loadEnvFile, projectRoot, requiredEnv } from './lib/runtime'
 
 type GeneratedProduct = {
   productId?: string
+  variantId?: string
   images?: unknown
   imageStoragePaths?: unknown
   imageVariants?: unknown
@@ -12,7 +13,7 @@ type GeneratedProduct = {
 
 type ProductSyncRecord = {
   productId?: string
-  images?: unknown
+  variants?: unknown
 }
 
 const productsPath = path.join(projectRoot, 'src/generated/products.json')
@@ -42,6 +43,7 @@ async function main() {
 function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
   for (const product of products) {
     const productId = readProductId(product.productId)
+    const variantId = readProductId(product.variantId)
     const images = readStringArray(product.images, `${productId}.images`)
     const storagePaths = readStringArray(product.imageStoragePaths, `${productId}.imageStoragePaths`)
     const imageVariants = readImageVariants(product.imageVariants, `${productId}.imageVariants`)
@@ -74,7 +76,7 @@ function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
     }
 
     for (const storagePath of storagePaths) {
-      assertR2StoragePath(storagePath, productId)
+      assertR2StoragePath(storagePath, variantId)
     }
   }
 }
@@ -82,10 +84,21 @@ function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
 function validateSyncRecords(records: ProductSyncRecord[], publicBaseUrl: string) {
   for (const record of records) {
     const productId = readProductId(record.productId)
-    const images = readStringArray(record.images, `${productId}.images`)
+    if (!Array.isArray(record.variants)) {
+      throw new Error(`${productId}.variants must be an array`)
+    }
 
-    for (const image of images) {
-      assertPublicImageUrl(image, publicBaseUrl, `${productId}.images`)
+    for (const variant of record.variants) {
+      if (!variant || typeof variant !== 'object') {
+        throw new Error(`${productId}.variants must contain variant objects`)
+      }
+
+      const variantId = readProductId((variant as { variantId?: unknown }).variantId)
+      const images = readStringArray((variant as { images?: unknown }).images, `${variantId}.images`)
+
+      for (const image of images) {
+        assertPublicImageUrl(image, publicBaseUrl, `${variantId}.images`)
+      }
     }
   }
 }

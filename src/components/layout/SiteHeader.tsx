@@ -18,18 +18,23 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-paper)]/96 backdrop-blur-sm">
       <div className="bg-[var(--color-primary)] px-4 py-2 text-center text-[0.6875rem] font-medium uppercase leading-4 tracking-[0.12em] text-[var(--color-paper)] sm:px-6 lg:px-8">
-        <span className="sm:hidden">{freeShippingText} | Easy exchanges</span>
+        <span className="sm:hidden">{freeShippingText} | 7-day returns</span>
         <span className="hidden sm:inline">
-          {freeShippingText} | COD-style secure checkout | 7-day easy size exchanges
+          {freeShippingText} | Secure checkout powered by Razorpay | 7-day returns on eligible pieces
         </span>
       </div>
       <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-7">
           <Link
             to="/"
-            className="shrink-0 font-serif text-3xl font-normal leading-none text-[var(--color-ink)] transition duration-150 ease-out hover:text-[var(--color-primary-dark)] sm:text-4xl"
+            aria-label="Trenzura home"
+            className="inline-flex shrink-0 items-center transition duration-150 ease-out hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
           >
-            Trenzura
+            <img
+              src="/favicon.svg"
+              alt="Trenzura"
+              className="size-10 sm:size-12"
+            />
           </Link>
           <nav
             aria-label="Main navigation"

@@ -24,13 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           <ProductMedia product={product} className="aspect-[2/3]" hoverZoom />
           <span className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 sm:bottom-auto sm:top-3 sm:items-start">
-            {product.featured ? (
-              <span className="max-w-[7rem] bg-[var(--color-paper)]/92 px-2 py-1 text-[0.625rem] font-medium uppercase leading-4 tracking-[0.08em] text-[var(--color-ink)] backdrop-blur-sm sm:max-w-none sm:px-2.5 sm:text-[0.6875rem] sm:tracking-[0.12em]">
-                Most wanted
-              </span>
-            ) : (
-              <span />
-            )}
+            <span />
             {product.discountPercent > 0 ? (
               <span className="shrink-0 bg-[var(--color-accent-muted)] px-2 py-1 text-[0.625rem] font-medium uppercase leading-4 tracking-[0.08em] text-[var(--color-paper)] sm:px-2.5 sm:text-[0.6875rem] sm:tracking-[0.12em]">
                 Save {product.discountPercent}%

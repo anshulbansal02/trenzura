@@ -52,7 +52,7 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
             <div className="mt-9 grid grid-cols-3 gap-3">
               {supportingProducts.map((product) => (
                 <Link
-                  key={product.productId}
+                  key={product.variantId}
                   to="/products/$slug"
                   params={{ slug: product.slug }}
                   className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"

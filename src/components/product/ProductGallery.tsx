@@ -46,7 +46,7 @@ export function ProductGallery({
     setActiveIndex(0)
     setViewerOpen(false)
     setMagnifier((current) => ({ ...current, active: false }))
-  }, [product.productId, product.images])
+  }, [product.variantId, product.images])
 
   function handleMouseMove(event: MouseEvent<HTMLDivElement>) {
     if (!canMagnify) return

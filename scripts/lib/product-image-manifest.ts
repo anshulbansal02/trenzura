@@ -11,6 +11,7 @@ export type ImageManifest = {
 type ImageManifestEntry = {
   storagePath: string
   publicUrl: string
+  sourceFileId?: string
   sourceFileName?: string
   variants: ImageManifestVariant[]
 }
@@ -100,11 +101,13 @@ function orderManifestImages(
     byName.set(fileName.toLowerCase(), image)
     byName.set(image.storagePath.toLowerCase(), image)
     byName.set(image.publicUrl.toLowerCase(), image)
+    if (image.sourceFileId) byName.set(image.sourceFileId.toLowerCase(), image)
     if (image.sourceFileName) byName.set(image.sourceFileName.toLowerCase(), image)
   }
 
   return explicitPaths.map((explicitPath) => {
-    const match = byName.get(explicitPath.toLowerCase())
+    const driveFileId = extractGoogleDriveFileId(explicitPath)
+    const match = byName.get(explicitPath.toLowerCase()) || (driveFileId ? byName.get(driveFileId.toLowerCase()) : undefined)
     if (!match) {
       throw new Error(
         `Image "${explicitPath}" on row ${rowNumber} was not found in the ${productId} image manifest`,
@@ -113,4 +116,8 @@ function orderManifestImages(
 
     return match
   })
+}
+
+function extractGoogleDriveFileId(value: string) {
+  return value.match(/\/file\/d\/([^/]+)/)?.[1] ?? value.match(/[?&]id=([^&]+)/)?.[1]
 }
