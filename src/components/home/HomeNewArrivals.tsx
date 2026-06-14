@@ -17,7 +17,7 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
         <div className="grid grid-cols-2 gap-2">
           {collageProducts.map((product, index) => (
             <Link
-              key={product.productId}
+              key={product.variantId}
               to="/products/$slug"
               params={{ slug: product.slug }}
               className={`group overflow-hidden bg-[var(--color-surface)] ${
@@ -48,7 +48,7 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
           <div className="mt-8 divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
             {products.map((product) => (
               <Link
-                key={product.productId}
+                key={product.variantId}
                 to="/products/$slug"
                 params={{ slug: product.slug }}
                 className="flex items-center justify-between gap-5 py-4 text-sm transition duration-150 ease-out hover:translate-x-1"

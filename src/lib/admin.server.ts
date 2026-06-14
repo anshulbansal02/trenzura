@@ -20,12 +20,30 @@ export type AdminOrderRow = {
   customer_name: string | null
   customer_phone: string | null
   customer_email: string | null
+  items: AdminOrderItemSummary[]
   total_amount_paise: number | null
   currency: string | null
   payment_status: string | null
   shipment_status: string | null
   tracking_number: string | null
   created_at: string
+}
+
+export type AdminOrderItemSummary = {
+  productId: string
+  variantId: string
+  inventoryId: string
+  productSlug: string
+  variantSlug: string
+  productCode: string
+  title: string
+  sizeLabel: string
+  quantity: number
+  unitSellingPricePaise: number
+  unitMrpPaise: number
+  discountAmountPaise: number
+  lineTotalPaise: number
+  primaryImageUrl: string | null
 }
 
 export type AdminIntegrationErrorRow = {

@@ -65,6 +65,7 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
             <tr>
               <TableHead>Order</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Items</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Shipment</TableHead>
@@ -82,6 +83,9 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
                   <p className="font-medium text-[var(--color-ink)]">{row.customer_name || '-'}</p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">{row.customer_phone || '-'}</p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">{row.customer_email || '-'}</p>
+                </TableCell>
+                <TableCell>
+                  <OrderItemsSummary row={row} />
                 </TableCell>
                 <TableCell>
                   {typeof row.total_amount_paise === 'number'
@@ -220,6 +224,9 @@ function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
                 {row.customer_email || '-'}
               </p>
             </MobileField>
+            <MobileField label="Items">
+              <OrderItemsSummary row={row} />
+            </MobileField>
             <div className="grid grid-cols-2 gap-3">
               <MobileField label="Payment">
                 <StatusBadge value={row.payment_status || '-'} />
@@ -302,6 +309,35 @@ function LowStockMobileCards({ rows }: { rows: AdminLowStockVariantRow[] }) {
             </MobileField>
           </div>
         </article>
+      ))}
+    </div>
+  )
+}
+
+function OrderItemsSummary({ row }: { row: AdminOrderRow }) {
+  const items = Array.isArray(row.items) ? row.items : []
+
+  if (items.length === 0) {
+    return <span className="text-xs text-[var(--color-muted)]">No items</span>
+  }
+
+  return (
+    <div className="grid max-w-md gap-2">
+      {items.map((item) => (
+        <div
+          key={`${row.order_number}-${item.inventoryId}-${item.productCode}`}
+          className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"
+        >
+          <div className="min-w-0">
+            <p className="break-words font-medium text-[var(--color-ink)]">{item.title}</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              {item.productCode} · {item.sizeLabel} · Qty {item.quantity}
+            </p>
+          </div>
+          <p className="shrink-0 text-xs font-medium text-[var(--color-ink)]">
+            {formatPrice(item.lineTotalPaise)}
+          </p>
+        </div>
       ))}
     </div>
   )
