@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 import { alertPaymentReview, createShipmentWorkflow } from '../_shared/domain/shipments.ts'
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { verifyRazorpayWebhookSignature } from '../_shared/integrations/razorpay.ts'
+import { notifyOrderConfirmedOnWhatsApp } from '../_shared/integrations/whatsapp.ts'
 
 type RazorpayWebhookPayload = {
   event?: string
@@ -117,6 +118,9 @@ Deno.serve(async (request) => {
           } catch (updateError) {
             console.error('Unable to mark order shipment_pending after webhook shipment failure', updateError)
           }
+        })
+        await notifyOrderConfirmedOnWhatsApp(supabase, { orderId: payment.order_id }).catch((error) => {
+          console.error('WhatsApp order notification failed from Razorpay webhook', error)
         })
       }
     }

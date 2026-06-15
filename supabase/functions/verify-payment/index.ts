@@ -8,6 +8,7 @@ import {
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
 import { verifyRazorpayPaymentSignature } from '../_shared/integrations/razorpay.ts'
+import { notifyOrderConfirmedOnWhatsApp } from '../_shared/integrations/whatsapp.ts'
 
 type VerifyPaymentInput = {
   orderUuid: string
@@ -145,6 +146,9 @@ Deno.serve(async (request) => {
     }
 
     const shipment = await attemptShipmentCreation(supabase, input.orderUuid)
+    await notifyOrderConfirmedOnWhatsApp(supabase, { orderId: input.orderUuid }).catch((error) => {
+      console.error('WhatsApp order notification failed after payment verification', error)
+    })
 
     return jsonResponse({
       verified: true,

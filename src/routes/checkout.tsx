@@ -39,6 +39,8 @@ import {
   otherCityValue,
 } from '../../shared/indian-address'
 
+type CheckoutTextField = Exclude<keyof CheckoutForm, 'whatsappUpdatesOptIn'>
+
 export const Route = createFileRoute('/checkout')({
   head: () =>
     createPageMeta({
@@ -91,7 +93,7 @@ function CheckoutPage() {
     ]
   }, [form.state])
 
-  function updateField(field: keyof CheckoutForm, value: string) {
+  function updateField(field: CheckoutTextField, value: string) {
     const nextValue = field === 'pincode' ? value.replace(/\D/g, '').slice(0, 6) : value
 
     setForm((current) => {
@@ -116,6 +118,15 @@ function CheckoutPage() {
       if (field === 'city') delete next.cityOther
       return next
     })
+    setPendingOrder(null)
+    if (!isBusyCheckoutStatus(status)) {
+      setStatus('idle')
+      setMessage('')
+    }
+  }
+
+  function updateWhatsappUpdatesOptIn(value: boolean) {
+    setForm((current) => ({ ...current, whatsappUpdatesOptIn: value }))
     setPendingOrder(null)
     if (!isBusyCheckoutStatus(status)) {
       setStatus('idle')
@@ -369,6 +380,17 @@ function CheckoutPage() {
                   onChange={(value) => updateField('phone', value)}
                   error={errors.phone}
                 />
+                <label className="flex gap-3 border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-sm leading-6 text-[var(--color-muted)] sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={form.whatsappUpdatesOptIn}
+                    onChange={(event) => updateWhatsappUpdatesOptIn(event.currentTarget.checked)}
+                    className="mt-1 size-4 shrink-0 accent-[var(--color-primary)]"
+                  />
+                  <span>
+                    Send order confirmation and shipping updates to this phone number on WhatsApp.
+                  </span>
+                </label>
               </div>
             </section>
 
