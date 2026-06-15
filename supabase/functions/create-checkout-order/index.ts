@@ -4,6 +4,11 @@ import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
 import { createRazorpayOrder } from '../_shared/integrations/razorpay.ts'
 import { calculateShippingPaise } from '../../../shared/shipping.ts'
+import {
+  isKnownIndianState,
+  isPincodeLikelyForIndianState,
+  isValidIndianPincode,
+} from '../../../shared/indian-address.ts'
 
 type CartItemInput = {
   productId: string
@@ -358,8 +363,32 @@ function normalizeCustomer(value: unknown): CustomerInput {
     throw new CheckoutError('Enter a valid email address', 400)
   }
 
-  if (!/^\d{6}$/.test(customer.pincode)) {
+  if (customer.fullName.length < 2) {
+    throw new CheckoutError('Enter the full name for delivery', 400)
+  }
+
+  if (!/^\+?\d{10,15}$/.test(customer.phone.replace(/\s/g, ''))) {
+    throw new CheckoutError('Enter a valid phone number', 400)
+  }
+
+  if (customer.addressLine.length < 8) {
+    throw new CheckoutError('Enter a complete delivery address', 400)
+  }
+
+  if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(customer.city)) {
+    throw new CheckoutError('Enter a valid city or town', 400)
+  }
+
+  if (!isKnownIndianState(customer.state)) {
+    throw new CheckoutError('Select a valid state or union territory', 400)
+  }
+
+  if (!isValidIndianPincode(customer.pincode)) {
     throw new CheckoutError('Enter a valid 6 digit pincode', 400)
+  }
+
+  if (!isPincodeLikelyForIndianState(customer.pincode, customer.state)) {
+    throw new CheckoutError('Pincode does not look valid for the selected state', 400)
   }
 
   return customer

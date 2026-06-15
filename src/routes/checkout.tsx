@@ -3,16 +3,17 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react'
 import type { FormEvent } from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useCart } from '../components/cart/CartProvider'
 import { CheckoutConfirmation } from '../components/checkout/CheckoutConfirmation'
-import { CheckoutField } from '../components/checkout/CheckoutField'
+import { CheckoutField, CheckoutSelect } from '../components/checkout/CheckoutField'
 import { CheckoutNotice } from '../components/checkout/CheckoutNotice'
 import { CheckoutOrderSummary } from '../components/checkout/CheckoutOrderSummary'
 import { trackAnalyticsEvent } from '../lib/analytics'
 import {
   type CheckoutForm,
+  type CheckoutFormErrors,
   type CheckoutConfirmation as CheckoutConfirmationData,
   type CheckoutStatus,
   type CreateOrderResponse,
@@ -26,12 +27,17 @@ import {
   initialCheckoutForm,
   isBusyCheckoutStatus,
   normalizeCheckoutForm,
-  validateCheckoutForm,
+  validateCheckoutFormFields,
 } from '../lib/checkout'
 import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
 import { calculateShippingPaise } from '../lib/shipping'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
+import {
+  getCitiesForIndianState,
+  indianStateNames,
+  otherCityValue,
+} from '../../shared/indian-address'
 
 export const Route = createFileRoute('/checkout')({
   head: () =>
@@ -49,12 +55,13 @@ const loadCheckoutScript = createIsomorphicFn()
     await loadRazorpayCheckout()
   })
   .server(() => {
-    throw new Error('Razorpay checkout can only run in the browser')
+    throw new Error('Payment checkout can only run in the browser')
   })
 
 function CheckoutPage() {
   const { lines, itemCount, subtotal, savings, clearCart } = useCart()
   const [form, setForm] = useState(initialCheckoutForm)
+  const [errors, setErrors] = useState<CheckoutFormErrors>({})
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<CheckoutStatus>('idle')
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null)
@@ -75,9 +82,40 @@ function CheckoutPage() {
     pendingOrder?.fingerprint === checkoutFingerprint ? pendingOrder : null
   const summaryTotals = activePendingOrder?.totals ?? { subtotal, shipping, total }
   const isCheckoutBusy = isBusyCheckoutStatus(status)
+  const cityOptions = useMemo(() => {
+    const stateCities = getCitiesForIndianState(form.state)
+
+    return [
+      ...stateCities.map((city) => ({ label: city, value: city })),
+      ...(form.state ? [{ label: 'Other city/town', value: otherCityValue }] : []),
+    ]
+  }, [form.state])
 
   function updateField(field: keyof CheckoutForm, value: string) {
-    setForm((current) => ({ ...current, [field]: value }))
+    const nextValue = field === 'pincode' ? value.replace(/\D/g, '').slice(0, 6) : value
+
+    setForm((current) => {
+      if (field === 'state') {
+        return { ...current, state: nextValue, city: '', cityOther: '' }
+      }
+
+      if (field === 'city' && nextValue !== otherCityValue) {
+        return { ...current, city: nextValue, cityOther: '' }
+      }
+
+      return { ...current, [field]: nextValue }
+    })
+    setErrors((current) => {
+      const next = { ...current }
+      delete next[field]
+      if (field === 'state') {
+        delete next.city
+        delete next.cityOther
+        delete next.pincode
+      }
+      if (field === 'city') delete next.cityOther
+      return next
+    })
     setPendingOrder(null)
     if (!isBusyCheckoutStatus(status)) {
       setStatus('idle')
@@ -89,10 +127,11 @@ function CheckoutPage() {
     event.preventDefault()
     setConfirmation(null)
 
-    const validationMessage = validateCheckoutForm(normalizedForm)
-    if (validationMessage) {
+    const validationErrors = validateCheckoutFormFields(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
       setStatus('error')
-      setMessage(validationMessage)
+      setMessage('Review the highlighted checkout details.')
       return
     }
 
@@ -251,7 +290,7 @@ function CheckoutPage() {
     checkout.open()
     trackAnalyticsEvent('razorpay_opened', getCheckoutAnalyticsPayload(itemCount, order.totals.total))
     setStatus('payment-open')
-    setMessage('Complete payment in the Razorpay window. We will confirm the order here.')
+    setMessage('Complete payment in the secure payment window. We will confirm the order here.')
   }
 
   if (confirmation) {
@@ -301,7 +340,7 @@ function CheckoutPage() {
         </div>
 
         <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <form id="checkout-form" onSubmit={submitCheckout} className="grid gap-10">
+          <form id="checkout-form" noValidate onSubmit={submitCheckout} className="grid gap-10">
             <section>
               <div className="mb-5">
                 <h2 className="text-xl font-medium text-[var(--color-ink)]">Contact</h2>
@@ -318,6 +357,7 @@ function CheckoutPage() {
                   enterKeyHint="next"
                   value={form.email}
                   onChange={(value) => updateField('email', value)}
+                  error={errors.email}
                 />
                 <CheckoutField
                   label="Phone"
@@ -327,6 +367,7 @@ function CheckoutPage() {
                   enterKeyHint="next"
                   value={form.phone}
                   onChange={(value) => updateField('phone', value)}
+                  error={errors.phone}
                 />
               </div>
             </section>
@@ -346,6 +387,7 @@ function CheckoutPage() {
                   enterKeyHint="next"
                   value={form.fullName}
                   onChange={(value) => updateField('fullName', value)}
+                  error={errors.fullName}
                 />
                 <CheckoutField
                   label="Pincode"
@@ -353,8 +395,10 @@ function CheckoutPage() {
                   placeholder="400001"
                   autoComplete="postal-code"
                   enterKeyHint="next"
+                  maxLength={6}
                   value={form.pincode}
                   onChange={(value) => updateField('pincode', value)}
+                  error={errors.pincode}
                 />
                 <CheckoutField
                   label="Address"
@@ -363,6 +407,7 @@ function CheckoutPage() {
                   enterKeyHint="next"
                   value={form.addressLine}
                   onChange={(value) => updateField('addressLine', value)}
+                  error={errors.addressLine}
                   className="sm:col-span-2"
                 />
                 <CheckoutField
@@ -371,24 +416,40 @@ function CheckoutPage() {
                   enterKeyHint="next"
                   value={form.landmark}
                   onChange={(value) => updateField('landmark', value)}
+                  error={errors.landmark}
                   required={false}
                 />
-                <CheckoutField
-                  label="City"
-                  placeholder="Mumbai"
-                  autoComplete="address-level2"
-                  enterKeyHint="next"
-                  value={form.city}
-                  onChange={(value) => updateField('city', value)}
-                />
-                <CheckoutField
+                <CheckoutSelect
                   label="State"
-                  placeholder="Maharashtra"
+                  placeholder="Select state"
                   autoComplete="address-level1"
-                  enterKeyHint="done"
+                  options={indianStateNames.map((state) => ({ label: state, value: state }))}
                   value={form.state}
                   onChange={(value) => updateField('state', value)}
+                  error={errors.state}
                 />
+                <CheckoutSelect
+                  label="City"
+                  placeholder={form.state ? 'Select city' : 'Select state first'}
+                  autoComplete="address-level2"
+                  options={cityOptions}
+                  value={form.city}
+                  onChange={(value) => updateField('city', value)}
+                  error={errors.city}
+                  disabled={!form.state}
+                />
+                {form.city === otherCityValue ? (
+                  <CheckoutField
+                    label="City / town"
+                    placeholder="Enter city or town"
+                    autoComplete="address-level2"
+                    enterKeyHint="done"
+                    value={form.cityOther}
+                    onChange={(value) => updateField('cityOther', value)}
+                    error={errors.cityOther}
+                    className="sm:col-span-2"
+                  />
+                ) : null}
               </div>
             </section>
 
@@ -396,20 +457,20 @@ function CheckoutPage() {
               <div className="mb-5">
                 <h2 className="text-xl font-medium text-[var(--color-ink)]">Payment</h2>
                 <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
-                  Review the payable total before opening Razorpay.
+                  Review the payable total before opening payment.
                 </p>
               </div>
               <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
                 <p className="flex items-center gap-2 text-sm font-medium text-[var(--color-ink)]">
                   <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
-                  Razorpay secure checkout
+                  Secure payment
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
                   Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
                   from this page so the payment step stays quick.
                 </p>
                 <div className="mt-4 grid gap-2 text-xs font-medium text-[var(--color-muted)] sm:grid-cols-3">
-                  {['Review details', 'Pay in Razorpay', 'Instant confirmation'].map((label) => (
+                  {['Review details', 'Pay securely', 'Instant confirmation'].map((label) => (
                     <span
                       key={label}
                       className="border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"

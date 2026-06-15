@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { RefreshCcw, ShieldCheck, ShoppingBag, Truck, type LucideIcon } from 'lucide-react'
+import { Pin, RefreshCcw, ShieldCheck, ShoppingBag, Truck, type LucideIcon } from 'lucide-react'
 
 import { formatPrice } from '../../lib/format'
 import type { ProductSearchState } from '../../lib/product-search-url'
@@ -71,6 +71,24 @@ const footerBenefits: Array<{ Icon: LucideIcon; copy: string; title: string }> =
   },
 ]
 
+const socialLinks = [
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/trenzura',
+    mark: 'Ig',
+  },
+  {
+    label: 'Facebook',
+    href: 'https://www.facebook.com/trenzura',
+    mark: 'Fb',
+  },
+  {
+    label: 'Pinterest',
+    href: 'https://www.pinterest.com/trenzura',
+    Icon: Pin,
+  },
+] as const
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--color-line)] bg-[var(--color-paper)] px-4 pb-28 pt-10 sm:px-6 sm:pb-10 lg:px-8">
@@ -107,6 +125,7 @@ export function SiteFooter() {
               Everyday Indian wear with straightforward sizing, clear checkout, and eligible returns.
             </p>
             <RazorpayBadge />
+            <SocialLinks />
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             {footerSections.map((section) => (
@@ -155,10 +174,7 @@ export function SiteFooter() {
 
         <div className="flex flex-col justify-between gap-3 border-t border-[var(--color-line)] pt-6 text-xs text-[var(--color-muted)] sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} Trenzura. All rights reserved.</p>
-          <p className="inline-flex items-center gap-2">
-            <span>Secure checkout powered by</span>
-            <RazorpayLogo className="h-3.5 w-auto" />
-          </p>
+          <p>Clear sizing, secure payment, and eligible returns.</p>
         </div>
       </div>
     </footer>
@@ -171,6 +187,28 @@ function RazorpayBadge() {
       <span>Secure checkout powered by</span>
       <span className="h-4 w-px bg-[var(--color-line)]" aria-hidden="true" />
       <RazorpayLogo className="h-4 w-auto" />
+    </div>
+  )
+}
+
+function SocialLinks() {
+  return (
+    <div className="mt-5">
+      <h2 className="text-sm font-medium text-[var(--color-ink)]">Follow</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {socialLinks.map((link) => (
+          <a
+            key={link.label}
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Trenzura on ${link.label}`}
+            className="inline-flex size-10 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] text-xs font-semibold text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+          >
+            {'Icon' in link ? <link.Icon className="size-4" aria-hidden="true" /> : link.mark}
+          </a>
+        ))}
+      </div>
     </div>
   )
 }
