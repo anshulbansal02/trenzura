@@ -95,6 +95,7 @@ create table public.orders (
   customer_name text not null,
   customer_phone text not null,
   customer_email text not null,
+  whatsapp_updates_opt_in boolean not null default false,
   shipping_address jsonb not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -349,7 +350,8 @@ select
   p.status as payment_status,
   s.status as shipment_status,
   s.tracking_number,
-  o.created_at
+  o.created_at,
+  o.whatsapp_updates_opt_in
 from public.orders o
 left join public.payments p on p.order_id = o.id
 left join public.shipments s on s.order_id = o.id

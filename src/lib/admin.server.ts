@@ -26,6 +26,7 @@ export type AdminOrderRow = {
   shipment_status: string | null
   tracking_number: string | null
   created_at: string
+  whatsapp_updates_opt_in?: boolean | null
 }
 
 export type AdminIntegrationErrorRow = {

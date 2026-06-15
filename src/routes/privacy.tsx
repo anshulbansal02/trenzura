@@ -26,6 +26,8 @@ function PrivacyPage() {
             <p className="mt-2">
               We collect the details needed to place, confirm, ship, and support orders, including
               contact details, shipping address, selected items, and payment status.
+              If you opt in at checkout, your phone number may also be used for WhatsApp order
+              confirmation and shipping updates.
             </p>
           </section>
           <section className="py-5">

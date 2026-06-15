@@ -21,6 +21,7 @@ type CustomerInput = {
   email: string
   fullName: string
   phone: string
+  whatsappUpdatesOptIn: boolean
   addressLine: string
   landmark: string
   city: string
@@ -208,6 +209,7 @@ Deno.serve(async (request) => {
         customer_email: customer.email,
         customer_name: customer.fullName,
         customer_phone: customer.phone,
+        whatsapp_updates_opt_in: customer.whatsappUpdatesOptIn,
         shipping_address: {
           addressLine: customer.addressLine,
           landmark: customer.landmark,
@@ -338,6 +340,7 @@ function normalizeCustomer(value: unknown): CustomerInput {
     email: String(input.email ?? '').trim(),
     fullName: String(input.fullName ?? '').trim(),
     phone: String(input.phone ?? '').trim(),
+    whatsappUpdatesOptIn: input.whatsappUpdatesOptIn === true,
     addressLine: String(input.addressLine ?? input.address ?? '').trim(),
     landmark: String(input.landmark ?? '').trim(),
     city: String(input.city ?? '').trim(),

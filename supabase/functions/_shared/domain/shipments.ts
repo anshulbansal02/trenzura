@@ -166,7 +166,7 @@ export async function createShipmentWorkflow(
   })
 
   return {
-    ok: providerResult.skipped,
+    ok: providerResult.skipped === true,
     orderId: order.id,
     orderNumber: order.order_number,
     orderStatus: 'shipment_pending',

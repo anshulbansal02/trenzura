@@ -12,6 +12,7 @@ export type CheckoutForm = {
   email: string
   fullName: string
   phone: string
+  whatsappUpdatesOptIn: boolean
   addressLine: string
   landmark: string
   city: string
@@ -24,6 +25,7 @@ export const initialCheckoutForm: CheckoutForm = {
   email: '',
   fullName: '',
   phone: '',
+  whatsappUpdatesOptIn: false,
   addressLine: '',
   landmark: '',
   city: '',
@@ -207,6 +209,7 @@ export function normalizeCheckoutForm(form: CheckoutForm): CheckoutForm {
     email: form.email.trim().toLowerCase(),
     fullName: form.fullName.trim(),
     phone: normalizePhoneForPayment(form.phone) || form.phone.trim(),
+    whatsappUpdatesOptIn: form.whatsappUpdatesOptIn,
     addressLine: form.addressLine.trim(),
     landmark: form.landmark.trim(),
     city: city.trim(),
