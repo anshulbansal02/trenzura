@@ -1,5 +1,12 @@
 import { getAmountBucket } from './analytics'
 import { formatPrice } from './format'
+import {
+  isKnownCityForIndianState,
+  isKnownIndianState,
+  isPincodeLikelyForIndianState,
+  isValidIndianPincode,
+  otherCityValue,
+} from '../../shared/indian-address'
 
 export type CheckoutForm = {
   email: string
@@ -8,6 +15,7 @@ export type CheckoutForm = {
   addressLine: string
   landmark: string
   city: string
+  cityOther: string
   state: string
   pincode: string
 }
@@ -19,9 +27,12 @@ export const initialCheckoutForm: CheckoutForm = {
   addressLine: '',
   landmark: '',
   city: '',
+  cityOther: '',
   state: '',
   pincode: '',
 }
+
+export type CheckoutFormErrors = Partial<Record<keyof CheckoutForm, string>>
 
 export type CheckoutStatus =
   | 'idle'
@@ -94,7 +105,7 @@ export function isBusyCheckoutStatus(status: CheckoutStatus) {
 
 export function getPayButtonLabel(status: CheckoutStatus, total: number) {
   if (status === 'preparing') return 'Preparing order'
-  if (status === 'opening') return 'Opening Razorpay'
+  if (status === 'opening') return 'Opening payment'
   if (status === 'payment-open') return 'Payment window open'
   if (status === 'confirming') return 'Confirming payment'
   if (status === 'ready') return `Pay ${formatPrice(total)}`
@@ -123,45 +134,85 @@ export function getCheckoutAnalyticsPayload(itemCount: number, totalPaise: numbe
 }
 
 export function validateCheckoutForm(form: CheckoutForm) {
+  const errors = validateCheckoutFormFields(form)
+  return Object.values(errors)[0] ?? ''
+}
+
+export function validateCheckoutFormFields(form: CheckoutForm): CheckoutFormErrors {
+  const errors: CheckoutFormErrors = {}
   const requiredFields = [
-    form.email,
-    form.fullName,
-    form.phone,
-    form.addressLine,
-    form.city,
-    form.state,
-    form.pincode,
-  ]
+    ['email', form.email, 'Email is required.'],
+    ['fullName', form.fullName, 'Full name is required.'],
+    ['phone', form.phone, 'Phone number is required.'],
+    ['addressLine', form.addressLine, 'Address is required.'],
+    ['state', form.state, 'Select a state or union territory.'],
+    ['city', form.city, 'Select a city.'],
+    ['pincode', form.pincode, 'Pincode is required.'],
+  ] as const
 
-  if (requiredFields.some((field) => !field.trim())) {
-    return 'Complete delivery details to continue.'
+  for (const [field, value, message] of requiredFields) {
+    if (!value.trim()) errors[field] = message
   }
 
-  if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-    return 'Enter a valid email address.'
+  if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+    errors.email = 'Enter a valid email address.'
   }
 
-  if (!/^\d{6}$/.test(form.pincode.trim())) {
-    return 'Enter a valid 6 digit pincode.'
+  if (form.fullName.trim() && form.fullName.trim().length < 2) {
+    errors.fullName = 'Enter the full name for delivery.'
   }
 
-  if (!normalizePhoneForPayment(form.phone)) {
-    return 'Enter a valid 10 digit phone number.'
+  if (form.phone.trim() && !normalizePhoneForPayment(form.phone)) {
+    errors.phone = 'Enter a valid 10 digit Indian phone number.'
   }
 
-  return ''
+  if (form.addressLine.trim() && form.addressLine.trim().length < 8) {
+    errors.addressLine = 'Enter a complete house, building, and street address.'
+  }
+
+  if (form.state.trim() && !isKnownIndianState(form.state.trim())) {
+    errors.state = 'Select a valid state or union territory.'
+  }
+
+  if (form.city === otherCityValue) {
+    if (!form.cityOther.trim()) {
+      errors.cityOther = 'Enter your city or town.'
+    } else if (form.cityOther.trim().length < 2) {
+      errors.cityOther = 'City or town is too short.'
+    } else if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(form.cityOther.trim())) {
+      errors.cityOther = 'Use a valid city or town name.'
+    }
+  } else if (form.state.trim() && form.city.trim() && !isKnownCityForIndianState(form.state.trim(), form.city.trim())) {
+    errors.city = 'Select a valid city for this state.'
+  }
+
+  if (form.pincode.trim() && !isValidIndianPincode(form.pincode)) {
+    errors.pincode = 'Enter a valid 6 digit Indian pincode.'
+  } else if (
+    form.pincode.trim() &&
+    form.state.trim() &&
+    isKnownIndianState(form.state.trim()) &&
+    !isPincodeLikelyForIndianState(form.pincode, form.state)
+  ) {
+    errors.pincode = 'Pincode does not look valid for the selected state.'
+  }
+
+  return errors
 }
 
 export function normalizeCheckoutForm(form: CheckoutForm): CheckoutForm {
+  const city = form.city === otherCityValue ? form.cityOther : form.city
+
   return {
-    email: form.email.trim(),
+    email: form.email.trim().toLowerCase(),
     fullName: form.fullName.trim(),
     phone: normalizePhoneForPayment(form.phone) || form.phone.trim(),
     addressLine: form.addressLine.trim(),
     landmark: form.landmark.trim(),
-    city: form.city.trim(),
+    city: city.trim(),
+    cityOther: '',
     state: form.state.trim(),
-    pincode: form.pincode.trim(),
+    pincode: form.pincode.replace(/\D/g, '').slice(0, 6),
   }
 }
 

@@ -20,7 +20,7 @@ export function SiteHeader() {
       <div className="bg-[var(--color-primary)] px-4 py-2 text-center text-[0.6875rem] font-medium uppercase leading-4 tracking-[0.12em] text-[var(--color-paper)] sm:px-6 lg:px-8">
         <span className="sm:hidden">{freeShippingText} | 7-day returns</span>
         <span className="hidden sm:inline">
-          {freeShippingText} | Secure checkout powered by Razorpay | 7-day returns on eligible pieces
+          {freeShippingText} | 7-day returns on eligible pieces
         </span>
       </div>
       <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">

@@ -1,6 +1,6 @@
 import { Button } from '@base-ui/react/button'
 import { useNavigate } from '@tanstack/react-router'
-import { CreditCard, Minus, Plus, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
+import { Minus, Plus, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCart } from '../cart/CartProvider'
@@ -8,7 +8,6 @@ import type { Product } from '../../data/products'
 import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, joinClasses } from '../../lib/format'
 import { shippingConfig } from '../../lib/shipping'
-import { RazorpayLogo } from '../payment/RazorpayLogo'
 import { FitConfidenceHelper } from './FitConfidenceHelper'
 
 const addedMessageDurationMs = 4200
@@ -265,14 +264,11 @@ export function ProductPurchasePanel({
               <span>Free shipping above {formatPrice(shippingConfig.freeShippingThresholdPaise)}.</span>
             </p>
             <p className="flex gap-3">
-              <CreditCard
+              <ShieldCheck
                 className="mt-0.5 size-4 shrink-0 text-[var(--color-accent-muted)]"
                 aria-hidden="true"
               />
-              <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
-                Secure checkout powered by
-                <RazorpayLogo className="h-4 w-auto" />
-              </span>
+              <span>Order total is confirmed before payment.</span>
             </p>
           </>
         ) : null}
