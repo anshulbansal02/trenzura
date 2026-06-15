@@ -129,8 +129,8 @@ function assertR2StoragePath(value: string, productId: string) {
     throw new Error(`${productId}.imageStoragePaths contains unsafe path "${value}"`)
   }
 
-  if (!value.startsWith(`products/${productId}/`)) {
-    throw new Error(`${productId}.imageStoragePaths must use products/${productId}/ R2 keys`)
+  if (!value.startsWith('products/')) {
+    throw new Error(`${productId}.imageStoragePaths must use products/ R2 keys`)
   }
 }
 

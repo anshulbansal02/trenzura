@@ -59,6 +59,11 @@ export function resolveProductImagesFromManifest({
   const explicitPaths = splitList(value)
   const manifestImages = imageManifest.products[productId]
 
+  if (explicitPaths.length > 0) {
+    const resolvedManifestImages = orderManifestImages(productId, explicitPaths, imageManifest, rowNumber)
+    return resolvedManifestImages.map(toResolvedProductImage(productId, rowNumber))
+  }
+
   if (!manifestImages || manifestImages.length === 0) {
     if (!active) return []
 
@@ -66,11 +71,11 @@ export function resolveProductImagesFromManifest({
     return []
   }
 
-  const resolvedManifestImages = explicitPaths.length > 0
-    ? orderManifestImages(productId, explicitPaths, manifestImages, rowNumber)
-    : manifestImages
+  return manifestImages.map(toResolvedProductImage(productId, rowNumber))
+}
 
-  return resolvedManifestImages.map((image) => {
+function toResolvedProductImage(productId: string, rowNumber: number) {
+  return (image: ImageManifestEntry) => {
     if (!Array.isArray(image.variants) || image.variants.length === 0) {
       throw new Error(`Image manifest entry for ${productId} on row ${rowNumber} is missing optimized variants`)
     }
@@ -85,18 +90,18 @@ export function resolveProductImagesFromManifest({
         }))
         .sort((left, right) => left.width - right.width),
     }
-  })
+  }
 }
 
 function orderManifestImages(
   productId: string,
   explicitPaths: string[],
-  manifestImages: ImageManifestEntry[],
+  imageManifest: ImageManifest,
   rowNumber: number,
 ) {
   const byName = new Map<string, ImageManifestEntry>()
 
-  for (const image of manifestImages) {
+  for (const image of Object.values(imageManifest.products).flat()) {
     const fileName = image.storagePath.split('/').pop() ?? image.storagePath
     byName.set(fileName.toLowerCase(), image)
     byName.set(image.storagePath.toLowerCase(), image)
