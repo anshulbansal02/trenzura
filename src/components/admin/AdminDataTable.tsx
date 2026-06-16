@@ -1,5 +1,7 @@
-import { PackageCheck } from 'lucide-react'
+import { createServerFn, useServerFn } from '@tanstack/react-start'
+import { Download, PackageCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 
 import type {
   AdminDashboard,
@@ -14,6 +16,21 @@ import {
 } from '../../lib/admin-ui'
 import { formatPrice } from '../../lib/format'
 import { getAdminViewLabel } from './AdminViewTabs'
+
+const downloadAdminInvoice = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Order number is required')
+    }
+
+    return {
+      orderNumber: String((data as { orderNumber?: unknown }).orderNumber ?? ''),
+    }
+  })
+  .handler(async ({ data }) => {
+    const { generateAdminInvoiceDownload } = await import('../../lib/admin.server')
+    return generateAdminInvoiceDownload(data.orderNumber)
+  })
 
 export function AdminDataTable({
   dashboard,
@@ -69,6 +86,7 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
               <TableHead>Payment</TableHead>
               <TableHead>Shipment</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </tr>
           </thead>
           <tbody className="bg-[var(--color-surface)]">
@@ -98,6 +116,9 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
                   </p>
                 </TableCell>
                 <TableCell>{formatAdminDateTime(row.created_at)}</TableCell>
+                <TableCell>
+                  <InvoiceDownloadButton orderNumber={row.order_number} />
+                </TableCell>
               </tr>
             ))}
           </tbody>
@@ -234,6 +255,7 @@ function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
             <MobileField label="Created">
               {formatAdminDateTime(row.created_at)}
             </MobileField>
+            <InvoiceDownloadButton orderNumber={row.order_number} />
           </div>
         </article>
       ))}
@@ -337,4 +359,59 @@ function StatusBadge({ value }: { value: string }) {
       {normalized}
     </span>
   )
+}
+
+function InvoiceDownloadButton({ orderNumber }: { orderNumber: string }) {
+  const downloadInvoice = useServerFn(downloadAdminInvoice)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  async function handleDownload() {
+    setStatus('loading')
+
+    try {
+      const invoice = await downloadInvoice({ data: { orderNumber } })
+      downloadBase64File(invoice.base64, invoice.filename)
+      setStatus('idle')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={status === 'loading'}
+        className="inline-flex w-fit items-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <Download className="size-3.5" aria-hidden="true" />
+        {status === 'loading' ? 'Generating...' : 'Invoice'}
+      </button>
+      {status === 'error' ? (
+        <p className="mt-2 max-w-36 text-xs leading-5 text-red-700">Unable to generate invoice.</p>
+      ) : null}
+    </div>
+  )
+}
+
+function downloadBase64File(base64: string, filename: string) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  const blob = new Blob([buffer], { type: 'application/pdf' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
