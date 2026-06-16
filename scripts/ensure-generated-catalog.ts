@@ -7,6 +7,7 @@ const generatedDir = path.join(projectRoot, 'src/generated')
 const generatedFiles = [
   path.join(generatedDir, 'products.json'),
   path.join(generatedDir, 'products-sync.json'),
+  path.join(generatedDir, 'blog-posts.json'),
 ]
 
 await mkdir(generatedDir, { recursive: true })
