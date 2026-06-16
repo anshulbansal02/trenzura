@@ -25,7 +25,12 @@ export function ProductGallery({
   const mobileStripRef = useRef<HTMLDivElement | null>(null)
   const [magnifier, setMagnifier] = useState({
     active: false,
+    backgroundHeight: 0,
+    backgroundPositionX: 0,
+    backgroundPositionY: 0,
+    backgroundWidth: 0,
     height: 0,
+    imageSrc: '',
     width: 0,
     x: 0,
     y: 0,
@@ -33,14 +38,6 @@ export function ProductGallery({
   const isQuickLook = variant === 'quickLook'
   const canMagnify = !isQuickLook && imageFit === 'cover'
   const activeImage = getProductImage(product, activeIndex)
-  const magnifierLeft = Math.min(
-    Math.max(MAGNIFIER_SIZE / 2, magnifier.width - MAGNIFIER_SIZE / 2),
-    Math.max(MAGNIFIER_SIZE / 2, magnifier.x),
-  )
-  const magnifierTop = Math.min(
-    Math.max(MAGNIFIER_SIZE / 2, magnifier.height - MAGNIFIER_SIZE / 2),
-    Math.max(MAGNIFIER_SIZE / 2, magnifier.y),
-  )
 
   useEffect(() => {
     setActiveIndex(0)
@@ -48,22 +45,39 @@ export function ProductGallery({
     setMagnifier((current) => ({ ...current, active: false }))
   }, [product.variantId, product.images])
 
-  function handleMouseMove(event: MouseEvent<HTMLDivElement>) {
+  function handleMouseMove(event: MouseEvent<HTMLButtonElement>) {
     if (!canMagnify) return
 
-    const imageFrame = event.currentTarget.querySelector<HTMLElement>('[data-gallery-frame]')
-    const bounds = imageFrame?.getBoundingClientRect()
-    if (!bounds) return
+    const image = event.currentTarget.querySelector<HTMLImageElement>('img')
+    const bounds = event.currentTarget.getBoundingClientRect()
+    if (!bounds || !image) return
 
     const x = event.clientX - bounds.left
     const y = event.clientY - bounds.top
+    const clampedX = Math.min(bounds.width, Math.max(0, x))
+    const clampedY = Math.min(bounds.height, Math.max(0, y))
+    const imageWidth = image.naturalWidth || bounds.width
+    const imageHeight = image.naturalHeight || bounds.height
+    const coverBox = getObjectCoverTopBox({
+      frameHeight: bounds.height,
+      frameWidth: bounds.width,
+      imageHeight,
+      imageWidth,
+    })
+    const imageX = Math.min(coverBox.width, Math.max(0, clampedX - coverBox.offsetX))
+    const imageY = Math.min(coverBox.height, Math.max(0, clampedY - coverBox.offsetY))
 
     setMagnifier({
       active: true,
+      backgroundHeight: coverBox.height * MAGNIFIER_ZOOM,
+      backgroundPositionX: MAGNIFIER_SIZE / 2 - imageX * MAGNIFIER_ZOOM,
+      backgroundPositionY: MAGNIFIER_SIZE / 2 - imageY * MAGNIFIER_ZOOM,
+      backgroundWidth: coverBox.width * MAGNIFIER_ZOOM,
       height: bounds.height,
+      imageSrc: image.currentSrc || activeImage,
       width: bounds.width,
-      x: Math.min(bounds.width, Math.max(0, x)),
-      y: Math.min(bounds.height, Math.max(0, y)),
+      x,
+      y,
     })
   }
 
@@ -157,7 +171,6 @@ export function ProductGallery({
 
       <div className="hidden min-w-0 max-w-full lg:block">
         <div
-          onMouseMove={handleMouseMove}
           onMouseLeave={() => setMagnifier((current) => ({ ...current, active: false }))}
           className={joinClasses(
             'relative max-w-full overflow-visible',
@@ -168,6 +181,7 @@ export function ProductGallery({
             type="button"
             aria-label={`Open larger image of ${product.title}`}
             onClick={() => setViewerOpen(true)}
+            onMouseMove={handleMouseMove}
             data-gallery-frame
             className={joinClasses(
               'quick-gallery-main relative block w-full overflow-hidden rounded-[var(--radius-image)] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
@@ -206,28 +220,14 @@ export function ProductGallery({
                 magnifier.active ? 'opacity-100' : 'opacity-0',
               )}
               style={{
-                left: `${magnifierLeft}px`,
-                top: `${magnifierTop}px`,
+                backgroundImage: magnifier.imageSrc ? `url("${magnifier.imageSrc}")` : undefined,
+                backgroundPosition: `${magnifier.backgroundPositionX}px ${magnifier.backgroundPositionY}px`,
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: `${magnifier.backgroundWidth}px ${magnifier.backgroundHeight}px`,
+                left: `${magnifier.x}px`,
+                top: `${magnifier.y}px`,
               }}
-            >
-              <img
-                src={activeImage}
-                alt=""
-                className="absolute max-w-none object-cover text-transparent"
-                draggable={false}
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none'
-                }}
-                style={{
-                  height: `${magnifier.height}px`,
-                  left: `${MAGNIFIER_SIZE / 2 - magnifier.x}px`,
-                  top: `${MAGNIFIER_SIZE / 2 - magnifier.y}px`,
-                  transform: `scale(${MAGNIFIER_ZOOM})`,
-                  transformOrigin: `${magnifier.x}px ${magnifier.y}px`,
-                  width: `${magnifier.width}px`,
-                }}
-              />
-            </div>
+            />
           ) : null}
         </div>
         {product.images.length > 1 ? (
@@ -297,6 +297,29 @@ export function ProductGallery({
       </Dialog.Root>
     </>
   )
+}
+
+function getObjectCoverTopBox({
+  frameHeight,
+  frameWidth,
+  imageHeight,
+  imageWidth,
+}: {
+  frameHeight: number
+  frameWidth: number
+  imageHeight: number
+  imageWidth: number
+}) {
+  const scale = Math.max(frameWidth / imageWidth, frameHeight / imageHeight)
+  const width = imageWidth * scale
+  const height = imageHeight * scale
+
+  return {
+    height,
+    offsetX: (frameWidth - width) / 2,
+    offsetY: 0,
+    width,
+  }
 }
 
 type GalleryImageProps = {
