@@ -70,6 +70,14 @@ export function SiteHeader() {
             >
               Offers
             </Link>
+            <Link
+              to="/blog"
+              activeProps={{ className: 'text-[var(--color-ink)]' }}
+              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
+              className="transition duration-150 ease-out"
+            >
+              Blog
+            </Link>
           </nav>
         </div>
         <nav aria-label="Shop actions" className="flex shrink-0 items-center justify-end gap-4 text-sm sm:gap-5">

@@ -13,7 +13,7 @@ type FooterLink =
     }
   | {
       label: string
-      to: '/about' | '/shipping-returns' | '/contact' | '/terms' | '/privacy'
+      to: '/about' | '/blog' | '/shipping-returns' | '/contact' | '/terms' | '/privacy'
     }
   | {
       label: string
@@ -34,6 +34,7 @@ const footerSections: Array<{ links: FooterLink[]; title: string }> = [
     title: 'Company',
     links: [
       { label: 'About', to: '/about' as const },
+      { label: 'Blog', to: '/blog' as const },
       { label: 'Contact', to: '/contact' as const },
       { label: 'Shipping & returns', to: '/shipping-returns' as const },
     ],

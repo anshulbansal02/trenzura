@@ -16,7 +16,8 @@ const config = defineConfig({
         enabled: true,
         crawlLinks: true,
         failOnError: true,
-        filter: ({ path }) => path === '/' || path.startsWith('/products'),
+        filter: ({ path }) =>
+          path === '/' || path.startsWith('/products') || path.startsWith('/blog'),
       },
     }),
     viteReact(),

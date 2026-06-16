@@ -15,10 +15,12 @@ import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsSlugRouteImport } from './routes/products_.$slug'
+import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -50,6 +52,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -70,29 +77,38 @@ const ProductsSlugRoute = ProductsSlugRouteImport.update({
   path: '/products/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog_/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRoute
   '/shipping-returns': typeof ShippingReturnsRoute
   '/terms': typeof TermsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRoute
   '/shipping-returns': typeof ShippingReturnsRoute
   '/terms': typeof TermsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
 }
 export interface FileRoutesById {
@@ -100,12 +116,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/products': typeof ProductsRoute
   '/shipping-returns': typeof ShippingReturnsRoute
   '/terms': typeof TermsRoute
+  '/blog_/$slug': typeof BlogSlugRoute
   '/products_/$slug': typeof ProductsSlugRoute
 }
 export interface FileRouteTypes {
@@ -114,36 +132,42 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/blog'
     | '/checkout'
     | '/contact'
     | '/privacy'
     | '/products'
     | '/shipping-returns'
     | '/terms'
+    | '/blog/$slug'
     | '/products/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/admin'
+    | '/blog'
     | '/checkout'
     | '/contact'
     | '/privacy'
     | '/products'
     | '/shipping-returns'
     | '/terms'
+    | '/blog/$slug'
     | '/products/$slug'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
+    | '/blog'
     | '/checkout'
     | '/contact'
     | '/privacy'
     | '/products'
     | '/shipping-returns'
     | '/terms'
+    | '/blog_/$slug'
     | '/products_/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -151,12 +175,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
+  BlogRoute: typeof BlogRoute
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   PrivacyRoute: typeof PrivacyRoute
   ProductsRoute: typeof ProductsRoute
   ShippingReturnsRoute: typeof ShippingReturnsRoute
   TermsRoute: typeof TermsRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
 }
 
@@ -204,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -232,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog_/$slug': {
+      id: '/blog_/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -239,12 +279,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
+  BlogRoute: BlogRoute,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   PrivacyRoute: PrivacyRoute,
   ProductsRoute: ProductsRoute,
   ShippingReturnsRoute: ShippingReturnsRoute,
   TermsRoute: TermsRoute,
+  BlogSlugRoute: BlogSlugRoute,
   ProductsSlugRoute: ProductsSlugRoute,
 }
 export const routeTree = rootRouteImport
