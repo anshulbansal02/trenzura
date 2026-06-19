@@ -29,7 +29,7 @@ The `VITE_` variables select the Sanity project and dataset at build time. The s
 
 If `VITE_SANITY_PROJECT_ID` is not set, the storefront still builds with local fallback content and `/blog` shows an empty state.
 
-Set `SANITY_VALIDATE_REQUIRED_CONTENT=true` when you want CI to fail if required singleton documents or static pages are missing. Keep it unset while first deploying the schema/code before the editorial documents have been created; the storefront will use local fallback content and still perform no runtime Sanity reads.
+Set `SANITY_VALIDATE_REQUIRED_CONTENT=true` when you want CI to fail if required singleton documents or static pages are missing. Keep it unset while first deploying the schema/code before the editorial documents have been created; the storefront will use local fallback content and still perform no runtime Sanity reads. This validation is explicit opt-in and is not enabled automatically by `CI`, `GITHUB_ACTIONS`, or `CLOUDFLARE_ENV`.
 
 ## Storefront Rendering
 

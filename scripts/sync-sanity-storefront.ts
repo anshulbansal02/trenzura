@@ -164,12 +164,7 @@ function validateContent(content: unknown) {
 }
 
 function shouldRequireContent() {
-  return (
-    process.env.SANITY_VALIDATE_REQUIRED_CONTENT === 'true' ||
-    process.env.CI === 'true' ||
-    process.env.GITHUB_ACTIONS === 'true' ||
-    Boolean(process.env.CLOUDFLARE_ENV)
-  )
+  return process.env.SANITY_VALIDATE_REQUIRED_CONTENT === 'true'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
