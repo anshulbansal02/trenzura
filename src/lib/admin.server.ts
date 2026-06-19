@@ -127,6 +127,8 @@ export type AdminInvoiceDownload = {
   filename: string
 }
 
+export type AdminOrderDetails = InvoiceData
+
 type AdminEnv = {
   adminEmails: string[]
   accessTeamDomain?: string
@@ -368,7 +370,29 @@ export async function generateAdminInvoiceDownload(
   }
 }
 
-type InvoiceOrder = {
+export async function loadAdminOrderDetails(orderNumber: string): Promise<AdminOrderDetails> {
+  setAdminResponseHeaders()
+
+  try {
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const supabase = createAdminSupabaseClient(env)
+    const normalizedOrderNumber = normalizeOrderNumber(orderNumber)
+    const details = await loadInvoiceData(supabase, normalizedOrderNumber)
+
+    console.log('admin order details view', {
+      adminEmail,
+      orderNumber: normalizedOrderNumber,
+      orderId: details.order.id,
+    })
+
+    return details
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to load order details')
+  }
+}
+
+export type InvoiceOrder = {
   id: string
   order_number: string
   status: string
@@ -379,12 +403,17 @@ type InvoiceOrder = {
   customer_name: string
   customer_phone: string
   customer_email: string
-  shipping_address: unknown
+  shipping_address: InvoiceAddress
   created_at: string
 }
 
-type InvoiceItem = {
+export type InvoiceItem = {
   id: string
+  product_id: string
+  variant_id: string
+  inventory_id: string
+  product_slug: string
+  variant_slug: string
   product_code: string
   title: string
   size_label: string
@@ -393,23 +422,28 @@ type InvoiceItem = {
   unit_mrp_paise: number
   discount_amount_paise: number
   line_total_paise: number
+  primary_image_url: string | null
 }
 
-type InvoicePayment = {
+export type InvoicePayment = {
   provider: string
   status: string
   provider_payment_id: string | null
+  provider_order_id: string | null
+  amount_paise: number
+  currency: string
   verified_at: string | null
   created_at: string
 }
 
-type InvoiceShipment = {
+export type InvoiceShipment = {
   provider: string
   status: string
+  provider_order_id: string | null
   tracking_number: string | null
 }
 
-type InvoiceData = {
+export type InvoiceData = {
   order: InvoiceOrder
   items: InvoiceItem[]
   payment: InvoicePayment | null
@@ -455,13 +489,13 @@ async function loadInvoiceData(
     selectInvoiceItems(supabase, orderId),
     supabase
       .from('payments')
-      .select('provider,status,provider_payment_id,verified_at,created_at')
+      .select('provider,status,provider_order_id,provider_payment_id,amount_paise,currency,verified_at,created_at')
       .eq('order_id', orderId)
       .order('created_at', { ascending: false })
       .limit(1),
     supabase
       .from('shipments')
-      .select('provider,status,tracking_number')
+      .select('provider,status,provider_order_id,tracking_number')
       .eq('order_id', orderId)
       .maybeSingle(),
   ])
@@ -483,6 +517,11 @@ async function loadInvoiceData(
 
     return {
       id: String(item.id),
+      product_id: readString(item.product_id),
+      variant_id: readString(item.variant_id),
+      inventory_id: readString(item.inventory_id),
+      product_slug: readString(item.product_slug),
+      variant_slug: readString(item.variant_slug),
       product_code: readString(item.product_code) || readString(item.variant_id),
       title: readString(item.title),
       size_label: readString(item.size_label),
@@ -491,6 +530,7 @@ async function loadInvoiceData(
       unit_mrp_paise: readNumber(item.unit_mrp_paise),
       discount_amount_paise: readNumber(item.discount_amount_paise),
       line_total_paise: readNumber(item.line_total_paise),
+      primary_image_url: readNullableString(item.primary_image_url),
     }
   })
 
@@ -510,7 +550,7 @@ async function loadInvoiceData(
       customer_name: readString(order.customer_name),
       customer_phone: readString(order.customer_phone),
       customer_email: readString(order.customer_email),
-      shipping_address: order.shipping_address,
+      shipping_address: normalizeInvoiceAddress(order.shipping_address),
       created_at: readString(order.created_at),
     },
     items,
@@ -526,7 +566,7 @@ async function selectInvoiceItems(
   const result = await supabase
     .from('order_items')
     .select(
-      'id,product_code,variant_id,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,created_at',
+      'id,product_id,variant_id,inventory_id,product_slug,variant_slug,product_code,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,primary_image_url,created_at',
     )
     .eq('order_id', orderId)
     .order('created_at', { ascending: true })
@@ -848,7 +888,10 @@ function normalizeInvoicePayment(value: unknown): InvoicePayment | null {
   return {
     provider: readString(payment.provider),
     status: readString(payment.status),
+    provider_order_id: readNullableString(payment.provider_order_id),
     provider_payment_id: readNullableString(payment.provider_payment_id),
+    amount_paise: readNumber(payment.amount_paise),
+    currency: readString(payment.currency) || 'INR',
     verified_at: readNullableString(payment.verified_at),
     created_at: readString(payment.created_at),
   }
@@ -861,6 +904,7 @@ function normalizeInvoiceShipment(value: unknown): InvoiceShipment | null {
   return {
     provider: readString(shipment.provider),
     status: readString(shipment.status),
+    provider_order_id: readNullableString(shipment.provider_order_id),
     tracking_number: readNullableString(shipment.tracking_number),
   }
 }
