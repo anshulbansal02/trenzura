@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 
 import { HomeCategoryTiles } from '../components/home/HomeCategoryTiles'
 import { HomeEmptyCatalog } from '../components/home/HomeEmptyCatalog'
@@ -14,20 +14,25 @@ import {
   products,
 } from '../data/products'
 import { createPageMeta } from '../lib/seo'
+import { getHomePageContent } from '../lib/storefront-content'
 
 export const Route = createFileRoute('/')({
-  head: () =>
-    createPageMeta({
-      title: 'Trenzura | Short Tops, Kurtis and Co-ord Sets',
-      description:
-        'Shop printed short tops, kurtis, and coordinated sets for everyday plans, festive lunches, and easy occasion wear.',
+  head: () => {
+    const content = getHomePageContent()
+
+    return createPageMeta({
+      title: content.seo.title,
+      description: content.seo.description,
       path: '/',
-      image: '/assets/hero/trenzura-everyday-elegance-01.jpg',
-    }),
+      image: content.seo.image?.url,
+    })
+  },
   component: Home,
 })
 
 function Home() {
+  const content = getHomePageContent()
+
   if (products.length === 0) {
     return <HomeEmptyCatalog />
   }
@@ -42,8 +47,12 @@ function Home() {
 
   return (
     <main className="pb-24 sm:pb-0">
-      <HomeHero />
-      <HomeCategoryTiles categoryLabels={categoryLabels} tiles={categoryTiles} />
+      <HomeHero content={content.hero} />
+      <HomeCategoryTiles
+        categoryLabels={categoryLabels}
+        content={content.categorySection}
+        tiles={categoryTiles}
+      />
 
       <RecentlyViewedRail className="mx-auto max-w-[90rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14" limit={4} />
 
@@ -51,24 +60,30 @@ function Home() {
         <div className="mx-auto max-w-[90rem]">
           <div className="mb-8 flex flex-col justify-between gap-5 border-b border-[var(--color-line)] pb-6 md:flex-row md:items-end">
             <div>
-              <p className="text-sm font-medium text-[var(--color-muted)]">Loved by shoppers</p>
+              <p className="text-sm font-medium text-[var(--color-muted)]">
+                {content.bestSellersSection.eyebrow}
+              </p>
               <h2 className="mt-2 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
-                Best sellers
+                {content.bestSellersSection.heading}
               </h2>
             </div>
-            <Link
-              to="/products"
+            <a
+              href={content.bestSellersSection.link.url}
               className="text-sm font-medium text-[var(--color-ink)] underline-offset-4 transition hover:underline"
             >
-              View all products
-            </Link>
+              {content.bestSellersSection.link.label}
+            </a>
           </div>
           <ProductGrid products={featuredProducts} />
         </div>
       </section>
 
-      <HomeImageStory products={imageStoryProducts} />
-      <HomeNewArrivals collageProducts={newArrivalsCollage} products={newArrivals} />
+      <HomeImageStory content={content.imageStory} products={imageStoryProducts} />
+      <HomeNewArrivals
+        collageProducts={newArrivalsCollage}
+        content={content.newArrivalsSection}
+        products={newArrivals}
+      />
     </main>
   )
 }

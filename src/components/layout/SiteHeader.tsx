@@ -1,8 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Search, ShoppingBag } from 'lucide-react'
 
-import { formatPrice } from '../../lib/format'
-import { shippingConfig } from '../../lib/shipping'
+import { getSiteSettingsContent } from '../../lib/storefront-content'
 import { useOptionalCart } from '../cart/CartProvider'
 
 export function SiteHeader() {
@@ -11,17 +10,13 @@ export function SiteHeader() {
   const itemCount = cart?.itemCount ?? 0
   const openCart = cart?.openCart ?? (() => {})
   const mobileBottomNavVisible = pathname === '/' || pathname === '/products'
-  const freeShippingText = `Free shipping above ${formatPrice(
-    shippingConfig.freeShippingThresholdPaise,
-  )}`
+  const settings = getSiteSettingsContent()
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-paper)]/96 backdrop-blur-sm">
       <div className="bg-[var(--color-primary)] px-4 py-2 text-center text-[0.6875rem] font-medium uppercase leading-4 tracking-[0.12em] text-[var(--color-paper)] sm:px-6 lg:px-8">
-        <span className="sm:hidden">{freeShippingText} | 7-day returns</span>
-        <span className="hidden sm:inline">
-          {freeShippingText} | 7-day returns on eligible pieces
-        </span>
+        <span className="sm:hidden">{settings.announcement.mobileText}</span>
+        <span className="hidden sm:inline">{settings.announcement.desktopText}</span>
       </div>
       <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-7">
@@ -40,52 +35,23 @@ export function SiteHeader() {
             aria-label="Main navigation"
             className="hidden items-center gap-7 text-sm text-[var(--color-muted)] lg:flex"
           >
-            <Link
-              to="/"
-              activeProps={{ className: 'text-[var(--color-ink)]' }}
-              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
-              className="transition duration-150 ease-out"
-            >
-              Home
-            </Link>
-            <Link
-              to="/products"
-              activeProps={{ className: 'text-[var(--color-ink)]' }}
-              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
-              className="transition duration-150 ease-out"
-            >
-              Shop
-            </Link>
-            <Link
-              to="/products"
-              search={{ sort: 'newest' }}
-              className="transition duration-150 ease-out hover:text-[var(--color-ink)]"
-            >
-              New In
-            </Link>
-            <Link
-              to="/products"
-              search={{ sort: 'discount-desc' }}
-              className="transition duration-150 ease-out hover:text-[var(--color-ink)]"
-            >
-              Offers
-            </Link>
-            <Link
-              to="/blog"
-              activeProps={{ className: 'text-[var(--color-ink)]' }}
-              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
-              className="transition duration-150 ease-out"
-            >
-              Blog
-            </Link>
-            <Link
-              to="/orders"
-              activeProps={{ className: 'text-[var(--color-ink)]' }}
-              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
-              className="transition duration-150 ease-out"
-            >
-              Track Order
-            </Link>
+            {settings.headerLinks.map((link) => {
+              const active = getPathFromUrl(link.url) === pathname
+
+              return (
+                <a
+                  key={`${link.label}-${link.url}`}
+                  href={link.url}
+                  className={`transition duration-150 ease-out ${
+                    active
+                      ? 'text-[var(--color-ink)]'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-ink)]'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              )
+            })}
           </nav>
         </div>
         <nav aria-label="Shop actions" className="flex shrink-0 items-center justify-end gap-4 text-sm sm:gap-5">
@@ -133,4 +99,9 @@ export function SiteHeader() {
       </div>
     </header>
   )
+}
+
+function getPathFromUrl(url: string) {
+  if (url.startsWith('http://') || url.startsWith('https://')) return ''
+  return url.split('?')[0] || '/'
 }

@@ -2,6 +2,9 @@ name: Deploy storefront
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - sanity-content-production
   push:
     branches:
       - main
@@ -12,6 +15,7 @@ jobs:
     environment: prod
     env:
       TARGET_ENVIRONMENT: prod
+      SANITY_VALIDATE_REQUIRED_CONTENT: "true"
       GOOGLE_SHEETS_SPREADSHEET_ID: ${{ vars.GOOGLE_SHEETS_SPREADSHEET_ID }}
       GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       GOOGLE_SHEETS_RANGE: ${{ vars.GOOGLE_SHEETS_RANGE }}
@@ -41,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref || 'main' }}
 
       - uses: pnpm/action-setup@v4
         with:

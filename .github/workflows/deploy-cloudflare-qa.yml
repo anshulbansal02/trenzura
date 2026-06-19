@@ -2,6 +2,9 @@ name: Deploy storefront QA
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - sanity-content-qa
   push:
     branches:
       - dev
@@ -13,6 +16,7 @@ jobs:
     env:
       TARGET_ENVIRONMENT: qa
       CLOUDFLARE_ENV: qa
+      SANITY_VALIDATE_REQUIRED_CONTENT: "true"
       GOOGLE_SHEETS_SPREADSHEET_ID: ${{ vars.GOOGLE_SHEETS_SPREADSHEET_ID }}
       GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       GOOGLE_SHEETS_RANGE: ${{ vars.GOOGLE_SHEETS_RANGE }}
@@ -41,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref || 'dev' }}
 
       - uses: pnpm/action-setup@v4
         with:
