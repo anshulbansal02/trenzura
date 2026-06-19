@@ -1,4 +1,12 @@
-import { AlertTriangle, Boxes, Clock3, CreditCard, Truck, type LucideIcon } from 'lucide-react'
+import {
+  AlertTriangle,
+  Boxes,
+  Clock3,
+  CreditCard,
+  RotateCcw,
+  Truck,
+  type LucideIcon,
+} from 'lucide-react'
 
 import type { AdminDashboard } from '../../lib/admin.server'
 import type { AdminViewKey } from '../../lib/admin-ui'
@@ -12,6 +20,7 @@ const adminTabs: Array<{
   { key: 'shipmentPendingOrders', label: 'Shipments', Icon: Truck },
   { key: 'paymentReviewOrders', label: 'Review', Icon: CreditCard },
   { key: 'failedPayments', label: 'Payments', Icon: AlertTriangle },
+  { key: 'returnRequests', label: 'Returns', Icon: RotateCcw },
   { key: 'integrationErrors', label: 'Errors', Icon: AlertTriangle },
   { key: 'lowStockVariants', label: 'Low stock', Icon: Boxes },
 ]

@@ -51,6 +51,21 @@ export type AdminLowStockVariantRow = {
   product_active: boolean
 }
 
+export type AdminReturnRequestRow = {
+  id: string
+  order_number: string
+  status: string
+  reason: string
+  customer_note: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  order_status: string | null
+  total_amount_paise: number | null
+  currency: string | null
+  created_at: string
+}
+
 export type AdminDashboard = {
   adminEmail: string
   loadedAt: string
@@ -61,6 +76,7 @@ export type AdminDashboard = {
     failedPayments: number
     integrationErrors: number
     lowStockVariants: number
+    returnRequests: number
   }
   views: {
     recentOrders: AdminOrderRow[]
@@ -69,6 +85,7 @@ export type AdminDashboard = {
     failedPayments: AdminOrderRow[]
     integrationErrors: AdminIntegrationErrorRow[]
     lowStockVariants: AdminLowStockVariantRow[]
+    returnRequests: AdminReturnRequestRow[]
   }
 }
 
@@ -159,6 +176,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
       failedPayments,
       integrationErrors,
       lowStockVariants,
+      returnRequests,
     ] = await Promise.all([
       selectRows<AdminOrderRow>(supabase, 'ops_orders_recent', recentOrdersLimit),
       selectRows<AdminOrderRow>(supabase, 'ops_shipment_pending_orders', adminViewLimit),
@@ -166,6 +184,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
       selectRows<AdminOrderRow>(supabase, 'ops_failed_payments', adminViewLimit),
       selectRows<AdminIntegrationErrorRow>(supabase, 'ops_integration_errors', adminViewLimit),
       selectRows<AdminLowStockVariantRow>(supabase, 'ops_low_stock_variants', adminViewLimit),
+      selectRows<AdminReturnRequestRow>(supabase, 'ops_return_requests', adminViewLimit),
     ])
 
     return {
@@ -178,6 +197,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
         failedPayments: failedPayments.length,
         integrationErrors: integrationErrors.length,
         lowStockVariants: lowStockVariants.length,
+        returnRequests: returnRequests.length,
       },
       views: {
         recentOrders,
@@ -186,6 +206,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
         failedPayments,
         integrationErrors,
         lowStockVariants,
+        returnRequests,
       },
     }
   } catch (error) {
@@ -443,11 +464,20 @@ export type InvoiceShipment = {
   tracking_number: string | null
 }
 
+export type InvoiceReturnRequest = {
+  id: string
+  status: string
+  reason: string
+  customer_note: string | null
+  created_at: string
+}
+
 export type InvoiceData = {
   order: InvoiceOrder
   items: InvoiceItem[]
   payment: InvoicePayment | null
   shipment: InvoiceShipment | null
+  returnRequests: InvoiceReturnRequest[]
 }
 
 type InvoiceAddress = {
@@ -485,7 +515,7 @@ async function loadInvoiceData(
   }
 
   const orderId = String(order.id)
-  const [itemsResult, paymentsResult, shipmentResult] = await Promise.all([
+  const [itemsResult, paymentsResult, shipmentResult, returnRequestsResult] = await Promise.all([
     selectInvoiceItems(supabase, orderId),
     supabase
       .from('payments')
@@ -498,6 +528,11 @@ async function loadInvoiceData(
       .select('provider,status,provider_order_id,tracking_number')
       .eq('order_id', orderId)
       .maybeSingle(),
+    supabase
+      .from('order_return_requests')
+      .select('id,status,reason,customer_note,created_at')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: false }),
   ])
 
   if (itemsResult.error) {
@@ -510,6 +545,14 @@ async function loadInvoiceData(
 
   if (shipmentResult.error) {
     throw new AdminError(`Unable to load invoice shipment: ${shipmentResult.error.message}`, 500, false)
+  }
+
+  if (returnRequestsResult.error && !isMissingRelationError(returnRequestsResult.error)) {
+    throw new AdminError(
+      `Unable to load return requests: ${returnRequestsResult.error.message}`,
+      500,
+      false,
+    )
   }
 
   const items = (itemsResult.data ?? []).map((value) => {
@@ -556,6 +599,15 @@ async function loadInvoiceData(
     items,
     payment: normalizeInvoicePayment(paymentsResult.data?.[0]),
     shipment: normalizeInvoiceShipment(shipmentResult.data),
+    returnRequests: ((returnRequestsResult.data ?? []) as Array<Record<string, unknown>>).map(
+      (request) => ({
+        id: readString(request.id),
+        status: readString(request.status),
+        reason: readString(request.reason),
+        customer_note: readNullableString(request.customer_note),
+        created_at: readString(request.created_at),
+      }),
+    ),
   }
 }
 
@@ -585,6 +637,10 @@ async function selectInvoiceItems(
 }
 
 function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes('does not exist'))
+}
+
+function isMissingRelationError(error: { message?: string } | null) {
   return Boolean(error?.message?.includes('does not exist'))
 }
 

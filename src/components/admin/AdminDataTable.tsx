@@ -9,6 +9,7 @@ import type {
   AdminLowStockVariantRow,
   AdminOrderDetails,
   AdminOrderRow,
+  AdminReturnRequestRow,
 } from '../../lib/admin.server'
 import {
   formatAdminDateTime,
@@ -81,6 +82,8 @@ export function AdminDataTable({
         <IntegrationErrorsTable rows={rows as AdminIntegrationErrorRow[]} />
       ) : activeView === 'lowStockVariants' ? (
         <LowStockTable rows={rows as AdminLowStockVariantRow[]} />
+      ) : activeView === 'returnRequests' ? (
+        <ReturnRequestsTable rows={rows as AdminReturnRequestRow[]} />
       ) : (
         <OrdersTable rows={rows as AdminOrderRow[]} />
       )}
@@ -259,6 +262,59 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
   )
 }
 
+function ReturnRequestsTable({ rows }: { rows: AdminReturnRequestRow[] }) {
+  return (
+    <>
+      <ReturnRequestMobileCards rows={rows} />
+      <div className="hidden overflow-x-auto sm:block">
+        <table className="min-w-[980px] w-full border-collapse text-left text-sm">
+          <thead className="bg-[var(--color-paper)] text-xs uppercase text-[var(--color-muted)]">
+            <tr>
+              <TableHead>Order</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Requested</TableHead>
+            </tr>
+          </thead>
+          <tbody className="bg-[var(--color-surface)]">
+            {rows.map((row) => (
+              <tr key={row.id} className="border-t border-[var(--color-line)] transition duration-150 ease-out hover:bg-[var(--color-paper)]">
+                <TableCell>
+                  <p className="font-medium text-[var(--color-ink)]">{row.order_number}</p>
+                  <StatusBadge value={row.status} />
+                  <p className="mt-2 text-xs text-[var(--color-muted)]">
+                    Order {formatStatusText(row.order_status || '-')}
+                  </p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-[var(--color-ink)]">{row.customer_name || '-'}</p>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">{row.customer_phone || '-'}</p>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">{row.customer_email || '-'}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-[var(--color-ink)]">{formatStatusText(row.reason)}</p>
+                  {row.customer_note ? (
+                    <p className="mt-2 max-w-md whitespace-normal text-xs leading-5 text-[var(--color-muted)]">
+                      {row.customer_note}
+                    </p>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  {typeof row.total_amount_paise === 'number'
+                    ? formatPrice(row.total_amount_paise)
+                    : '-'}
+                </TableCell>
+                <TableCell>{formatAdminDateTime(row.created_at)}</TableCell>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
 function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
   const loadDetails = useServerFn(loadOrderDetails)
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderDetails | null>(null)
@@ -401,6 +457,47 @@ function LowStockMobileCards({ rows }: { rows: AdminLowStockVariantRow[] }) {
             <MobileField label="Category">{row.category}</MobileField>
             <MobileField label="Status">
               <StatusBadge value={row.product_active && row.variant_active ? 'active' : 'inactive'} />
+            </MobileField>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function ReturnRequestMobileCards({ rows }: { rows: AdminReturnRequestRow[] }) {
+  return (
+    <div className="divide-y divide-[var(--color-line)] sm:hidden">
+      {rows.map((row) => (
+        <article key={row.id} className="px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-medium text-[var(--color-ink)]">
+                {row.order_number}
+              </p>
+              <StatusBadge value={row.status} />
+            </div>
+            <p className="shrink-0 text-xs font-medium text-[var(--color-muted)]">
+              {formatAdminDateTime(row.created_at)}
+            </p>
+          </div>
+          <div className="mt-4 grid gap-3 text-sm">
+            <MobileField label="Customer">
+              <p className="font-medium text-[var(--color-ink)]">{row.customer_name || '-'}</p>
+              <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
+                {row.customer_phone || '-'}
+              </p>
+            </MobileField>
+            <MobileField label="Reason">{formatStatusText(row.reason)}</MobileField>
+            {row.customer_note ? (
+              <MobileField label="Note">
+                <span className="break-words leading-6">{row.customer_note}</span>
+              </MobileField>
+            ) : null}
+            <MobileField label="Total">
+              {typeof row.total_amount_paise === 'number'
+                ? formatPrice(row.total_amount_paise)
+                : '-'}
             </MobileField>
           </div>
         </article>
@@ -586,6 +683,21 @@ function OrderDetailsModal({
               <DetailRow label="Shipment" value={order.shipment ? formatStatusText(order.shipment.status) : '-'} />
               <DetailRow label="Tracking" value={order.shipment?.tracking_number || '-'} />
             </DetailPanel>
+
+            {order.returnRequests.length > 0 ? (
+              <DetailPanel title="Return requests">
+                {order.returnRequests.map((returnRequest) => (
+                  <div key={returnRequest.id} className="border-b border-[var(--color-line)] pb-3 last:border-b-0 last:pb-0">
+                    <DetailRow label="Status" value={formatStatusText(returnRequest.status)} />
+                    <DetailRow label="Reason" value={formatStatusText(returnRequest.reason)} />
+                    <DetailRow label="Requested" value={formatAdminDateTime(returnRequest.created_at)} />
+                    {returnRequest.customer_note ? (
+                      <DetailRow label="Note" value={returnRequest.customer_note} multiline />
+                    ) : null}
+                  </div>
+                ))}
+              </DetailPanel>
+            ) : null}
           </aside>
         </div>
       </div>

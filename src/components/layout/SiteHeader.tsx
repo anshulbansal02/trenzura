@@ -78,6 +78,14 @@ export function SiteHeader() {
             >
               Blog
             </Link>
+            <Link
+              to="/orders"
+              activeProps={{ className: 'text-[var(--color-ink)]' }}
+              inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
+              className="transition duration-150 ease-out"
+            >
+              Track Order
+            </Link>
           </nav>
         </div>
         <nav aria-label="Shop actions" className="flex shrink-0 items-center justify-end gap-4 text-sm sm:gap-5">
@@ -95,6 +103,14 @@ export function SiteHeader() {
             className="hidden text-sm transition duration-150 ease-out lg:inline"
           >
             Checkout
+          </Link>
+          <Link
+            to="/orders"
+            activeProps={{ className: 'text-[var(--color-ink)]' }}
+            inactiveProps={{ className: 'text-[var(--color-muted)] hover:text-[var(--color-ink)]' }}
+            className="hidden text-sm transition duration-150 ease-out sm:inline lg:hidden"
+          >
+            Track Order
           </Link>
           <button
             type="button"

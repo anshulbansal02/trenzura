@@ -7,6 +7,7 @@ export type AdminViewKey =
   | 'failedPayments'
   | 'integrationErrors'
   | 'lowStockVariants'
+  | 'returnRequests'
 
 export type AdminActionStatus = 'idle' | 'loading' | 'success' | 'error'
 export type AdminPublishEnvironment = 'qa' | 'prod'
@@ -25,6 +26,8 @@ export function getAdminViewDescription(view: AdminViewKey) {
       return 'Failed integration events and provider errors.'
     case 'lowStockVariants':
       return 'Active product variants at or below the low stock threshold.'
+    case 'returnRequests':
+      return 'Customer return requests waiting for review or follow-up.'
   }
 }
 

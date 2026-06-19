@@ -41,3 +41,4 @@ jobs:
           supabase functions deploy razorpay-webhook
           supabase functions deploy create-shipment
           supabase functions deploy retry-shipment
+          supabase functions deploy customer-order
