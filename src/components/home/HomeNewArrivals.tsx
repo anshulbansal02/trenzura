@@ -4,13 +4,15 @@ import { Link } from '@tanstack/react-router'
 import type { Product } from '../../data/products'
 import { formatPrice } from '../../lib/format'
 import { getProductImageProps } from '../../lib/product-images'
+import type { HomePageContent } from '../../lib/storefront-content'
 
 type HomeNewArrivalsProps = {
   collageProducts: Product[]
+  content: HomePageContent['newArrivalsSection']
   products: Product[]
 }
 
-export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsProps) {
+export function HomeNewArrivals({ collageProducts, content, products }: HomeNewArrivalsProps) {
   return (
     <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-[90rem] gap-10 border-y border-[var(--color-line)] py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
@@ -41,9 +43,9 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
           ))}
         </div>
         <div>
-          <p className="text-sm font-medium text-[var(--color-muted)]">Latest arrivals</p>
+          <p className="text-sm font-medium text-[var(--color-muted)]">{content.eyebrow}</p>
           <h2 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
-            New arrivals, ready to wear
+            {content.heading}
           </h2>
           <div className="mt-8 divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
             {products.map((product) => (
@@ -70,14 +72,13 @@ export function HomeNewArrivals({ collageProducts, products }: HomeNewArrivalsPr
           <Button
             nativeButton={false}
             render={
-              <Link
-                to="/products"
-                search={{ sort: 'discount-desc' }}
+              <a
+                href={content.link.url}
                 className="mt-8 inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
               />
             }
           >
-            Shop offers
+            {content.link.label}
           </Button>
         </div>
       </div>

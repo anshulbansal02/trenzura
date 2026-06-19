@@ -5,17 +5,18 @@ import { projectRoot } from './lib/runtime'
 
 const generatedDir = path.join(projectRoot, 'src/generated')
 const generatedFiles = [
-  path.join(generatedDir, 'products.json'),
-  path.join(generatedDir, 'products-sync.json'),
-  path.join(generatedDir, 'blog-posts.json'),
+  { path: path.join(generatedDir, 'products.json'), fallback: '[]\n' },
+  { path: path.join(generatedDir, 'products-sync.json'), fallback: '[]\n' },
+  { path: path.join(generatedDir, 'blog-posts.json'), fallback: '[]\n' },
+  { path: path.join(generatedDir, 'site-content.json'), fallback: '{}\n' },
 ]
 
 await mkdir(generatedDir, { recursive: true })
 
-for (const filePath of generatedFiles) {
+for (const file of generatedFiles) {
   try {
-    await access(filePath)
+    await access(file.path)
   } catch {
-    await writeFile(filePath, '[]\n')
+    await writeFile(file.path, file.fallback)
   }
 }

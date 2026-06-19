@@ -113,6 +113,27 @@ const portableTextComponents: PortableTextComponents = {
     },
   },
   types: {
+    externalImage: ({ value }) => {
+      const image = value as SanityImage
+      const url = getSanityImageUrl(image, { width: 1200 })
+      if (!url) return null
+
+      return (
+        <figure className="my-9">
+          <img
+            src={url}
+            alt={image.alt || ''}
+            className="w-full bg-[var(--color-surface)] object-cover"
+            loading="lazy"
+          />
+          {image.alt ? (
+            <figcaption className="mt-3 text-xs leading-5 text-[var(--color-muted)]">
+              {image.alt}
+            </figcaption>
+          ) : null}
+        </figure>
+      )
+    },
     image: ({ value }) => {
       const image = value as SanityImage
       const url = getSanityImageUrl(image, { width: 1200 })

@@ -15,7 +15,7 @@
     "sync:images:r2:upload": "tsx scripts/sync-drive-images-to-r2.ts --upload-manifest",
     "validate:catalog-assets": "tsx scripts/validate-catalog-assets.ts",
     "publish:catalog": "pnpm sync:images:manifest && pnpm sync:products && pnpm validate:catalog-assets && pnpm sync:images:r2:upload && tsx scripts/sync-products-to-supabase.ts",
-    "prepare:generated": "tsx scripts/ensure-generated-catalog.ts && tsx scripts/sync-sanity-blog.ts",
+    "prepare:generated": "tsx scripts/ensure-generated-catalog.ts && tsx scripts/sync-sanity-storefront.ts",
     "generate:favicons": "tsx scripts/generate-favicons.ts",
     "pretypecheck": "pnpm prepare:generated",
     "typecheck": "tsc --noEmit",
@@ -26,7 +26,8 @@
     "preview": "vite preview",
     "cf-typegen": "wrangler types",
     "sanity:seed-blog": "tsx scripts/seed-sanity-blog.ts",
-    "sync:blog": "tsx scripts/sync-sanity-blog.ts",
+    "sync:blog": "tsx scripts/sync-sanity-storefront.ts",
+    "sync:content": "tsx scripts/sync-sanity-storefront.ts",
     "studio:dev": "sanity dev",
     "studio:deploy": "sanity deploy"
   },

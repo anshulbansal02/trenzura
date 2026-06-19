@@ -31,13 +31,25 @@ export const blogPost = defineType({
       validation: (rule) => rule.required().max(220),
     }),
     defineField({
-      name: 'coverImage',
-      title: 'Cover image',
-      type: 'image',
+      name: 'coverImageUrl',
+      title: 'Cover image URL',
+      type: 'url',
       icon: Image,
-      options: {
-        hotspot: true,
-      },
+      description: 'Use a Cloudflare/R2/CDN image URL for new posts.',
+      validation: (rule) => rule.uri({ scheme: ['http', 'https'] }),
+    }),
+    defineField({
+      name: 'coverImageAlt',
+      title: 'Cover image alt text',
+      type: 'string',
+      validation: (rule) => rule.max(140),
+    }),
+    defineField({
+      name: 'coverImage',
+      title: 'Legacy Sanity cover image',
+      type: 'image',
+      description: 'Temporary fallback for posts created before external image URLs.',
+      options: { hotspot: true },
       fields: [
         defineField({
           name: 'alt',
@@ -46,7 +58,6 @@ export const blogPost = defineType({
           validation: (rule) => rule.required().max(140),
         }),
       ],
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: 'category',
@@ -121,7 +132,12 @@ export const blogPost = defineType({
           },
         },
         {
+          type: 'externalImage',
+        },
+        {
           type: 'image',
+          title: 'Legacy Sanity image',
+          description: 'Use only for older posts. Prefer external image URLs for new content.',
           options: {
             hotspot: true,
           },

@@ -2,12 +2,14 @@ import { Link } from '@tanstack/react-router'
 
 import type { Product } from '../../data/products'
 import { getProductImageProps } from '../../lib/product-images'
+import type { HomePageContent } from '../../lib/storefront-content'
 
 type HomeImageStoryProps = {
+  content: HomePageContent['imageStory']
   products: Product[]
 }
 
-export function HomeImageStory({ products }: HomeImageStoryProps) {
+export function HomeImageStory({ content, products }: HomeImageStoryProps) {
   const featureProduct = products[0]
   const supportingProducts = products.slice(1, 4)
 
@@ -33,20 +35,19 @@ export function HomeImageStory({ products }: HomeImageStoryProps) {
         </Link>
 
         <div className="lg:pl-10">
-          <p className="text-sm font-medium text-[var(--color-muted)]">The cotton edit</p>
+          <p className="text-sm font-medium text-[var(--color-muted)]">{content.eyebrow}</p>
           <h2 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
-            Color, print, repeat
+            {content.heading}
           </h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-[var(--color-muted)]">
-            Pick easy silhouettes with enough polish for everyday plans, festive lunches, and
-            weekend dressing.
+            {content.copy}
           </p>
-          <Link
-            to="/products"
+          <a
+            href={content.link.url}
             className="mt-7 inline-flex h-11 items-center justify-center border border-[var(--color-line)] bg-[var(--color-paper)] px-6 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
           >
-            Shop new arrivals
-          </Link>
+            {content.link.label}
+          </a>
 
           {supportingProducts.length > 0 ? (
             <div className="mt-9 grid grid-cols-3 gap-3">

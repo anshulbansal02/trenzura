@@ -1,6 +1,6 @@
-# Sanity Blog
+# Sanity Storefront Content
 
-Trenzura uses Sanity for lightweight blog content that can be managed by a non-technical editor.
+Trenzura uses Sanity for lightweight storefront content that can be managed by a non-technical editor. Product catalog data, variants, inventory, orders, payments, returns, and shipments stay outside Sanity.
 
 ## Sanity Project
 
@@ -25,17 +25,35 @@ SANITY_READ_TOKEN=
 SANITY_WRITE_TOKEN=
 ```
 
-The `VITE_` variables select the Sanity project and dataset at build time. The storefront reads generated blog JSON at runtime. `SANITY_READ_TOKEN` is used only during build-time sync if the dataset is not publicly readable. The `SANITY_STUDIO_` variables are used by Sanity Studio.
+The `VITE_` variables select the Sanity project and dataset at build time. The storefront reads generated JSON at runtime. `SANITY_READ_TOKEN` is used only during build-time sync if the dataset is not publicly readable. The `SANITY_STUDIO_` variables are used by Sanity Studio.
 
-If `VITE_SANITY_PROJECT_ID` is not set, `/blog` still builds and shows an empty state.
+If `VITE_SANITY_PROJECT_ID` is not set, the storefront still builds with local fallback content and `/blog` shows an empty state.
+
+Set `SANITY_VALIDATE_REQUIRED_CONTENT=true` in QA/production build environments if CI detection is not available. CI/GitHub Actions/Cloudflare environment builds fail when required singleton documents or static pages are missing.
 
 ## Storefront Rendering
 
-Blog content is fetched from Sanity during `pnpm prepare:generated`, which runs before typecheck and build. The script writes ignored generated data to `src/generated/blog-posts.json`, and the storefront imports that JSON instead of calling Sanity from route loaders.
+Storefront content is fetched from Sanity during `pnpm prepare:generated`, which runs before typecheck and build. The script writes ignored generated data to:
+
+- `src/generated/blog-posts.json`
+- `src/generated/site-content.json`
+
+The storefront imports those JSON files instead of calling Sanity from route loaders.
 
 This matters for TanStack Start because route loaders can run on the server for initial SSR and in the browser during client navigation. Keeping Sanity reads in the build-time sync avoids exposing tokens and avoids hitting the CMS on every page view.
 
-The build prerenders `/blog` and uses link crawling to discover `/blog/$slug` detail pages. When a post changes in Sanity, trigger a QA or production rebuild through a Sanity webhook.
+The build prerenders the storefront and uses link crawling to discover linked static pages, products, and blog detail pages. When content changes in Sanity, trigger a QA or production rebuild through a Sanity webhook.
+
+## Content Types
+
+Sanity manages:
+
+- `siteSettings`: announcement bar, header/footer links, footer copy, social links, trust cards, and SEO defaults.
+- `homePage`: hero slides, homepage CTA labels/links, and fixed-section headings/copy.
+- `staticPage`: `about`, `contact`, `shipping-returns`, `terms`, and `privacy`.
+- `blogPost`: posts for `/blog` and `/blog/$slug`.
+
+New content images should use external Cloudflare/R2/CDN URLs plus alt text. Existing blog posts that still use Sanity image assets are supported as a temporary fallback.
 
 ## Seed Sample Posts In Sanity Cloud
 
@@ -61,7 +79,7 @@ Run:
 pnpm studio:dev
 ```
 
-The Studio is configured with the `Blog post` document type. Editors can manage title, slug, excerpt, cover image, category, author, publish date, rich content, and SEO fields.
+The Studio is configured with site settings, homepage content, static pages, and blog posts. Editors can manage storefront copy, links, external image URLs, rich static-page content, blog title/slug/excerpt/category/author/publish date, and SEO fields.
 
 ## Studio Deployment
 
@@ -77,15 +95,27 @@ Use a Studio hostname like `trenzura-blog` or similar. The hosted Studio is sepa
 
 Recommended flow:
 
-1. Editor creates or updates a blog post in Sanity.
+1. Editor creates or updates content in Sanity.
 2. Editor publishes the post.
 3. Sanity webhook triggers the storefront deploy workflow.
-4. The storefront rebuilds `/blog` and `/blog/$slug` pages.
+4. The storefront rebuilds generated JSON and prerendered pages.
 
 The storefront reads only published posts where `publishedAt <= now()`.
 
 ## Webhook
 
-Create a Sanity webhook for create/update/delete/publish events on `blogPost` documents. Point it to the deployment provider or GitHub Actions workflow endpoint used for Trenzura deploys.
+Create a Sanity webhook for create/update/delete/publish events on these document types:
+
+- `siteSettings`
+- `homePage`
+- `staticPage`
+- `blogPost`
+
+Point it to GitHub's repository dispatch API for the target environment:
+
+- QA event type: `sanity-content-qa`
+- Production event type: `sanity-content-production`
+
+The deploy workflows listen for those event types, rebuild generated JSON, and deploy the existing storefront. Sanity webhooks should trigger rebuilds only; customer requests must not perform live Sanity API reads.
 
 Keep the webhook secret in the deployment provider, not in Sanity document content.
