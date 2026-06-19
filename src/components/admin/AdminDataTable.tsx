@@ -1,5 +1,5 @@
 import { createServerFn, useServerFn } from '@tanstack/react-start'
-import { Download, PackageCheck } from 'lucide-react'
+import { Download, Eye, PackageCheck, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
@@ -7,6 +7,7 @@ import type {
   AdminDashboard,
   AdminIntegrationErrorRow,
   AdminLowStockVariantRow,
+  AdminOrderDetails,
   AdminOrderRow,
 } from '../../lib/admin.server'
 import {
@@ -30,6 +31,21 @@ const downloadAdminInvoice = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { generateAdminInvoiceDownload } = await import('../../lib/admin.server')
     return generateAdminInvoiceDownload(data.orderNumber)
+  })
+
+const loadOrderDetails = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Order number is required')
+    }
+
+    return {
+      orderNumber: String((data as { orderNumber?: unknown }).orderNumber ?? ''),
+    }
+  })
+  .handler(async ({ data }) => {
+    const { loadAdminOrderDetails } = await import('../../lib/admin.server')
+    return loadAdminOrderDetails(data.orderNumber)
   })
 
 export function AdminDataTable({
@@ -73,6 +89,25 @@ export function AdminDataTable({
 }
 
 function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
+  const loadDetails = useServerFn(loadOrderDetails)
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderDetails | null>(null)
+  const [loadingOrderNumber, setLoadingOrderNumber] = useState<string | null>(null)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
+
+  async function handleOpenDetails(orderNumber: string) {
+    setLoadingOrderNumber(orderNumber)
+    setDetailsError(null)
+
+    try {
+      const details = await loadDetails({ data: { orderNumber } })
+      setSelectedOrder(details)
+    } catch {
+      setDetailsError('Unable to load order details.')
+    } finally {
+      setLoadingOrderNumber(null)
+    }
+  }
+
   return (
     <>
       <OrderMobileCards rows={rows} />
@@ -117,13 +152,25 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
                 </TableCell>
                 <TableCell>{formatAdminDateTime(row.created_at)}</TableCell>
                 <TableCell>
-                  <InvoiceDownloadButton orderNumber={row.order_number} />
+                  <div className="flex flex-wrap gap-2">
+                    <OrderDetailsButton
+                      loading={loadingOrderNumber === row.order_number}
+                      onClick={() => void handleOpenDetails(row.order_number)}
+                    />
+                    <InvoiceDownloadButton orderNumber={row.order_number} />
+                  </div>
+                  {detailsError && loadingOrderNumber === null ? (
+                    <p className="mt-2 max-w-40 text-xs leading-5 text-red-700">{detailsError}</p>
+                  ) : null}
                 </TableCell>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {selectedOrder ? (
+        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      ) : null}
     </>
   )
 }
@@ -213,53 +260,86 @@ function LowStockTable({ rows }: { rows: AdminLowStockVariantRow[] }) {
 }
 
 function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
-  return (
-    <div className="divide-y divide-[var(--color-line)] sm:hidden">
-      {rows.map((row) => (
-        <article key={`${row.order_number}-${row.created_at}`} className="px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="break-words text-sm font-medium text-[var(--color-ink)]">
-                {row.order_number}
-              </p>
-              <StatusBadge value={row.order_status} />
-            </div>
-            <p className="shrink-0 text-sm font-medium text-[var(--color-ink)]">
-              {typeof row.total_amount_paise === 'number'
-                ? formatPrice(row.total_amount_paise)
-                : '-'}
-            </p>
-          </div>
+  const loadDetails = useServerFn(loadOrderDetails)
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderDetails | null>(null)
+  const [loadingOrderNumber, setLoadingOrderNumber] = useState<string | null>(null)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
 
-          <div className="mt-4 grid gap-3 text-sm">
-            <MobileField label="Customer">
-              <p className="font-medium text-[var(--color-ink)]">{row.customer_name || '-'}</p>
-              <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
-                {row.customer_phone || '-'}
+  async function handleOpenDetails(orderNumber: string) {
+    setLoadingOrderNumber(orderNumber)
+    setDetailsError(null)
+
+    try {
+      const details = await loadDetails({ data: { orderNumber } })
+      setSelectedOrder(details)
+    } catch {
+      setDetailsError('Unable to load order details.')
+    } finally {
+      setLoadingOrderNumber(null)
+    }
+  }
+
+  return (
+    <>
+      <div className="divide-y divide-[var(--color-line)] sm:hidden">
+        {rows.map((row) => (
+          <article key={`${row.order_number}-${row.created_at}`} className="px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="break-words text-sm font-medium text-[var(--color-ink)]">
+                  {row.order_number}
+                </p>
+                <StatusBadge value={row.order_status} />
+              </div>
+              <p className="shrink-0 text-sm font-medium text-[var(--color-ink)]">
+                {typeof row.total_amount_paise === 'number'
+                  ? formatPrice(row.total_amount_paise)
+                  : '-'}
               </p>
-              <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
-                {row.customer_email || '-'}
-              </p>
-            </MobileField>
-            <div className="grid grid-cols-2 gap-3">
-              <MobileField label="Payment">
-                <StatusBadge value={row.payment_status || '-'} />
-              </MobileField>
-              <MobileField label="Shipment">
-                <StatusBadge value={row.shipment_status || '-'} />
-              </MobileField>
             </div>
-            <MobileField label="Tracking">
-              {row.tracking_number || 'No tracking'}
-            </MobileField>
-            <MobileField label="Created">
-              {formatAdminDateTime(row.created_at)}
-            </MobileField>
-            <InvoiceDownloadButton orderNumber={row.order_number} />
-          </div>
-        </article>
-      ))}
-    </div>
+
+            <div className="mt-4 grid gap-3 text-sm">
+              <MobileField label="Customer">
+                <p className="font-medium text-[var(--color-ink)]">{row.customer_name || '-'}</p>
+                <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
+                  {row.customer_phone || '-'}
+                </p>
+                <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
+                  {row.customer_email || '-'}
+                </p>
+              </MobileField>
+              <div className="grid grid-cols-2 gap-3">
+                <MobileField label="Payment">
+                  <StatusBadge value={row.payment_status || '-'} />
+                </MobileField>
+                <MobileField label="Shipment">
+                  <StatusBadge value={row.shipment_status || '-'} />
+                </MobileField>
+              </div>
+              <MobileField label="Tracking">
+                {row.tracking_number || 'No tracking'}
+              </MobileField>
+              <MobileField label="Created">
+                {formatAdminDateTime(row.created_at)}
+              </MobileField>
+              <div className="flex flex-wrap gap-2">
+                <OrderDetailsButton
+                  loading={loadingOrderNumber === row.order_number}
+                  onClick={() => void handleOpenDetails(row.order_number)}
+                />
+                <InvoiceDownloadButton orderNumber={row.order_number} />
+              </div>
+              {detailsError && loadingOrderNumber === null ? (
+                <p className="text-xs leading-5 text-red-700">{detailsError}</p>
+              ) : null}
+            </div>
+          </article>
+        ))}
+      </div>
+      {selectedOrder ? (
+        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      ) : null}
+    </>
   )
 }
 
@@ -393,6 +473,174 @@ function InvoiceDownloadButton({ orderNumber }: { orderNumber: string }) {
       ) : null}
     </div>
   )
+}
+
+function OrderDetailsButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className="inline-flex w-fit items-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-xs font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <Eye className="size-3.5" aria-hidden="true" />
+      {loading ? 'Loading...' : 'Details'}
+    </button>
+  )
+}
+
+function OrderDetailsModal({
+  onClose,
+  order,
+}: {
+  onClose: () => void
+  order: AdminOrderDetails
+}) {
+  const address = formatShippingAddress(order.order.shipping_address)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/35 p-0 sm:items-center sm:p-6">
+      <div className="max-h-[92vh] w-full overflow-y-auto border border-[var(--color-line)] bg-[var(--color-paper)] shadow-xl sm:mx-auto sm:max-w-5xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-4 sm:px-6">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
+              Order details
+            </p>
+            <h2 className="mt-1 text-xl font-medium text-[var(--color-ink)]">
+              {order.order.order_number}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close order details"
+            className="grid size-10 shrink-0 place-items-center border border-[var(--color-line)] text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+          <section>
+            <h3 className="text-sm font-medium text-[var(--color-ink)]">Items ordered</h3>
+            <div className="mt-3 divide-y divide-[var(--color-line)] border border-[var(--color-line)]">
+              {order.items.map((item) => (
+                <div key={item.id} className="grid gap-3 bg-[var(--color-surface)] p-3 sm:grid-cols-[56px_minmax(0,1fr)_auto]">
+                  <div className="size-14 overflow-hidden bg-[var(--color-paper)]">
+                    {item.primary_image_url ? (
+                      <img
+                        src={item.primary_image_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium leading-6 text-[var(--color-ink)]">{item.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
+                      {item.product_code || item.variant_id} / {item.size_label}
+                    </p>
+                    <p className="mt-1 break-words text-xs leading-5 text-[var(--color-muted)]">
+                      Product: {item.product_id || '-'} · Variant: {item.variant_id || '-'}
+                    </p>
+                  </div>
+                  <div className="text-sm sm:text-right">
+                    <p className="font-medium text-[var(--color-ink)]">
+                      {formatPrice(item.line_total_paise)}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {item.quantity} × {formatPrice(item.unit_selling_price_paise)}
+                    </p>
+                    {item.discount_amount_paise > 0 ? (
+                      <p className="mt-1 text-xs text-[var(--color-muted)]">
+                        Discount {formatPrice(item.discount_amount_paise * item.quantity)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <aside className="grid gap-4">
+            <DetailPanel title="Customer">
+              <DetailRow label="Name" value={order.order.customer_name} />
+              <DetailRow label="Phone" value={order.order.customer_phone} />
+              <DetailRow label="Email" value={order.order.customer_email} />
+              <DetailRow label="Shipping" value={address} multiline />
+            </DetailPanel>
+
+            <DetailPanel title="Order">
+              <DetailRow label="Status" value={formatStatusText(order.order.status)} />
+              <DetailRow label="Created" value={formatAdminDateTime(order.order.created_at)} />
+              <DetailRow label="Subtotal" value={formatPrice(order.order.subtotal_amount_paise)} />
+              <DetailRow label="Shipping" value={formatPrice(order.order.shipping_amount_paise)} />
+              <DetailRow label="Total" value={formatPrice(order.order.total_amount_paise)} />
+            </DetailPanel>
+
+            <DetailPanel title="Payment and shipment">
+              <DetailRow label="Payment" value={order.payment ? formatStatusText(order.payment.status) : '-'} />
+              <DetailRow label="Payment ID" value={order.payment?.provider_payment_id || '-'} />
+              <DetailRow label="Provider order" value={order.payment?.provider_order_id || '-'} />
+              <DetailRow label="Shipment" value={order.shipment ? formatStatusText(order.shipment.status) : '-'} />
+              <DetailRow label="Tracking" value={order.shipment?.tracking_number || '-'} />
+            </DetailPanel>
+          </aside>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DetailPanel({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <section className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+      <h3 className="text-sm font-medium text-[var(--color-ink)]">{title}</h3>
+      <dl className="mt-3 grid gap-3">{children}</dl>
+    </section>
+  )
+}
+
+function DetailRow({
+  label,
+  multiline = false,
+  value,
+}: {
+  label: string
+  multiline?: boolean
+  value: string
+}) {
+  return (
+    <div>
+      <dt className="text-[0.68rem] font-medium uppercase text-[var(--color-muted)]">{label}</dt>
+      <dd className={`mt-1 text-sm text-[var(--color-ink-soft)] ${multiline ? 'whitespace-pre-line leading-6' : 'break-words'}`}>
+        {value || '-'}
+      </dd>
+    </div>
+  )
+}
+
+function formatShippingAddress(value: unknown) {
+  if (!value || typeof value !== 'object') return '-'
+  const address = value as Record<string, unknown>
+  const lines = [
+    readDisplayString(address.addressLine),
+    readDisplayString(address.landmark),
+    [readDisplayString(address.city), readDisplayString(address.state), readDisplayString(address.pincode)]
+      .filter(Boolean)
+      .join(', '),
+  ].filter(Boolean)
+
+  return lines.length > 0 ? lines.join('\n') : '-'
+}
+
+function readDisplayString(value: unknown) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function formatStatusText(value: string) {
+  return value.replaceAll('_', ' ') || '-'
 }
 
 function downloadBase64File(base64: string, filename: string) {
