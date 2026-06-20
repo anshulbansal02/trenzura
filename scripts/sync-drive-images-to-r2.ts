@@ -332,7 +332,7 @@ function readConfig(mode: SyncMode) {
   const publicBaseUrl = requiredEnv('PRODUCT_IMAGE_PUBLIC_BASE_URL').replace(/\/+$/, '')
 
   return {
-    driveFolderId: requiredEnv('GOOGLE_DRIVE_IMAGE_FOLDER_ID'),
+    driveFolderId: mode === 'upload-manifest' ? '' : requiredEnv('GOOGLE_DRIVE_IMAGE_FOLDER_ID'),
     bucket: requiredEnv('R2_PRODUCT_IMAGES_BUCKET'),
     publicBaseUrl,
     accessKeyId: needsR2Access ? requiredEnv('R2_ACCESS_KEY_ID') : '',

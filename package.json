@@ -11,7 +11,7 @@
     "dev": "vite dev --port 3000",
     "sync:products": "tsx scripts/sync-products.ts",
     "sync:images:r2": "tsx scripts/sync-drive-images-to-r2.ts",
-    "sync:images:manifest": "tsx scripts/sync-drive-images-to-r2.ts --manifest-only",
+    "sync:images:manifest": "tsx scripts/sync-sheet-images-to-r2.ts",
     "sync:images:r2:upload": "tsx scripts/sync-drive-images-to-r2.ts --upload-manifest",
     "validate:catalog-assets": "tsx scripts/validate-catalog-assets.ts",
     "publish:catalog": "pnpm sync:images:manifest && pnpm sync:products && pnpm validate:catalog-assets && pnpm sync:images:r2:upload && tsx scripts/sync-products-to-supabase.ts",
