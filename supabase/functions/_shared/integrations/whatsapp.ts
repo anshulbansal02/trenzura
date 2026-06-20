@@ -194,7 +194,7 @@ async function markNotificationEvent(
 
 function readConfig(): { ok: true; value: WhatsAppConfig } | { ok: false; reason: string } {
   const config = {
-    accessToken: Deno.env.get('WHATSAPP_ACCESS_TOKEN') ?? '',
+    accessToken: Deno.env.get('WHATSAPP_ACCESS_TOKEN') || Deno.env.get('WHATSAPP_API_TOKEN') || '',
     graphApiVersion: Deno.env.get('WHATSAPP_GRAPH_API_VERSION') ?? '',
     phoneNumberId: Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') ?? '',
     templateName: Deno.env.get('WHATSAPP_ORDER_CONFIRMED_TEMPLATE_NAME') ?? '',
