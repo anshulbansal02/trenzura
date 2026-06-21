@@ -159,7 +159,7 @@ function requiredEnv(name: string) {
 }
 
 function serviceRoleKey() {
-  return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || requiredEnv('OPS_SERVICE_ROLE_KEY')
+  return Deno.env.get('OPS_SERVICE_ROLE_KEY') || requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
 }
 
 class CheckoutError extends Error {
