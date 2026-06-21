@@ -148,6 +148,16 @@ Deno.serve(async (request) => {
     }
 
     console.error(error)
+    if (Deno.env.get('RAZORPAY_WEBHOOK_DEBUG') === 'true') {
+      return jsonResponse(
+        {
+          received: false,
+          error: error instanceof Error ? error.message : 'Unable to process webhook',
+        },
+        { status: 500 },
+      )
+    }
+
     return jsonResponse({ received: false, error: 'Unable to process webhook' }, { status: 500 })
   }
 })
