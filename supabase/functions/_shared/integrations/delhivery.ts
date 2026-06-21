@@ -44,9 +44,12 @@ export async function createDelhiveryShipment(input: {
     method: 'POST',
     headers: {
       Authorization: `Token ${apiToken}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: `format=json&data=${JSON.stringify(payload)}`,
+    body: new URLSearchParams({
+      format: 'json',
+      data: JSON.stringify(payload),
+    }),
   })
   const responsePayload = await response.json().catch(() => null)
   const providerError = readProviderError(responsePayload)
