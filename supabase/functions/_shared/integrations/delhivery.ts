@@ -49,11 +49,12 @@ export async function createDelhiveryShipment(input: {
     body: `format=json&data=${JSON.stringify(payload)}`,
   })
   const responsePayload = await response.json().catch(() => null)
+  const providerError = readProviderError(responsePayload)
 
-  if (!response.ok) {
+  if (!response.ok || isProviderFailure(responsePayload)) {
     return {
       ok: false,
-      reason: readProviderError(responsePayload) ?? `delhivery_http_${response.status}`,
+      reason: providerError ?? `delhivery_http_${response.status}`,
       rawPayload: responsePayload,
     }
   }
@@ -260,7 +261,18 @@ function findNestedValue(value: Record<string, unknown>, key: string): unknown {
 }
 
 function readProviderError(value: unknown) {
-  return pickString(value, ['error', 'message', 'description', 'remark'])
+  return pickString(value, ['rmk', 'remark', 'error', 'message', 'description'])
+}
+
+function isProviderFailure(value: unknown) {
+  if (!value || typeof value !== 'object') return false
+
+  const payload = value as Record<string, unknown>
+  if (payload.success === false) return true
+  if (payload.error === true) return true
+  if (typeof payload.error === 'string' && payload.error.trim()) return true
+
+  return false
 }
 
 class DelhiveryConfigError extends Error {}
