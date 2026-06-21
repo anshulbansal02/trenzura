@@ -60,7 +60,7 @@ Deno.serve(async (request) => {
 
     const supabase = createClient(
       requiredEnv('SUPABASE_URL'),
-      requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      serviceRoleKey(),
       { auth: { persistSession: false } },
     )
     const { data: payment } = providerOrderId
@@ -156,6 +156,10 @@ function requiredEnv(name: string) {
   const value = Deno.env.get(name)
   if (!value) throw new CheckoutError(`${name} is not configured`, 503)
   return value
+}
+
+function serviceRoleKey() {
+  return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || requiredEnv('OPS_SERVICE_ROLE_KEY')
 }
 
 class CheckoutError extends Error {
