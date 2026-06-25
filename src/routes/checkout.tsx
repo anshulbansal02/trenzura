@@ -1,4 +1,5 @@
 import { Button } from '@base-ui/react/button'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react'
@@ -181,7 +182,7 @@ function CheckoutPage() {
         stage: 'checkout_start',
       })
       setStatus('error')
-      setMessage(error instanceof Error ? error.message : 'Unable to start checkout')
+      setMessage(getCheckoutStartErrorMessage(error))
     }
   }
 
@@ -203,7 +204,7 @@ function CheckoutPage() {
     )
 
     if (error || !order) {
-      throw new Error(error?.message ?? 'Unable to prepare your order')
+      throw await createCheckoutStartError(error)
     }
 
     return order
@@ -293,7 +294,7 @@ function CheckoutPage() {
             stage: 'payment_verify',
           })
           setStatus('error')
-          setMessage(error instanceof Error ? error.message : 'Unable to confirm your payment')
+          setMessage(getPaymentVerificationErrorMessage(error))
         }
       },
     })
@@ -586,4 +587,47 @@ async function verifyPayment(orderUuid: string, response: RazorpaySuccessRespons
   }
 
   return data
+}
+
+async function createCheckoutStartError(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    const payload = await error.context.json().catch(() => null)
+    const message = readErrorMessage(payload)
+
+    if (error.context.status >= 400 && error.context.status < 500 && message) {
+      return new Error(message)
+    }
+  }
+
+  return new Error('We could not prepare payment right now. Please try again in a few minutes.')
+}
+
+function getCheckoutStartErrorMessage(error: unknown) {
+  const fallback = 'We could not prepare payment right now. Please try again in a few minutes.'
+
+  return error instanceof Error && error.message ? error.message : fallback
+}
+
+function getPaymentVerificationErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message && !isTechnicalFunctionError(error.message)) {
+    return error.message
+  }
+
+  return 'We could not confirm the payment right now. If money was debited, we will verify it shortly.'
+}
+
+function readErrorMessage(payload: unknown) {
+  if (!payload || typeof payload !== 'object') return ''
+
+  const error = (payload as { error?: unknown }).error
+  return typeof error === 'string' ? error : ''
+}
+
+function isTechnicalFunctionError(message: string) {
+  return (
+    message.includes('Edge Function') ||
+    message.includes('non-2xx') ||
+    message.includes('FunctionsHttpError') ||
+    message.includes('Failed to fetch')
+  )
 }
