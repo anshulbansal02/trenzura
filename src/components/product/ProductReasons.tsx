@@ -25,18 +25,18 @@ export function ProductReasons({
   return (
     <div
       className={joinClasses(
-        'rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)]',
+        'border border-[var(--color-line)] bg-[var(--color-paper)]',
         compact ? 'p-3' : 'p-4',
       )}
     >
-      <p className="flex items-center gap-2 text-xs font-semibold uppercase text-[var(--color-rouge)]">
+      <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-primary)]">
         <Check className="size-3.5" aria-hidden="true" />
         Why this piece
       </p>
       <ul className={joinClasses('grid gap-2', compact ? 'mt-3 text-xs' : 'mt-4 text-sm')}>
         {reasons.map((reason) => (
           <li key={reason} className="flex gap-2 leading-5 text-[var(--color-muted)]">
-            <span className="mt-2 size-1 rounded-full bg-[var(--color-rouge)]" />
+            <span className="mt-2 size-1 bg-[var(--color-primary)]" />
             <span>{reason}</span>
           </li>
         ))}

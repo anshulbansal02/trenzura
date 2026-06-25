@@ -2,6 +2,7 @@ import '@tanstack/react-start/server-only'
 
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { env as workerEnv } from 'cloudflare:workers'
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
 import {
   getRequestHeader,
@@ -26,6 +27,7 @@ export type AdminOrderRow = {
   shipment_status: string | null
   tracking_number: string | null
   created_at: string
+  whatsapp_updates_opt_in?: boolean | null
 }
 
 export type AdminIntegrationErrorRow = {
@@ -49,6 +51,21 @@ export type AdminLowStockVariantRow = {
   product_active: boolean
 }
 
+export type AdminReturnRequestRow = {
+  id: string
+  order_number: string
+  status: string
+  reason: string
+  customer_note: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  order_status: string | null
+  total_amount_paise: number | null
+  currency: string | null
+  created_at: string
+}
+
 export type AdminDashboard = {
   adminEmail: string
   loadedAt: string
@@ -59,6 +76,7 @@ export type AdminDashboard = {
     failedPayments: number
     integrationErrors: number
     lowStockVariants: number
+    returnRequests: number
   }
   views: {
     recentOrders: AdminOrderRow[]
@@ -67,6 +85,7 @@ export type AdminDashboard = {
     failedPayments: AdminOrderRow[]
     integrationErrors: AdminIntegrationErrorRow[]
     lowStockVariants: AdminLowStockVariantRow[]
+    returnRequests: AdminReturnRequestRow[]
   }
 }
 
@@ -115,6 +134,18 @@ export type CatalogPublishRun = {
   updatedAt: string
 }
 
+export type AdminInvoicePdf = {
+  bytes: Uint8Array
+  filename: string
+}
+
+export type AdminInvoiceDownload = {
+  base64: string
+  filename: string
+}
+
+export type AdminOrderDetails = InvoiceData
+
 type AdminEnv = {
   adminEmails: string[]
   accessTeamDomain?: string
@@ -145,6 +176,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
       failedPayments,
       integrationErrors,
       lowStockVariants,
+      returnRequests,
     ] = await Promise.all([
       selectRows<AdminOrderRow>(supabase, 'ops_orders_recent', recentOrdersLimit),
       selectRows<AdminOrderRow>(supabase, 'ops_shipment_pending_orders', adminViewLimit),
@@ -152,6 +184,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
       selectRows<AdminOrderRow>(supabase, 'ops_failed_payments', adminViewLimit),
       selectRows<AdminIntegrationErrorRow>(supabase, 'ops_integration_errors', adminViewLimit),
       selectRows<AdminLowStockVariantRow>(supabase, 'ops_low_stock_variants', adminViewLimit),
+      selectRows<AdminReturnRequestRow>(supabase, 'ops_return_requests', adminViewLimit),
     ])
 
     return {
@@ -164,6 +197,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
         failedPayments: failedPayments.length,
         integrationErrors: integrationErrors.length,
         lowStockVariants: lowStockVariants.length,
+        returnRequests: returnRequests.length,
       },
       views: {
         recentOrders,
@@ -172,6 +206,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboard> {
         failedPayments,
         integrationErrors,
         lowStockVariants,
+        returnRequests,
       },
     }
   } catch (error) {
@@ -317,6 +352,670 @@ export async function loadCatalogPublishStatus(): Promise<CatalogPublishStatus> 
   } catch (error) {
     throw sanitizeAdminError(error, 'Unable to load catalog publish status')
   }
+}
+
+export async function generateAdminInvoicePdf(orderNumber: string): Promise<AdminInvoicePdf> {
+  setAdminResponseHeaders()
+
+  try {
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const supabase = createAdminSupabaseClient(env)
+    const normalizedOrderNumber = normalizeOrderNumber(orderNumber)
+    const invoiceData = await loadInvoiceData(supabase, normalizedOrderNumber)
+    const bytes = await renderInvoicePdf(invoiceData)
+
+    console.log('admin invoice download', {
+      adminEmail,
+      orderNumber: normalizedOrderNumber,
+      orderId: invoiceData.order.id,
+    })
+
+    return {
+      bytes,
+      filename: `${normalizedOrderNumber}-invoice.pdf`,
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to generate invoice')
+  }
+}
+
+export async function generateAdminInvoiceDownload(
+  orderNumber: string,
+): Promise<AdminInvoiceDownload> {
+  const invoice = await generateAdminInvoicePdf(orderNumber)
+
+  return {
+    base64: encodeBase64(invoice.bytes),
+    filename: invoice.filename,
+  }
+}
+
+export async function loadAdminOrderDetails(orderNumber: string): Promise<AdminOrderDetails> {
+  setAdminResponseHeaders()
+
+  try {
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const supabase = createAdminSupabaseClient(env)
+    const normalizedOrderNumber = normalizeOrderNumber(orderNumber)
+    const details = await loadInvoiceData(supabase, normalizedOrderNumber)
+
+    console.log('admin order details view', {
+      adminEmail,
+      orderNumber: normalizedOrderNumber,
+      orderId: details.order.id,
+    })
+
+    return details
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to load order details')
+  }
+}
+
+export type InvoiceOrder = {
+  id: string
+  order_number: string
+  status: string
+  currency: string
+  subtotal_amount_paise: number
+  shipping_amount_paise: number
+  total_amount_paise: number
+  customer_name: string
+  customer_phone: string
+  customer_email: string
+  shipping_address: InvoiceAddress
+  created_at: string
+}
+
+export type InvoiceItem = {
+  id: string
+  product_id: string
+  variant_id: string
+  inventory_id: string
+  product_slug: string
+  variant_slug: string
+  product_code: string
+  title: string
+  size_label: string
+  quantity: number
+  unit_selling_price_paise: number
+  unit_mrp_paise: number
+  discount_amount_paise: number
+  line_total_paise: number
+  primary_image_url: string | null
+}
+
+export type InvoicePayment = {
+  provider: string
+  status: string
+  provider_payment_id: string | null
+  provider_order_id: string | null
+  amount_paise: number
+  currency: string
+  verified_at: string | null
+  created_at: string
+}
+
+export type InvoiceShipment = {
+  provider: string
+  status: string
+  provider_order_id: string | null
+  tracking_number: string | null
+}
+
+export type InvoiceReturnRequest = {
+  id: string
+  status: string
+  reason: string
+  customer_note: string | null
+  created_at: string
+}
+
+export type InvoiceData = {
+  order: InvoiceOrder
+  items: InvoiceItem[]
+  payment: InvoicePayment | null
+  shipment: InvoiceShipment | null
+  returnRequests: InvoiceReturnRequest[]
+}
+
+type InvoiceAddress = {
+  addressLine: string
+  landmark: string
+  city: string
+  state: string
+  pincode: string
+}
+
+type InvoicePdfContext = {
+  document: PDFDocument
+  page: PDFPage
+  fonts: {
+    regular: PDFFont
+    bold: PDFFont
+  }
+  y: number
+}
+
+async function loadInvoiceData(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  orderNumber: string,
+): Promise<InvoiceData> {
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(
+      'id,order_number,status,currency,subtotal_amount_paise,shipping_amount_paise,total_amount_paise,customer_name,customer_phone,customer_email,shipping_address,created_at',
+    )
+    .eq('order_number', orderNumber)
+    .single()
+
+  if (orderError || !order) {
+    throw new AdminError('Order not found', orderError?.code === 'PGRST116' ? 404 : 500, true)
+  }
+
+  const orderId = String(order.id)
+  const [itemsResult, paymentsResult, shipmentResult, returnRequestsResult] = await Promise.all([
+    selectInvoiceItems(supabase, orderId),
+    supabase
+      .from('payments')
+      .select('provider,status,provider_order_id,provider_payment_id,amount_paise,currency,verified_at,created_at')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: false })
+      .limit(1),
+    supabase
+      .from('shipments')
+      .select('provider,status,provider_order_id,tracking_number')
+      .eq('order_id', orderId)
+      .maybeSingle(),
+    supabase
+      .from('order_return_requests')
+      .select('id,status,reason,customer_note,created_at')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: false }),
+  ])
+
+  if (itemsResult.error) {
+    throw new AdminError(`Unable to load invoice items: ${itemsResult.error.message}`, 500, false)
+  }
+
+  if (paymentsResult.error) {
+    throw new AdminError(`Unable to load invoice payment: ${paymentsResult.error.message}`, 500, false)
+  }
+
+  if (shipmentResult.error) {
+    throw new AdminError(`Unable to load invoice shipment: ${shipmentResult.error.message}`, 500, false)
+  }
+
+  if (returnRequestsResult.error && !isMissingRelationError(returnRequestsResult.error)) {
+    throw new AdminError(
+      `Unable to load return requests: ${returnRequestsResult.error.message}`,
+      500,
+      false,
+    )
+  }
+
+  const items = (itemsResult.data ?? []).map((value) => {
+    const item = value as Record<string, unknown>
+
+    return {
+      id: String(item.id),
+      product_id: readString(item.product_id),
+      variant_id: readString(item.variant_id),
+      inventory_id: readString(item.inventory_id),
+      product_slug: readString(item.product_slug),
+      variant_slug: readString(item.variant_slug),
+      product_code: readString(item.product_code) || readString(item.variant_id),
+      title: readString(item.title),
+      size_label: readString(item.size_label),
+      quantity: readNumber(item.quantity),
+      unit_selling_price_paise: readNumber(item.unit_selling_price_paise),
+      unit_mrp_paise: readNumber(item.unit_mrp_paise),
+      discount_amount_paise: readNumber(item.discount_amount_paise),
+      line_total_paise: readNumber(item.line_total_paise),
+      primary_image_url: readNullableString(item.primary_image_url),
+    }
+  })
+
+  if (items.length === 0) {
+    throw new AdminError('Order has no items to invoice', 409)
+  }
+
+  return {
+    order: {
+      id: orderId,
+      order_number: readString(order.order_number),
+      status: readString(order.status),
+      currency: readString(order.currency) || 'INR',
+      subtotal_amount_paise: readNumber(order.subtotal_amount_paise),
+      shipping_amount_paise: readNumber(order.shipping_amount_paise),
+      total_amount_paise: readNumber(order.total_amount_paise),
+      customer_name: readString(order.customer_name),
+      customer_phone: readString(order.customer_phone),
+      customer_email: readString(order.customer_email),
+      shipping_address: normalizeInvoiceAddress(order.shipping_address),
+      created_at: readString(order.created_at),
+    },
+    items,
+    payment: normalizeInvoicePayment(paymentsResult.data?.[0]),
+    shipment: normalizeInvoiceShipment(shipmentResult.data),
+    returnRequests: ((returnRequestsResult.data ?? []) as Array<Record<string, unknown>>).map(
+      (request) => ({
+        id: readString(request.id),
+        status: readString(request.status),
+        reason: readString(request.reason),
+        customer_note: readNullableString(request.customer_note),
+        created_at: readString(request.created_at),
+      }),
+    ),
+  }
+}
+
+async function selectInvoiceItems(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  orderId: string,
+) {
+  const result = await supabase
+    .from('order_items')
+    .select(
+      'id,product_id,variant_id,inventory_id,product_slug,variant_slug,product_code,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,primary_image_url,created_at',
+    )
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true })
+
+  if (!isMissingColumnError(result.error)) {
+    return result
+  }
+
+  return supabase
+    .from('order_items')
+    .select(
+      'id,variant_id,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,created_at',
+    )
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true })
+}
+
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes('does not exist'))
+}
+
+function isMissingRelationError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes('does not exist'))
+}
+
+async function renderInvoicePdf(invoice: InvoiceData) {
+  const document = await PDFDocument.create()
+  const regular = await document.embedFont(StandardFonts.Helvetica)
+  const bold = await document.embedFont(StandardFonts.HelveticaBold)
+  const context: InvoicePdfContext = {
+    document,
+    page: document.addPage([595.28, 841.89]),
+    fonts: { regular, bold },
+    y: 792,
+  }
+
+  drawInvoiceHeader(context, invoice)
+  drawCustomerBlocks(context, invoice)
+  drawOrderMeta(context, invoice)
+  drawItemsTable(context, invoice)
+  drawTotals(context, invoice)
+  drawInvoiceFooter(context)
+
+  return document.save()
+}
+
+function drawInvoiceHeader(context: InvoicePdfContext, invoice: InvoiceData) {
+  drawText(context, 'Trenzura', 48, context.y, {
+    font: context.fonts.bold,
+    size: 22,
+    color: rgb(0.12, 0.11, 0.09),
+  })
+  drawText(context, 'INVOICE', 465, context.y + 2, {
+    font: context.fonts.bold,
+    size: 16,
+    color: rgb(0.12, 0.11, 0.09),
+  })
+  context.y -= 24
+  drawText(context, 'Studio fashion order invoice', 48, context.y, {
+    size: 9,
+    color: rgb(0.45, 0.42, 0.36),
+  })
+  drawText(context, invoice.order.order_number, 404, context.y, {
+    font: context.fonts.bold,
+    size: 10,
+    color: rgb(0.45, 0.42, 0.36),
+  })
+  context.y -= 28
+  drawRule(context, context.y)
+  context.y -= 26
+}
+
+function drawCustomerBlocks(context: InvoicePdfContext, invoice: InvoiceData) {
+  const address = normalizeInvoiceAddress(invoice.order.shipping_address)
+  const leftX = 48
+  const rightX = 318
+  const startY = context.y
+
+  drawSectionLabel(context, 'Bill To', leftX, startY)
+  drawWrappedText(context, invoice.order.customer_name, leftX, startY - 18, 210, {
+    font: context.fonts.bold,
+    size: 10,
+  })
+  drawWrappedText(context, invoice.order.customer_phone, leftX, startY - 34, 210, { size: 9 })
+  drawWrappedText(context, invoice.order.customer_email, leftX, startY - 48, 210, { size: 9 })
+
+  drawSectionLabel(context, 'Ship To', rightX, startY)
+  const addressLines = [
+    invoice.order.customer_name,
+    address.addressLine,
+    address.landmark,
+    [address.city, address.state, address.pincode].filter(Boolean).join(', '),
+  ].filter(Boolean)
+  let y = startY - 18
+  for (const line of addressLines) {
+    y = drawWrappedText(context, line, rightX, y, 220, { size: 9 }) - 4
+  }
+
+  context.y = Math.min(startY - 74, y - 10)
+}
+
+function drawOrderMeta(context: InvoicePdfContext, invoice: InvoiceData) {
+  const payment = invoice.payment
+  const shipment = invoice.shipment
+  const rows = [
+    ['Invoice date', formatInvoiceDate(invoice.order.created_at)],
+    ['Order status', formatStatus(invoice.order.status)],
+    ['Payment', payment ? formatStatus(payment.status) : 'Not recorded'],
+    ['Payment ID', payment?.provider_payment_id || '-'],
+    ['Shipment', shipment ? formatStatus(shipment.status) : 'Not created'],
+    ['Tracking', shipment?.tracking_number || '-'],
+  ]
+  const startX = 48
+  const cellWidth = 165
+  const rowHeight = 28
+
+  drawRule(context, context.y)
+  context.y -= 18
+
+  rows.forEach(([label, value], index) => {
+    const column = index % 3
+    const row = Math.floor(index / 3)
+    const x = startX + column * cellWidth
+    const y = context.y - row * rowHeight
+    drawText(context, label.toUpperCase(), x, y, {
+      font: context.fonts.bold,
+      size: 7,
+      color: rgb(0.48, 0.45, 0.39),
+    })
+    drawText(context, value, x, y - 12, {
+      size: 9,
+      color: rgb(0.12, 0.11, 0.09),
+    })
+  })
+
+  context.y -= 72
+}
+
+function drawItemsTable(context: InvoicePdfContext, invoice: InvoiceData) {
+  ensureSpace(context, 92)
+  drawSectionLabel(context, 'Items', 48, context.y)
+  context.y -= 18
+  drawTableHeader(context)
+
+  for (const item of invoice.items) {
+    const titleLines = wrapText(`${item.title}`, 28, context.fonts.regular, 9)
+    const codeLines = wrapText(`${item.product_code} / ${item.size_label}`, 18, context.fonts.regular, 8)
+    const rowHeight = Math.max(34, Math.max(titleLines.length, codeLines.length) * 11 + 18)
+    ensureSpace(context, rowHeight + 20)
+
+    const rowTop = context.y
+    drawWrappedText(context, item.title, 48, rowTop - 14, 175, { size: 9 })
+    drawWrappedText(context, `${item.product_code} / ${item.size_label}`, 238, rowTop - 14, 100, {
+      size: 8,
+      color: rgb(0.38, 0.36, 0.31),
+    })
+    drawText(context, String(item.quantity), 355, rowTop - 14, { size: 9 })
+    drawText(context, formatPaise(item.unit_selling_price_paise), 388, rowTop - 14, { size: 9 })
+    drawText(context, formatPaise(item.discount_amount_paise * item.quantity), 455, rowTop - 14, { size: 9 })
+    drawText(context, formatPaise(item.line_total_paise), 514, rowTop - 14, {
+      font: context.fonts.bold,
+      size: 9,
+    })
+    context.y -= rowHeight
+    drawRule(context, context.y, 48, 548, rgb(0.88, 0.86, 0.8))
+    context.y -= 10
+  }
+}
+
+function drawTotals(context: InvoicePdfContext, invoice: InvoiceData) {
+  ensureSpace(context, 96)
+  const labelX = 382
+  const valueX = 500
+  const rows = [
+    ['Subtotal', formatPaise(invoice.order.subtotal_amount_paise)],
+    ['Shipping', formatPaise(invoice.order.shipping_amount_paise)],
+    ['Total', formatPaise(invoice.order.total_amount_paise)],
+  ]
+
+  context.y -= 8
+  rows.forEach(([label, value], index) => {
+    const isTotal = index === rows.length - 1
+    drawText(context, label, labelX, context.y, {
+      font: isTotal ? context.fonts.bold : context.fonts.regular,
+      size: isTotal ? 12 : 9,
+      color: rgb(0.12, 0.11, 0.09),
+    })
+    drawText(context, value, valueX, context.y, {
+      font: isTotal ? context.fonts.bold : context.fonts.regular,
+      size: isTotal ? 12 : 9,
+      color: rgb(0.12, 0.11, 0.09),
+    })
+    context.y -= isTotal ? 22 : 18
+  })
+}
+
+function drawInvoiceFooter(context: InvoicePdfContext) {
+  ensureSpace(context, 54)
+  context.y -= 6
+  drawRule(context, context.y)
+  context.y -= 18
+  drawWrappedText(
+    context,
+    'This invoice is generated from Trenzura admin order records. Prices are inclusive of applicable taxes where charged.',
+    48,
+    context.y,
+    498,
+    { size: 8, color: rgb(0.45, 0.42, 0.36) },
+  )
+}
+
+function drawTableHeader(context: InvoicePdfContext) {
+  const y = context.y
+  drawText(context, 'Product', 48, y, { font: context.fonts.bold, size: 8 })
+  drawText(context, 'Code / Size', 238, y, { font: context.fonts.bold, size: 8 })
+  drawText(context, 'Qty', 355, y, { font: context.fonts.bold, size: 8 })
+  drawText(context, 'Unit', 388, y, { font: context.fonts.bold, size: 8 })
+  drawText(context, 'Discount', 455, y, { font: context.fonts.bold, size: 8 })
+  drawText(context, 'Amount', 514, y, { font: context.fonts.bold, size: 8 })
+  context.y -= 10
+  drawRule(context, context.y)
+  context.y -= 10
+}
+
+function drawSectionLabel(context: InvoicePdfContext, value: string, x: number, y: number) {
+  drawText(context, value.toUpperCase(), x, y, {
+    font: context.fonts.bold,
+    size: 8,
+    color: rgb(0.48, 0.45, 0.39),
+  })
+}
+
+function drawText(
+  context: InvoicePdfContext,
+  text: string,
+  x: number,
+  y: number,
+  options: {
+    font?: PDFFont
+    size?: number
+    color?: ReturnType<typeof rgb>
+  } = {},
+) {
+  context.page.drawText(sanitizePdfText(text || '-'), {
+    x,
+    y,
+    size: options.size ?? 10,
+    font: options.font ?? context.fonts.regular,
+    color: options.color ?? rgb(0.18, 0.17, 0.14),
+  })
+}
+
+function drawWrappedText(
+  context: InvoicePdfContext,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  options: {
+    font?: PDFFont
+    size?: number
+    color?: ReturnType<typeof rgb>
+  } = {},
+) {
+  const font = options.font ?? context.fonts.regular
+  const size = options.size ?? 10
+  const lines = wrapText(text || '-', maxWidth, font, size)
+  let nextY = y
+  for (const line of lines) {
+    drawText(context, line, x, nextY, { ...options, font, size })
+    nextY -= size + 3
+  }
+
+  return nextY
+}
+
+function wrapText(text: string, maxWidth: number, font: PDFFont, size: number) {
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let line = ''
+
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+      line = candidate
+      continue
+    }
+
+    if (line) lines.push(line)
+    line = word
+  }
+
+  if (line) lines.push(line)
+  return lines.length > 0 ? lines : ['-']
+}
+
+function drawRule(
+  context: InvoicePdfContext,
+  y: number,
+  xStart = 48,
+  xEnd = 548,
+  color = rgb(0.79, 0.76, 0.68),
+) {
+  context.page.drawLine({
+    start: { x: xStart, y },
+    end: { x: xEnd, y },
+    thickness: 0.6,
+    color,
+  })
+}
+
+function ensureSpace(context: InvoicePdfContext, requiredHeight: number) {
+  if (context.y - requiredHeight >= 54) return
+
+  context.page = context.document.addPage([595.28, 841.89])
+  context.y = 792
+}
+
+function normalizeInvoicePayment(value: unknown): InvoicePayment | null {
+  if (!value || typeof value !== 'object') return null
+  const payment = value as Record<string, unknown>
+
+  return {
+    provider: readString(payment.provider),
+    status: readString(payment.status),
+    provider_order_id: readNullableString(payment.provider_order_id),
+    provider_payment_id: readNullableString(payment.provider_payment_id),
+    amount_paise: readNumber(payment.amount_paise),
+    currency: readString(payment.currency) || 'INR',
+    verified_at: readNullableString(payment.verified_at),
+    created_at: readString(payment.created_at),
+  }
+}
+
+function normalizeInvoiceShipment(value: unknown): InvoiceShipment | null {
+  if (!value || typeof value !== 'object') return null
+  const shipment = value as Record<string, unknown>
+
+  return {
+    provider: readString(shipment.provider),
+    status: readString(shipment.status),
+    provider_order_id: readNullableString(shipment.provider_order_id),
+    tracking_number: readNullableString(shipment.tracking_number),
+  }
+}
+
+function normalizeInvoiceAddress(value: unknown): InvoiceAddress {
+  if (!value || typeof value !== 'object') {
+    return { addressLine: '', landmark: '', city: '', state: '', pincode: '' }
+  }
+
+  const address = value as Record<string, unknown>
+  return {
+    addressLine: readString(address.addressLine),
+    landmark: readString(address.landmark),
+    city: readString(address.city),
+    state: readString(address.state),
+    pincode: readString(address.pincode),
+  }
+}
+
+function formatInvoiceDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
+
+function formatStatus(value: string) {
+  return value.replaceAll('_', ' ') || '-'
+}
+
+function formatPaise(value: number) {
+  const amount = new Intl.NumberFormat('en-IN', {
+    maximumFractionDigits: 0,
+  }).format(value / 100)
+
+  return `INR ${amount}`
+}
+
+function sanitizePdfText(value: string) {
+  return value.replace(/[^\x20-\x7e]/g, '-')
+}
+
+function encodeBase64(bytes: Uint8Array) {
+  let binary = ''
+  const chunkSize = 0x8000
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize))
+  }
+
+  return btoa(binary)
 }
 
 function normalizeRetryResult(value: unknown): RetryShipmentResult['result'] {

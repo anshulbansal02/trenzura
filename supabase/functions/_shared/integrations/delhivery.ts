@@ -44,16 +44,20 @@ export async function createDelhiveryShipment(input: {
     method: 'POST',
     headers: {
       Authorization: `Token ${apiToken}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: `format=json&data=${JSON.stringify(payload)}`,
+    body: new URLSearchParams({
+      format: 'json',
+      data: JSON.stringify(payload),
+    }),
   })
   const responsePayload = await response.json().catch(() => null)
+  const providerError = readProviderError(responsePayload)
 
-  if (!response.ok) {
+  if (!response.ok || isProviderFailure(responsePayload)) {
     return {
       ok: false,
-      reason: readProviderError(responsePayload) ?? `delhivery_http_${response.status}`,
+      reason: providerError ?? `delhivery_http_${response.status}`,
       rawPayload: responsePayload,
     }
   }
@@ -85,6 +89,7 @@ function buildShipmentPayload(
   const pickupLocationName = Deno.env.get('DELHIVERY_PICKUP_LOCATION')
   const sellerGst = Deno.env.get('DELHIVERY_SELLER_GST')
   const hsnCode = Deno.env.get('DELHIVERY_HSN_CODE')
+  const packageSize = calculatePackageSize(order)
 
   if (!pickupLocationName) {
     return { ok: false, reason: 'delhivery_pickup_location_missing' }
@@ -116,10 +121,10 @@ function buildShipmentPayload(
             total_amount: paiseToRupees(order.total_amount_paise),
             quantity: String(totalQuantity(order)),
             products_desc: productDescription(order),
-            weight: readNumberEnv('DELHIVERY_PACKAGE_WEIGHT_GRAMS', 500),
-            shipment_length: readNumberEnv('DELHIVERY_PACKAGE_LENGTH_CM', 30),
-            shipment_width: readNumberEnv('DELHIVERY_PACKAGE_BREADTH_CM', 25),
-            shipment_height: readNumberEnv('DELHIVERY_PACKAGE_HEIGHT_CM', 5),
+            weight: packageSize.weightGrams,
+            shipment_length: packageSize.lengthCm,
+            shipment_width: packageSize.breadthCm,
+            shipment_height: packageSize.heightCm,
             seller_gst_tin: sellerGst,
             hsn_code: hsnCode,
             extra_parameters: {
@@ -180,6 +185,45 @@ function productDescription(order: OrderForShipment) {
     .slice(0, 250)
 }
 
+function calculatePackageSize(order: OrderForShipment) {
+  const fallback = {
+    breadthCm: readNumberEnv('DELHIVERY_PACKAGE_BREADTH_CM', 25),
+    heightCm: readNumberEnv('DELHIVERY_PACKAGE_HEIGHT_CM', 5),
+    lengthCm: readNumberEnv('DELHIVERY_PACKAGE_LENGTH_CM', 30),
+    weightGrams: readNumberEnv('DELHIVERY_PACKAGE_WEIGHT_GRAMS', 500),
+  }
+  const sizedItems = order.order_items.flatMap((item) => {
+    const length = readPositiveNumber(item.package_length_cm)
+    const breadth = readPositiveNumber(item.package_breadth_cm)
+    const height = readPositiveNumber(item.package_height_cm)
+    const weightKg = readPositiveNumber(item.package_weight_kg)
+
+    if (!length || !breadth || !height || !weightKg) return []
+
+    return [{
+      breadthCm: Math.min(length, breadth),
+      heightCm: height,
+      lengthCm: Math.max(length, breadth),
+      quantity: item.quantity,
+      weightGrams: weightKg * 1000,
+    }]
+  })
+
+  if (sizedItems.length === 0) return fallback
+
+  return {
+    breadthCm: Math.ceil(Math.max(...sizedItems.map((item) => item.breadthCm))),
+    heightCm: Math.ceil(sizedItems.reduce((total, item) => total + item.heightCm * item.quantity, 0)),
+    lengthCm: Math.ceil(Math.max(...sizedItems.map((item) => item.lengthCm))),
+    weightGrams: Math.ceil(sizedItems.reduce((total, item) => total + item.weightGrams * item.quantity, 0)),
+  }
+}
+
+function readPositiveNumber(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
 function readNumberEnv(name: string, fallback: number) {
   const value = Number(Deno.env.get(name))
   return Number.isFinite(value) && value > 0 ? value : fallback
@@ -220,7 +264,18 @@ function findNestedValue(value: Record<string, unknown>, key: string): unknown {
 }
 
 function readProviderError(value: unknown) {
-  return pickString(value, ['error', 'message', 'description', 'remark'])
+  return pickString(value, ['rmk', 'remark', 'error', 'message', 'description'])
+}
+
+function isProviderFailure(value: unknown) {
+  if (!value || typeof value !== 'object') return false
+
+  const payload = value as Record<string, unknown>
+  if (payload.success === false) return true
+  if (payload.error === true) return true
+  if (typeof payload.error === 'string' && payload.error.trim()) return true
+
+  return false
 }
 
 class DelhiveryConfigError extends Error {}

@@ -45,6 +45,7 @@ export function getStyleFinderResults(answers: StyleFinderAnswers, limit = 3) {
 
 function scoreProduct(product: Product, answers: StyleFinderAnswers): StyleFinderResult {
   const text = `${product.title} ${product.description}`.toLowerCase()
+  const isSet = isSetProduct(product)
   const reasons: string[] = []
   let score = product.featured ? 2 : 1
 
@@ -74,7 +75,7 @@ function scoreProduct(product: Product, answers: StyleFinderAnswers): StyleFinde
   }
 
   if (answers.preference === 'set') {
-    if (product.category !== 'sets') return { product, reasons: [], score: 0 }
+    if (!isSet) return { product, reasons: [], score: 0 }
     score += 5
     reasons.push('Coordinated set')
   }
@@ -107,7 +108,7 @@ function scoreProduct(product: Product, answers: StyleFinderAnswers): StyleFinde
 
   if (answers.occasion === 'function') {
     if (
-      product.category === 'sets' ||
+      isSet ||
       text.includes('festive') ||
       text.includes('puja') ||
       text.includes('occasion')
@@ -118,8 +119,8 @@ function scoreProduct(product: Product, answers: StyleFinderAnswers): StyleFinde
   }
 
   if (answers.occasion === 'gift') {
-    score += product.category === 'sets' ? 3 : 2
-    reasons.push(product.category === 'sets' ? 'Complete outfit for gifting' : 'Easy piece to gift')
+    score += isSet ? 3 : 2
+    reasons.push(isSet ? 'Complete outfit for gifting' : 'Easy piece to gift')
   }
 
   return {
@@ -127,4 +128,9 @@ function scoreProduct(product: Product, answers: StyleFinderAnswers): StyleFinde
     reasons: Array.from(new Set([...reasons, ...getProductReasons(product, 2)])).slice(0, 3),
     score,
   }
+}
+
+function isSetProduct(product: Product) {
+  const categoryText = `${product.category} ${product.categoryLabel}`.toLowerCase()
+  return categoryText.includes('set')
 }

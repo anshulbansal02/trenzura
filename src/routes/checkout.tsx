@@ -1,23 +1,46 @@
 import { Button } from '@base-ui/react/button'
-import { Field } from '@base-ui/react/field'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CreditCard,
-  LoaderCircle,
-  PackageCheck,
-  ShieldCheck,
-} from 'lucide-react'
-import type { FormEvent, HTMLAttributes } from 'react'
-import { useState } from 'react'
+import { CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react'
+import type { FormEvent } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useCart } from '../components/cart/CartProvider'
-import { ProductMedia } from '../components/product/ProductMedia'
-import { formatPrice, standardShippingPaise } from '../lib/format'
+import { CheckoutConfirmation } from '../components/checkout/CheckoutConfirmation'
+import { CheckoutField, CheckoutSelect } from '../components/checkout/CheckoutField'
+import { CheckoutNotice } from '../components/checkout/CheckoutNotice'
+import { CheckoutOrderSummary } from '../components/checkout/CheckoutOrderSummary'
+import { trackAnalyticsEvent } from '../lib/analytics'
+import {
+  type CheckoutForm,
+  type CheckoutFormErrors,
+  type CheckoutConfirmation as CheckoutConfirmationData,
+  type CheckoutStatus,
+  type CreateOrderResponse,
+  type PendingOrder,
+  type RazorpaySuccessResponse,
+  type VerifyPaymentResponse,
+  createSuccessMessage,
+  getCheckoutAnalyticsPayload,
+  getMobilePayButtonLabel,
+  getPayButtonLabel,
+  initialCheckoutForm,
+  isBusyCheckoutStatus,
+  normalizeCheckoutForm,
+  validateCheckoutFormFields,
+} from '../lib/checkout'
+import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
+import { calculateShippingPaise } from '../lib/shipping'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
+import {
+  getCitiesForIndianState,
+  indianStateNames,
+  otherCityValue,
+} from '../../shared/indian-address'
+
+type CheckoutTextField = Exclude<keyof CheckoutForm, 'whatsappUpdatesOptIn'>
 
 export const Route = createFileRoute('/checkout')({
   head: () =>
@@ -29,105 +52,24 @@ export const Route = createFileRoute('/checkout')({
   component: CheckoutPage,
 })
 
-type CheckoutForm = {
-  email: string
-  fullName: string
-  phone: string
-  addressLine: string
-  landmark: string
-  city: string
-  state: string
-  pincode: string
-}
-
-const initialForm: CheckoutForm = {
-  email: '',
-  fullName: '',
-  phone: '',
-  addressLine: '',
-  landmark: '',
-  city: '',
-  state: '',
-  pincode: '',
-}
-
-type CheckoutStatus =
-  | 'idle'
-  | 'preparing'
-  | 'ready'
-  | 'opening'
-  | 'payment-open'
-  | 'confirming'
-  | 'success'
-  | 'cancelled'
-  | 'error'
-
-type CreateOrderResponse = {
-  keyId: string
-  orderUuid: string
-  orderNumber: string
-  orderId: string
-  amount: number
-  currency: string
-  totals: {
-    subtotal: number
-    shipping: number
-    total: number
-  }
-}
-
-type VerifyPaymentResponse = {
-  verified: boolean
-  orderUuid?: string
-  orderNumber?: string
-  paymentId?: string
-  orderId?: string
-  orderStatus?: string
-  shipment?: {
-    orderStatus?: string
-    shipmentStatus?: string
-    trackingNumber?: string | null
-    providerOrderId?: string | null
-  } | null
-  error?: string
-}
-
-type RazorpaySuccessResponse = {
-  razorpay_payment_id: string
-  razorpay_order_id: string
-  razorpay_signature: string
-}
-
-type PendingOrder = CreateOrderResponse & {
-  fingerprint: string
-}
-
-type Confirmation = {
-  orderNumber: string
-  paymentId?: string
-  orderStatus?: string
-  shipmentStatus?: string
-  trackingNumber?: string | null
-  needsReview: boolean
-}
-
 const loadCheckoutScript = createIsomorphicFn()
   .client(async () => {
     const { loadRazorpayCheckout } = await import('../lib/razorpay.client')
     await loadRazorpayCheckout()
   })
   .server(() => {
-    throw new Error('Razorpay checkout can only run in the browser')
+    throw new Error('Payment checkout can only run in the browser')
   })
 
 function CheckoutPage() {
   const { lines, itemCount, subtotal, savings, clearCart } = useCart()
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState(initialCheckoutForm)
+  const [errors, setErrors] = useState<CheckoutFormErrors>({})
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<CheckoutStatus>('idle')
   const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null)
-  const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
-  const shipping = subtotal === 0 ? 0 : standardShippingPaise
+  const [confirmation, setConfirmation] = useState<CheckoutConfirmationData | null>(null)
+  const shipping = calculateShippingPaise(subtotal)
   const total = subtotal + shipping
   const normalizedForm = normalizeCheckoutForm(form)
   const checkoutFingerprint = JSON.stringify({
@@ -143,9 +85,49 @@ function CheckoutPage() {
     pendingOrder?.fingerprint === checkoutFingerprint ? pendingOrder : null
   const summaryTotals = activePendingOrder?.totals ?? { subtotal, shipping, total }
   const isCheckoutBusy = isBusyCheckoutStatus(status)
+  const cityOptions = useMemo(() => {
+    const stateCities = getCitiesForIndianState(form.state)
 
-  function updateField(field: keyof CheckoutForm, value: string) {
-    setForm((current) => ({ ...current, [field]: value }))
+    return [
+      ...stateCities.map((city) => ({ label: city, value: city })),
+      ...(form.state ? [{ label: 'Other city/town', value: otherCityValue }] : []),
+    ]
+  }, [form.state])
+
+  function updateField(field: CheckoutTextField, value: string) {
+    const nextValue = field === 'pincode' ? value.replace(/\D/g, '').slice(0, 6) : value
+
+    setForm((current) => {
+      if (field === 'state') {
+        return { ...current, state: nextValue, city: '', cityOther: '' }
+      }
+
+      if (field === 'city' && nextValue !== otherCityValue) {
+        return { ...current, city: nextValue, cityOther: '' }
+      }
+
+      return { ...current, [field]: nextValue }
+    })
+    setErrors((current) => {
+      const next = { ...current }
+      delete next[field]
+      if (field === 'state') {
+        delete next.city
+        delete next.cityOther
+        delete next.pincode
+      }
+      if (field === 'city') delete next.cityOther
+      return next
+    })
+    setPendingOrder(null)
+    if (!isBusyCheckoutStatus(status)) {
+      setStatus('idle')
+      setMessage('')
+    }
+  }
+
+  function updateWhatsappUpdatesOptIn(value: boolean) {
+    setForm((current) => ({ ...current, whatsappUpdatesOptIn: value }))
     setPendingOrder(null)
     if (!isBusyCheckoutStatus(status)) {
       setStatus('idle')
@@ -157,10 +139,11 @@ function CheckoutPage() {
     event.preventDefault()
     setConfirmation(null)
 
-    const validationMessage = validateCheckoutForm(normalizedForm)
-    if (validationMessage) {
+    const validationErrors = validateCheckoutFormFields(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
       setStatus('error')
-      setMessage(validationMessage)
+      setMessage('Review the highlighted checkout details.')
       return
     }
 
@@ -170,10 +153,15 @@ function CheckoutPage() {
       return
     }
 
+    trackAnalyticsEvent('checkout_submit', getCheckoutAnalyticsPayload(itemCount, total))
     setStatus(activePendingOrder ? 'opening' : 'preparing')
     setMessage('')
 
     try {
+      trackAnalyticsEvent('checkout_started', {
+        ...getCheckoutAnalyticsPayload(itemCount, total),
+        reused_order: Boolean(activePendingOrder),
+      })
       const order = activePendingOrder ?? (await createCheckoutOrder())
       if (!activePendingOrder) {
         setPendingOrder({ ...order, fingerprint: checkoutFingerprint })
@@ -189,8 +177,12 @@ function CheckoutPage() {
 
       await openRazorpayCheckout(order)
     } catch (error) {
+      trackAnalyticsEvent('payment_failed', {
+        ...getCheckoutAnalyticsPayload(itemCount, total),
+        stage: 'checkout_start',
+      })
       setStatus('error')
-      setMessage(error instanceof Error ? error.message : 'Unable to start checkout')
+      setMessage(getCheckoutStartErrorMessage(error))
     }
   }
 
@@ -212,7 +204,7 @@ function CheckoutPage() {
     )
 
     if (error || !order) {
-      throw new Error(error?.message ?? 'Unable to prepare your order')
+      throw await createCheckoutStartError(error)
     }
 
     return order
@@ -246,8 +238,8 @@ function CheckoutPage() {
         customerEmail: normalizedForm.email,
       },
       theme: {
-        color: '#72343d',
-        backdrop_color: '#171310',
+        color: '#1C2E4A',
+        backdrop_color: '#1C2E4A',
       },
       modal: {
         backdropclose: false,
@@ -256,6 +248,7 @@ function CheckoutPage() {
         handleback: true,
         ondismiss: () => {
           if (!paymentStarted) {
+            trackAnalyticsEvent('payment_cancelled', getCheckoutAnalyticsPayload(itemCount, order.totals.total))
             setStatus('cancelled')
             setMessage('Payment window closed. Your details and confirmed total are still here.')
           }
@@ -276,7 +269,7 @@ function CheckoutPage() {
 
           clearCart()
           setPendingOrder(null)
-          setForm(initialForm)
+          setForm(initialCheckoutForm)
           setStatus('success')
           setConfirmation({
             orderNumber: verification.orderNumber ?? order.orderNumber,
@@ -291,62 +284,49 @@ function CheckoutPage() {
               ? 'Payment was received. We are checking availability before dispatch.'
               : createSuccessMessage(verification),
           )
+          trackAnalyticsEvent('purchase_completed', {
+            ...getCheckoutAnalyticsPayload(itemCount, order.totals.total),
+            needs_review: needsReview,
+          })
         } catch (error) {
+          trackAnalyticsEvent('payment_failed', {
+            ...getCheckoutAnalyticsPayload(itemCount, order.totals.total),
+            stage: 'payment_verify',
+          })
           setStatus('error')
-          setMessage(error instanceof Error ? error.message : 'Unable to confirm your payment')
+          setMessage(getPaymentVerificationErrorMessage(error))
         }
       },
     })
 
     checkout.open()
+    trackAnalyticsEvent('razorpay_opened', getCheckoutAnalyticsPayload(itemCount, order.totals.total))
     setStatus('payment-open')
-    setMessage('Complete payment in the Razorpay window. We will confirm the order here.')
+    setMessage('Complete payment in the secure payment window. We will confirm the order here.')
   }
 
   if (confirmation) {
-    return (
-      <main className="fashion-container py-12 lg:py-16">
-        <section className="mx-auto max-w-3xl text-center">
-          <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-sage)] text-white">
-            {confirmation.needsReview ? (
-              <AlertTriangle className="size-6" aria-hidden="true" />
-            ) : (
-              <CheckCircle2 className="size-6" aria-hidden="true" />
-            )}
-          </span>
-          <p className="fashion-eyebrow mt-6">Order {confirmation.orderNumber}</p>
-          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
-            {confirmation.needsReview ? 'Payment received' : 'Order confirmed'}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--color-muted)]">
-            {message}
-          </p>
-        </section>
+    return <CheckoutConfirmation confirmation={confirmation} message={message} />
+  }
 
-        <section className="fashion-surface mx-auto mt-10 max-w-3xl rounded-lg bg-[var(--color-paper)] p-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ConfirmationLine label="Order number" value={confirmation.orderNumber} />
-            <ConfirmationLine label="Payment reference" value={confirmation.paymentId ?? 'Recorded'} />
-            <ConfirmationLine
-              label="Order"
-              value={formatCustomerOrderStatus(confirmation.orderStatus ?? 'paid')}
-            />
-            <ConfirmationLine
-              label="Delivery"
-              value={
-                confirmation.trackingNumber
-                  ? confirmation.trackingNumber
-                  : formatCustomerDeliveryStatus(confirmation.shipmentStatus ?? 'shipment_pending')
-              }
-            />
-          </div>
-          <div className="mt-6 flex flex-col gap-3 border-t border-[var(--color-line)] pt-5 sm:flex-row sm:justify-end">
+  if (lines.length === 0) {
+    return (
+      <main className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto flex min-h-[58svh] max-w-3xl items-center border-b border-[var(--color-line)] pb-10 text-center">
+          <div className="mx-auto">
+            <p className="text-sm font-medium text-[var(--color-muted)]">Checkout</p>
+            <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
+              Your bag is empty
+            </h1>
+            <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
+              Choose a style and size to begin your order.
+            </p>
             <Button
               nativeButton={false}
               render={
                 <Link
                   to="/products"
-                  className="fashion-button-secondary h-11 justify-center px-5"
+                  className="mt-7 inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
                 />
               }
             >
@@ -358,257 +338,233 @@ function CheckoutPage() {
     )
   }
 
-  if (lines.length === 0) {
-    return (
-      <main className="mx-auto flex min-h-[70svh] max-w-3xl items-center justify-center px-5 py-16 text-center sm:px-8">
-        <div>
-          <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-3xl">Your bag is empty</h1>
-          <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
-            Choose a style and size to begin your order.
-          </p>
-          <Button
-            nativeButton={false}
-            render={
-              <Link
-                to="/products"
-                className="fashion-button-primary mt-7 h-11 px-5"
-              />
-            }
-          >
-            Continue shopping
-          </Button>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main className="fashion-container pb-36 pt-10 lg:py-14">
-      <div className="mb-10 flex flex-col gap-4 border-b border-[var(--color-line)] pb-8 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="fashion-eyebrow">Checkout</p>
-          <h1 className="fashion-display mt-2 text-3xl sm:text-4xl">
+    <main className="px-4 pb-36 pt-8 sm:px-6 sm:pt-8 lg:px-8 lg:pb-20 lg:pt-4">
+      <div className="mx-auto max-w-[75rem]">
+        <div className="border-b border-[var(--color-line)] pb-7">
+          <p className="text-sm font-medium text-[var(--color-muted)]">Checkout</p>
+          <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-7xl">
             Delivery and payment
           </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--color-muted)]">
+            Add your delivery details, review your bag, and pay securely when everything looks right.
+          </p>
         </div>
-        <p className="fashion-copy max-w-xl">
-          Add your delivery details, review your bag, and pay securely when everything looks right.
-        </p>
-      </div>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <form id="checkout-form" onSubmit={submitCheckout} className="space-y-8">
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Contact</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <CheckoutField
-                label="Email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                enterKeyHint="next"
-                value={form.email}
-                onChange={(value) => updateField('email', value)}
-              />
-              <CheckoutField
-                label="Phone"
-                type="tel"
-                placeholder="98765 43210"
-                autoComplete="tel"
-                enterKeyHint="next"
-                value={form.phone}
-                onChange={(value) => updateField('phone', value)}
-              />
-            </div>
-          </section>
-
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Delivery</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <CheckoutField
-                label="Full name"
-                placeholder="Aarav Sharma"
-                autoComplete="name"
-                enterKeyHint="next"
-                value={form.fullName}
-                onChange={(value) => updateField('fullName', value)}
-              />
-              <CheckoutField
-                label="Pincode"
-                inputMode="numeric"
-                placeholder="400001"
-                autoComplete="postal-code"
-                enterKeyHint="next"
-                value={form.pincode}
-                onChange={(value) => updateField('pincode', value)}
-              />
-              <CheckoutField
-                label="Address"
-                placeholder="Flat 12, Palm Grove Apartments, MG Road"
-                autoComplete="street-address"
-                enterKeyHint="next"
-                value={form.addressLine}
-                onChange={(value) => updateField('addressLine', value)}
-                className="sm:col-span-2"
-              />
-              <CheckoutField
-                label="Landmark"
-                placeholder="Near City Mall"
-                enterKeyHint="next"
-                value={form.landmark}
-                onChange={(value) => updateField('landmark', value)}
-                required={false}
-              />
-              <CheckoutField
-                label="City"
-                placeholder="Mumbai"
-                autoComplete="address-level2"
-                enterKeyHint="next"
-                value={form.city}
-                onChange={(value) => updateField('city', value)}
-              />
-              <CheckoutField
-                label="State"
-                placeholder="Maharashtra"
-                autoComplete="address-level1"
-                enterKeyHint="done"
-                value={form.state}
-                onChange={(value) => updateField('state', value)}
-              />
-            </div>
-          </section>
-
-          <section className="fashion-surface rounded-lg bg-[var(--color-paper)] p-5">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-full bg-[var(--color-ink)] text-[var(--color-paper)]">
-                <CreditCard className="size-4" aria-hidden="true" />
-              </span>
-              <h2 className="font-serif text-2xl text-[var(--color-ink)]">Payment</h2>
-            </div>
-            <div className="mt-5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]">
-                <ShieldCheck className="size-4 text-[var(--color-sage)]" aria-hidden="true" />
-                Razorpay secure checkout
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
-                from this page so the payment step stays quick.
-              </p>
-              <div className="mt-4 grid gap-2 text-xs font-semibold text-[var(--color-muted)] sm:grid-cols-3">
-                {['Review details', 'Pay in Razorpay', 'Instant confirmation'].map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"
-                  >
-                    {label}
+        <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <form id="checkout-form" noValidate onSubmit={submitCheckout} className="grid gap-10">
+            <section>
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Contact</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Used for order confirmation and payment prefill.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CheckoutField
+                  label="Email"
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  enterKeyHint="next"
+                  value={form.email}
+                  onChange={(value) => updateField('email', value)}
+                  error={errors.email}
+                />
+                <CheckoutField
+                  label="Phone"
+                  type="tel"
+                  placeholder="98765 43210"
+                  autoComplete="tel"
+                  enterKeyHint="next"
+                  value={form.phone}
+                  onChange={(value) => updateField('phone', value)}
+                  error={errors.phone}
+                />
+                <label className="flex gap-3 border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-sm leading-6 text-[var(--color-muted)] sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={form.whatsappUpdatesOptIn}
+                    onChange={(event) => updateWhatsappUpdatesOptIn(event.currentTarget.checked)}
+                    className="mt-1 size-4 shrink-0 accent-[var(--color-primary)]"
+                  />
+                  <span>
+                    Send order confirmation and shipping updates to this phone number on WhatsApp.
                   </span>
-                ))}
+                </label>
               </div>
-            </div>
-            {status !== 'idle' || message ? (
-              <CheckoutNotice status={status} message={message} total={summaryTotals.total} />
-            ) : null}
-          </section>
+            </section>
 
-          <div className="hidden flex-col-reverse gap-3 sm:flex sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={clearCart}
-              disabled={isCheckoutBusy}
-              className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)] hover:decoration-[var(--color-rouge)] disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
-            >
-              Clear bag
-            </button>
-            <Button
-              type="submit"
-              disabled={isCheckoutBusy}
-              className="fashion-button-primary h-12 min-w-52 gap-2 px-6"
-            >
-              {isCheckoutBusy ? (
-                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <CreditCard className="size-4" aria-hidden="true" />
-              )}
-              {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
-            </Button>
-          </div>
-
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-sm backdrop-blur-xl sm:hidden">
-            <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-[var(--color-muted)]">
-                  Total
-                </p>
-                <p className="mt-0.5 text-base font-semibold text-[var(--color-ink)]">
-                  {formatPrice(activePendingOrder?.totals.total ?? total)}
+            <section className="border-t border-[var(--color-line)] pt-8">
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Delivery</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Share a complete address so dispatch stays quick.
                 </p>
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CheckoutField
+                  label="Full name"
+                  placeholder="Aarav Sharma"
+                  autoComplete="name"
+                  enterKeyHint="next"
+                  value={form.fullName}
+                  onChange={(value) => updateField('fullName', value)}
+                  error={errors.fullName}
+                />
+                <CheckoutField
+                  label="Pincode"
+                  inputMode="numeric"
+                  placeholder="400001"
+                  autoComplete="postal-code"
+                  enterKeyHint="next"
+                  maxLength={6}
+                  value={form.pincode}
+                  onChange={(value) => updateField('pincode', value)}
+                  error={errors.pincode}
+                />
+                <CheckoutField
+                  label="Address"
+                  placeholder="Flat 12, Palm Grove Apartments, MG Road"
+                  autoComplete="street-address"
+                  enterKeyHint="next"
+                  value={form.addressLine}
+                  onChange={(value) => updateField('addressLine', value)}
+                  error={errors.addressLine}
+                  className="sm:col-span-2"
+                />
+                <CheckoutField
+                  label="Landmark"
+                  placeholder="Near City Mall"
+                  enterKeyHint="next"
+                  value={form.landmark}
+                  onChange={(value) => updateField('landmark', value)}
+                  error={errors.landmark}
+                  required={false}
+                />
+                <CheckoutSelect
+                  label="State"
+                  placeholder="Select state"
+                  autoComplete="address-level1"
+                  options={indianStateNames.map((state) => ({ label: state, value: state }))}
+                  value={form.state}
+                  onChange={(value) => updateField('state', value)}
+                  error={errors.state}
+                />
+                <CheckoutSelect
+                  label="City"
+                  placeholder={form.state ? 'Select city' : 'Select state first'}
+                  autoComplete="address-level2"
+                  options={cityOptions}
+                  value={form.city}
+                  onChange={(value) => updateField('city', value)}
+                  error={errors.city}
+                  disabled={!form.state}
+                />
+                {form.city === otherCityValue ? (
+                  <CheckoutField
+                    label="City / town"
+                    placeholder="Enter city or town"
+                    autoComplete="address-level2"
+                    enterKeyHint="done"
+                    value={form.cityOther}
+                    onChange={(value) => updateField('cityOther', value)}
+                    error={errors.cityOther}
+                    className="sm:col-span-2"
+                  />
+                ) : null}
+              </div>
+            </section>
+
+            <section className="border-t border-[var(--color-line)] pt-8">
+              <div className="mb-5">
+                <h2 className="text-xl font-medium text-[var(--color-ink)]">Payment</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                  Review the payable total before opening payment.
+                </p>
+              </div>
+              <div className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+                <p className="flex items-center gap-2 text-sm font-medium text-[var(--color-ink)]">
+                  <ShieldCheck className="size-4 text-[var(--color-accent-muted)]" aria-hidden="true" />
+                  Secure payment
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                  Pay with UPI, cards, wallets, and more. Your name, email, and phone are prefilled
+                  from this page so the payment step stays quick.
+                </p>
+                <div className="mt-4 grid gap-2 text-xs font-medium text-[var(--color-muted)] sm:grid-cols-3">
+                  {['Review details', 'Pay securely', 'Instant confirmation'].map((label) => (
+                    <span
+                      key={label}
+                      className="border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-center"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {status !== 'idle' || message ? (
+                <CheckoutNotice status={status} message={message} total={summaryTotals.total} />
+              ) : null}
+            </section>
+
+            <div className="hidden flex-col-reverse gap-3 border-t border-[var(--color-line)] pt-8 sm:flex sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={clearCart}
+                disabled={isCheckoutBusy}
+                className="text-sm font-medium text-[var(--color-muted)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline disabled:cursor-not-allowed disabled:text-stone-400 disabled:no-underline"
+              >
+                Clear bag
+              </button>
               <Button
                 type="submit"
                 disabled={isCheckoutBusy}
-                className="fashion-button-primary h-12 min-w-36 gap-2 px-5"
+                className="inline-flex h-12 min-w-52 items-center justify-center gap-2 bg-[var(--color-primary)] px-6 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
               >
                 {isCheckoutBusy ? (
                   <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
                 ) : (
                   <CreditCard className="size-4" aria-hidden="true" />
                 )}
-                {getMobilePayButtonLabel(status)}
+                {getPayButtonLabel(status, activePendingOrder?.totals.total ?? total)}
               </Button>
             </div>
-          </div>
-        </form>
 
-        <aside className="fashion-surface order-first self-start rounded-lg bg-[var(--color-paper)] p-5 lg:order-none lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-serif text-2xl text-[var(--color-ink)]">Order summary</h2>
-            <p className="text-sm text-[var(--color-muted)]">
-              {itemCount} {itemCount === 1 ? 'item' : 'items'}
-            </p>
-          </div>
-
-          <div className="mt-5 space-y-5">
-            {lines.map((line) => (
-              <div key={line.id} className="grid grid-cols-[72px_1fr] gap-3">
-                <ProductMedia product={line.product} className="aspect-[4/5]" />
-                <div className="min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--color-ink)]">
-                        {line.product.title}
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">
-                        Size {line.size} / Qty {line.quantity}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-[var(--color-ink)]">
-                      {formatPrice(line.product.sellingPricePaise * line.quantity)}
-                    </p>
-                  </div>
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-paper)]/96 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm sm:hidden">
+              <div className="mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                    Total
+                  </p>
+                  <p className="mt-0.5 text-base font-medium text-[var(--color-ink)]">
+                    {formatPrice(activePendingOrder?.totals.total ?? total)}
+                  </p>
                 </div>
+                <Button
+                  type="submit"
+                  disabled={isCheckoutBusy}
+                  className="inline-flex h-12 min-w-36 items-center justify-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-500"
+                >
+                  {isCheckoutBusy ? (
+                    <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <CreditCard className="size-4" aria-hidden="true" />
+                  )}
+                  {getMobilePayButtonLabel(status)}
+                </Button>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-6 space-y-2 border-t border-[var(--color-line)] pt-5 text-sm">
-            <SummaryLine label="Subtotal" value={formatPrice(summaryTotals.subtotal)} />
-            {savings > 0 && !activePendingOrder ? (
-              <SummaryLine label="Savings" value={formatPrice(savings)} tone="success" />
-            ) : null}
-            <SummaryLine label="Shipping" value={formatPrice(summaryTotals.shipping)} />
-            <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-3 text-base font-semibold text-[var(--color-ink)]">
-              <span>Total</span>
-              <span>{formatPrice(summaryTotals.total)}</span>
             </div>
-            {activePendingOrder ? (
-              <p className="flex items-center gap-2 pt-2 text-xs leading-5 text-[var(--color-muted)]">
-                <PackageCheck className="size-4 shrink-0 text-[var(--color-sage)]" aria-hidden="true" />
-                Your bag total has been confirmed for this order.
-              </p>
-            ) : null}
-          </div>
-        </aside>
+          </form>
+
+          <CheckoutOrderSummary
+            lines={lines}
+            itemCount={itemCount}
+            savings={savings}
+            summaryTotals={summaryTotals}
+            hasConfirmedTotal={Boolean(activePendingOrder)}
+          />
+        </div>
       </div>
     </main>
   )
@@ -633,267 +589,45 @@ async function verifyPayment(orderUuid: string, response: RazorpaySuccessRespons
   return data
 }
 
-function CheckoutField({
-  label,
-  value,
-  onChange,
-  className,
-  type = 'text',
-  inputMode,
-  placeholder,
-  autoComplete,
-  enterKeyHint,
-  required = true,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  className?: string
-  type?: string
-  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
-  placeholder?: string
-  autoComplete?: string
-  enterKeyHint?: HTMLAttributes<HTMLInputElement>['enterKeyHint']
-  required?: boolean
-}) {
+async function createCheckoutStartError(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    const payload = await error.context.json().catch(() => null)
+    const message = readErrorMessage(payload)
+
+    if (error.context.status >= 400 && error.context.status < 500 && message) {
+      return new Error(message)
+    }
+  }
+
+  return new Error('We could not prepare payment right now. Please try again in a few minutes.')
+}
+
+function getCheckoutStartErrorMessage(error: unknown) {
+  const fallback = 'We could not prepare payment right now. Please try again in a few minutes.'
+
+  return error instanceof Error && error.message ? error.message : fallback
+}
+
+function getPaymentVerificationErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message && !isTechnicalFunctionError(error.message)) {
+    return error.message
+  }
+
+  return 'We could not confirm the payment right now. If money was debited, we will verify it shortly.'
+}
+
+function readErrorMessage(payload: unknown) {
+  if (!payload || typeof payload !== 'object') return ''
+
+  const error = (payload as { error?: unknown }).error
+  return typeof error === 'string' ? error : ''
+}
+
+function isTechnicalFunctionError(message: string) {
   return (
-    <Field.Root className={className}>
-      <Field.Label className="text-sm font-semibold text-[var(--color-ink)]">{label}</Field.Label>
-      <Field.Control
-        required={required}
-        type={type}
-        inputMode={inputMode}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        enterKeyHint={enterKeyHint}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        className="mt-2 h-11 w-full rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 text-sm text-[var(--color-ink)] outline-none transition duration-150 ease-out placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-rouge)] focus:bg-white focus:shadow-sm"
-      />
-    </Field.Root>
+    message.includes('Edge Function') ||
+    message.includes('non-2xx') ||
+    message.includes('FunctionsHttpError') ||
+    message.includes('Failed to fetch')
   )
-}
-
-function CheckoutNotice({
-  status,
-  message,
-  total,
-}: {
-  status: CheckoutStatus
-  message: string
-  total: number
-}) {
-  const isError = status === 'error'
-  const isCancelled = status === 'cancelled'
-  const isReady = status === 'ready'
-  const title =
-    status === 'preparing'
-      ? 'Preparing payment'
-      : status === 'opening'
-        ? 'Opening Razorpay'
-        : status === 'payment-open'
-          ? 'Payment window is open'
-          : status === 'confirming'
-            ? 'Confirming payment'
-            : isReady
-              ? 'Total refreshed'
-              : isCancelled
-                ? 'Payment paused'
-                : isError
-                  ? 'Check details'
-                  : 'Checkout'
-  const copy =
-    message ||
-    (status === 'preparing'
-      ? 'We are checking stock and creating your secure payment order.'
-      : status === 'opening'
-        ? 'Razorpay will open in a moment.'
-        : status === 'payment-open'
-          ? 'Complete payment in the Razorpay window. You can return here if you close it.'
-          : status === 'confirming'
-            ? 'Do not refresh. We are verifying your payment and order.'
-            : `Payable total: ${formatPrice(total)}`)
-
-  return (
-    <div
-      className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
-        isError
-          ? 'border-red-200 bg-red-50 text-red-800'
-          : isCancelled
-            ? 'border-amber-200 bg-amber-50 text-amber-900'
-            : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-muted)]'
-      }`}
-      aria-live="polite"
-    >
-      <p className="font-semibold text-[var(--color-ink)]">{title}</p>
-      <p className="mt-1 leading-6">{copy}</p>
-    </div>
-  )
-}
-
-function ConfirmationLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-left">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-        {label}
-      </p>
-      <p className="mt-2 break-words text-sm font-semibold text-[var(--color-ink)]">{value}</p>
-    </div>
-  )
-}
-
-function SummaryLine({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string
-  value: string
-  tone?: 'default' | 'success'
-}) {
-  return (
-    <div
-      className={
-        tone === 'success'
-          ? 'flex justify-between text-[var(--color-sage)]'
-          : 'flex justify-between text-[var(--color-muted)]'
-      }
-    >
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
-  )
-}
-
-function isBusyCheckoutStatus(status: CheckoutStatus) {
-  return (
-    status === 'preparing' ||
-    status === 'opening' ||
-    status === 'payment-open' ||
-    status === 'confirming'
-  )
-}
-
-function getPayButtonLabel(status: CheckoutStatus, total: number) {
-  if (status === 'preparing') return 'Preparing order'
-  if (status === 'opening') return 'Opening Razorpay'
-  if (status === 'payment-open') return 'Payment window open'
-  if (status === 'confirming') return 'Confirming payment'
-  if (status === 'ready') return `Pay ${formatPrice(total)}`
-  if (status === 'cancelled') return 'Try payment again'
-  if (status === 'error') return 'Try again'
-
-  return `Pay ${formatPrice(total)}`
-}
-
-function getMobilePayButtonLabel(status: CheckoutStatus) {
-  if (status === 'preparing') return 'Preparing'
-  if (status === 'opening') return 'Opening'
-  if (status === 'payment-open') return 'Opened'
-  if (status === 'confirming') return 'Confirming'
-  if (status === 'cancelled') return 'Try again'
-  if (status === 'error') return 'Try again'
-
-  return 'Pay now'
-}
-
-function validateCheckoutForm(form: CheckoutForm) {
-  const requiredFields = [
-    form.email,
-    form.fullName,
-    form.phone,
-    form.addressLine,
-    form.city,
-    form.state,
-    form.pincode,
-  ]
-
-  if (requiredFields.some((field) => !field.trim())) {
-    return 'Complete delivery details to continue.'
-  }
-
-  if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-    return 'Enter a valid email address.'
-  }
-
-  if (!/^\d{6}$/.test(form.pincode.trim())) {
-    return 'Enter a valid 6 digit pincode.'
-  }
-
-  if (!normalizePhoneForPayment(form.phone)) {
-    return 'Enter a valid 10 digit phone number.'
-  }
-
-  return ''
-}
-
-function normalizeCheckoutForm(form: CheckoutForm): CheckoutForm {
-  return {
-    email: form.email.trim(),
-    fullName: form.fullName.trim(),
-    phone: normalizePhoneForPayment(form.phone) || form.phone.trim(),
-    addressLine: form.addressLine.trim(),
-    landmark: form.landmark.trim(),
-    city: form.city.trim(),
-    state: form.state.trim(),
-    pincode: form.pincode.trim(),
-  }
-}
-
-function normalizePhoneForPayment(phone: string) {
-  const trimmedPhone = phone.trim()
-  const digits = trimmedPhone.replace(/\D/g, '')
-
-  if (/^\+\d{10,15}$/.test(trimmedPhone)) return trimmedPhone
-  if (/^\d{10}$/.test(digits)) return `+91${digits}`
-  if (/^91\d{10}$/.test(digits)) return `+${digits}`
-
-  return ''
-}
-
-function createSuccessMessage(verification: VerifyPaymentResponse) {
-  if (verification.shipment?.trackingNumber) {
-    return `Your order is confirmed. Tracking number: ${verification.shipment.trackingNumber}.`
-  }
-
-  if (verification.orderStatus === 'shipment_pending') {
-    return 'Your order is confirmed. We will share tracking after dispatch.'
-  }
-
-  return 'Your order is confirmed. We will start preparing it shortly.'
-}
-
-function formatCustomerOrderStatus(status: string) {
-  const labels: Record<string, string> = {
-    paid: 'Confirmed',
-    shipment_pending: 'Preparing',
-    payment_review_required: 'Being checked',
-    payment_pending: 'Awaiting payment',
-    payment_failed: 'Payment incomplete',
-    shipped: 'Shipped',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
-  }
-
-  return labels[status] ?? toTitleCase(status)
-}
-
-function formatCustomerDeliveryStatus(status: string) {
-  const labels: Record<string, string> = {
-    pending: 'Preparing for dispatch',
-    shipment_pending: 'Preparing for dispatch',
-    created: 'Preparing for dispatch',
-    in_transit: 'On the way',
-    delivered: 'Delivered',
-    failed: 'We will contact you',
-  }
-
-  return labels[status] ?? toTitleCase(status)
-}
-
-function toTitleCase(value: string) {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
 }

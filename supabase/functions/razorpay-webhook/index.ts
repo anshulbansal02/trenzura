@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 import { alertPaymentReview, createShipmentWorkflow } from '../_shared/domain/shipments.ts'
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { verifyRazorpayWebhookSignature } from '../_shared/integrations/razorpay.ts'
+import { notifyOrderConfirmedOnWhatsApp } from '../_shared/integrations/whatsapp.ts'
 
 type RazorpayWebhookPayload = {
   event?: string
@@ -59,7 +60,7 @@ Deno.serve(async (request) => {
 
     const supabase = createClient(
       requiredEnv('SUPABASE_URL'),
-      requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      serviceRoleKey(),
       { auth: { persistSession: false } },
     )
     const { data: payment } = providerOrderId
@@ -118,6 +119,9 @@ Deno.serve(async (request) => {
             console.error('Unable to mark order shipment_pending after webhook shipment failure', updateError)
           }
         })
+        await notifyOrderConfirmedOnWhatsApp(supabase, { orderId: payment.order_id }).catch((error) => {
+          console.error('WhatsApp order notification failed from Razorpay webhook', error)
+        })
       }
     }
 
@@ -144,6 +148,16 @@ Deno.serve(async (request) => {
     }
 
     console.error(error)
+    if (Deno.env.get('RAZORPAY_WEBHOOK_DEBUG') === 'true') {
+      return jsonResponse(
+        {
+          received: false,
+          error: error instanceof Error ? error.message : 'Unable to process webhook',
+        },
+        { status: 500 },
+      )
+    }
+
     return jsonResponse({ received: false, error: 'Unable to process webhook' }, { status: 500 })
   }
 })
@@ -152,6 +166,10 @@ function requiredEnv(name: string) {
   const value = Deno.env.get(name)
   if (!value) throw new CheckoutError(`${name} is not configured`, 503)
   return value
+}
+
+function serviceRoleKey() {
+  return Deno.env.get('OPS_SERVICE_ROLE_KEY') || requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
 }
 
 class CheckoutError extends Error {

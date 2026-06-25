@@ -8,15 +8,14 @@ validated.
 ### Google catalog
 
 - Confirm the Google Sheet tab is named exactly `Products`.
-- Create the QA Drive image root folder, for example `Trenzura Product Images - QA`.
-- Share the QA Drive image folder with the Google service account email configured for the QA
-  catalog sync. Do not commit that email or the service account JSON to the repo.
-- Send the QA Drive folder URL or folder ID.
+- Keep the shared Drive image root folder accessible to the Google service account configured for
+  catalog sync. Do not commit the service account email, folder ID, sheet ID, or service account
+  JSON to the repo.
 
 Image folder structure:
 
 ```text
-Trenzura Product Images - QA/
+Website Photo/
   PRODUCT_ID_1/
     01-front.jpg
     02-close.jpg
@@ -53,20 +52,10 @@ https://<qa-supabase-project-ref>.supabase.co/functions/v1/razorpay-webhook
 - Event: `payment.captured`
 - Before prod launch, provide separate Razorpay live mode key ID, key secret, and webhook secret.
 
-### Prod catalog decision
-
-Decide whether prod uses:
-
-- the same Google Sheet and Drive image folder as QA, or
-- separate prod Sheet and Drive image folder.
-
-Separate prod folders are cleaner for launch control.
-
 ## I Will Do After You Provide These
 
 ### QA catalog
 
-- Set `GOOGLE_DRIVE_IMAGE_FOLDER_ID` in the QA GitHub environment.
 - Run the QA `Publish catalog` workflow.
 - Verify image sync to R2.
 - Verify product sync to QA Supabase.
@@ -97,7 +86,7 @@ Separate prod folders are cleaner for launch control.
 - Catalog publish workflow exists.
 - Admin publish button support exists.
 - R2 buckets and media domains are configured.
-- QA Google Sheet ID is configured.
+- QA and prod use the same configured owner Google Sheet and Drive image folder.
 - QA and prod R2 credentials are configured.
 - QA and prod Worker `GITHUB_ACTIONS_TOKEN` is configured.
 - Delhivery integration now uses Delhivery's documented shipment payload shape.
@@ -107,7 +96,6 @@ Separate prod folders are cleaner for launch control.
 
 ### Still blocked
 
-- QA publish/deploy is blocked on Cloudflare API token permission for Worker custom-domain routes.
 - QA Delhivery enablement is blocked on staging token, pickup location, GST, and HSN.
 - Prod publish/deploy is blocked until QA is validated and prod secrets are completed.
 - Edge Functions need a QA deploy after the latest Delhivery code changes.

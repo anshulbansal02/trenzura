@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+
+import { loadEnvFile, projectRoot, requiredEnv } from './lib/runtime'
 
 type GeneratedProduct = {
   productId?: string
+  variantId?: string
   images?: unknown
   imageStoragePaths?: unknown
   imageVariants?: unknown
@@ -11,11 +13,9 @@ type GeneratedProduct = {
 
 type ProductSyncRecord = {
   productId?: string
-  images?: unknown
+  variants?: unknown
 }
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
 const productsPath = path.join(projectRoot, 'src/generated/products.json')
 const productsSyncPath = path.join(projectRoot, 'src/generated/products-sync.json')
 const expectedImageVariantWidths = [400, 800, 1200]
@@ -43,6 +43,7 @@ async function main() {
 function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
   for (const product of products) {
     const productId = readProductId(product.productId)
+    const variantId = readProductId(product.variantId)
     const images = readStringArray(product.images, `${productId}.images`)
     const storagePaths = readStringArray(product.imageStoragePaths, `${productId}.imageStoragePaths`)
     const imageVariants = readImageVariants(product.imageVariants, `${productId}.imageVariants`)
@@ -75,7 +76,7 @@ function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
     }
 
     for (const storagePath of storagePaths) {
-      assertR2StoragePath(storagePath, productId)
+      assertR2StoragePath(storagePath, variantId)
     }
   }
 }
@@ -83,10 +84,21 @@ function validateProducts(products: GeneratedProduct[], publicBaseUrl: string) {
 function validateSyncRecords(records: ProductSyncRecord[], publicBaseUrl: string) {
   for (const record of records) {
     const productId = readProductId(record.productId)
-    const images = readStringArray(record.images, `${productId}.images`)
+    if (!Array.isArray(record.variants)) {
+      throw new Error(`${productId}.variants must be an array`)
+    }
 
-    for (const image of images) {
-      assertPublicImageUrl(image, publicBaseUrl, `${productId}.images`)
+    for (const variant of record.variants) {
+      if (!variant || typeof variant !== 'object') {
+        throw new Error(`${productId}.variants must contain variant objects`)
+      }
+
+      const variantId = readProductId((variant as { variantId?: unknown }).variantId)
+      const images = readStringArray((variant as { images?: unknown }).images, `${variantId}.images`)
+
+      for (const image of images) {
+        assertPublicImageUrl(image, publicBaseUrl, `${variantId}.images`)
+      }
     }
   }
 }
@@ -117,8 +129,8 @@ function assertR2StoragePath(value: string, productId: string) {
     throw new Error(`${productId}.imageStoragePaths contains unsafe path "${value}"`)
   }
 
-  if (!value.startsWith(`products/${productId}/`)) {
-    throw new Error(`${productId}.imageStoragePaths must use products/${productId}/ R2 keys`)
+  if (!value.startsWith('products/')) {
+    throw new Error(`${productId}.imageStoragePaths must use products/ R2 keys`)
   }
 }
 
@@ -167,31 +179,6 @@ function readImageVariants(value: unknown, context: string) {
       return { width, url }
     })
   })
-}
-
-function requiredEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is required`)
-  return value
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
-  }
 }
 
 main().catch((error: unknown) => {

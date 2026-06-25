@@ -20,6 +20,9 @@ Cloudflare files:
 - `.github/workflows/deploy-cloudflare.yml` builds and deploys with Wrangler.
 
 Local deploy commands are intentionally not provided. Deployment runs through GitHub Actions.
+Cloudflare Worker custom-domain routes are one-time infrastructure setup. The deploy workflows do
+not create or update routes on every deploy; they publish the Worker script/assets, then verify the
+configured domain responds over HTTPS.
 
 ## GitHub Secrets
 
@@ -30,7 +33,14 @@ CLOUDFLARE_API_TOKEN
 CLOUDFLARE_ACCOUNT_ID
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
+VITE_SANITY_PROJECT_ID
+VITE_SANITY_DATASET
+VITE_SANITY_API_VERSION
+SANITY_READ_TOKEN
 ```
+
+The Cloudflare API token used by GitHub Actions must be scoped to deploy Workers for the account.
+It does not need Worker route edit permission after the domain routes already exist.
 
 Required as Cloudflare Worker secrets for `/admin`:
 

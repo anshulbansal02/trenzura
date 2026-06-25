@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { createClient } from '@supabase/supabase-js'
+
+import { loadEnvFile, projectRoot, requiredEnv } from './lib/runtime'
 
 type ProductSyncRecord = {
   productId: string
@@ -10,33 +11,54 @@ type ProductSyncRecord = {
   title: string
   category: string
   description: string
-  images: string[]
-  mrpPaise: number
-  sellingPricePaise: number
-  sizeChart: unknown
   active: boolean
-  featured: boolean
   variants: Array<{
     variantId: string
-    sizeLabel: string
-    stock: number
-    restock: number | null
+    productCode: string
+    slug: string
+    title: string
+    color: string | null
+    tag: string | null
+    brand: string | null
+    images: string[]
+    mrpPaise: number
+    sellingPricePaise: number
+    sizeChart: unknown
+    attributes: unknown
+    minOrderQuantity: number
+    fulfillmentBy: string | null
+    shippingProvider: string | null
+    package: {
+      lengthCm: number | null
+      breadthCm: number | null
+      heightCm: number | null
+      weightKg: number | null
+    }
+    hsn: string | null
+    taxCode: string | null
     active: boolean
+    featured: boolean
+    sizes: Array<{
+      inventoryId: string
+      sizeLabel: string
+      stock: number
+      active: boolean
+    }>
   }>
 }
 
 type ExistingProductRow = {
   product_id: string
-  slug: string
 }
 
 type ExistingVariantRow = {
   variant_id: string
-  stock_available: number
 }
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(dirname, '..')
+type ExistingVariantSizeRow = {
+  inventory_id: string
+}
+
 const syncPath = path.join(projectRoot, 'src/generated/products-sync.json')
 
 async function main() {
@@ -55,80 +77,104 @@ async function main() {
 
   const { data: existingProducts, error: productReadError } = await supabase
     .from('products')
-    .select('product_id,slug')
+    .select('product_id')
 
   if (productReadError) throw productReadError
 
   const { data: existingVariants, error: variantReadError } = await supabase
     .from('product_variants')
-    .select('variant_id,stock_available')
+    .select('variant_id')
 
   if (variantReadError) throw variantReadError
 
-  const existingSlugByProductId = new Map(
-    ((existingProducts ?? []) as ExistingProductRow[]).map((product) => [
-      product.product_id,
-      product.slug,
-    ]),
-  )
-  const existingStockByVariantId = new Map(
-    ((existingVariants ?? []) as ExistingVariantRow[]).map((variant) => [
-      variant.variant_id,
-      variant.stock_available,
-    ]),
-  )
+  const { data: existingVariantSizes, error: variantSizeReadError } = await supabase
+    .from('product_variant_sizes')
+    .select('inventory_id')
+
+  if (variantSizeReadError) throw variantSizeReadError
+
   const productIds = new Set(records.map((product) => product.productId))
   const variantIds = new Set(records.flatMap((product) => product.variants.map((variant) => variant.variantId)))
+  const inventoryIds = new Set(
+    records.flatMap((product) =>
+      product.variants.flatMap((variant) => variant.sizes.map((size) => size.inventoryId)),
+    ),
+  )
 
   await assertOk(
     supabase.from('products').upsert(
       records.map((product) => ({
         product_id: product.productId,
-        slug: existingSlugByProductId.get(product.productId) ?? product.slug,
+        slug: product.slug,
         title: product.title,
         category: product.category,
         description: product.description,
-        images: product.images,
-        mrp_paise: product.mrpPaise,
-        selling_price_paise: product.sellingPricePaise,
-        size_chart: product.sizeChart,
         active: product.active,
-        featured: product.featured,
       })),
       { onConflict: 'product_id' },
     ),
     'Unable to upsert products',
   )
 
-  for (const product of records) {
-    for (const variant of product.variants) {
-      const currentStock = existingStockByVariantId.get(variant.variantId)
-      const stockAvailable = currentStock === undefined
-        ? variant.stock
-        : variant.restock ?? currentStock
+  await assertOk(
+    supabase.from('product_variants').upsert(
+      records.flatMap((product) =>
+        product.variants.map((variant) => ({
+          variant_id: variant.variantId,
+          product_id: product.productId,
+          product_code: variant.productCode,
+          slug: variant.slug,
+          title: variant.title,
+          color: variant.color,
+          tag: variant.tag,
+          brand: variant.brand,
+          images: variant.images,
+          mrp_paise: variant.mrpPaise,
+          selling_price_paise: variant.sellingPricePaise,
+          size_chart: variant.sizeChart,
+          attributes: variant.attributes,
+          min_order_quantity: variant.minOrderQuantity,
+          fulfillment_by: variant.fulfillmentBy,
+          shipping_provider: variant.shippingProvider,
+          package_length_cm: variant.package.lengthCm,
+          package_breadth_cm: variant.package.breadthCm,
+          package_height_cm: variant.package.heightCm,
+          package_weight_kg: variant.package.weightKg,
+          hsn: variant.hsn,
+          tax_code: variant.taxCode,
+          active: variant.active && product.active,
+          featured: variant.featured,
+        })),
+      ),
+      { onConflict: 'variant_id' },
+    ),
+    'Unable to upsert product variants',
+  )
 
-      await assertOk(
-        supabase.from('product_variants').upsert(
-          {
+  await assertOk(
+    supabase.from('product_variant_sizes').upsert(
+      records.flatMap((product) =>
+        product.variants.flatMap((variant) =>
+          variant.sizes.map((size) => ({
+            inventory_id: size.inventoryId,
             variant_id: variant.variantId,
-            product_id: product.productId,
-            size_label: variant.sizeLabel,
-            stock_available: stockAvailable,
-            active: variant.active && product.active,
-          },
-          { onConflict: 'variant_id' },
+            size_label: size.sizeLabel,
+            stock_available: size.stock,
+            active: size.active && variant.active && product.active,
+          })),
         ),
-        `Unable to upsert variant ${variant.variantId}`,
-      )
-    }
-  }
+      ),
+      { onConflict: 'inventory_id' },
+    ),
+    'Unable to upsert product variant sizes',
+  )
 
-  for (const product of (existingProducts ?? []) as ExistingProductRow[]) {
-    if (productIds.has(product.product_id)) continue
+  for (const size of (existingVariantSizes ?? []) as ExistingVariantSizeRow[]) {
+    if (inventoryIds.has(size.inventory_id)) continue
 
     await assertOk(
-      supabase.from('products').update({ active: false }).eq('product_id', product.product_id),
-      `Unable to deactivate stale product ${product.product_id}`,
+      supabase.from('product_variant_sizes').update({ active: false }).eq('inventory_id', size.inventory_id),
+      `Unable to deactivate stale inventory ${size.inventory_id}`,
     )
   }
 
@@ -141,8 +187,22 @@ async function main() {
     )
   }
 
+  for (const product of (existingProducts ?? []) as ExistingProductRow[]) {
+    if (productIds.has(product.product_id)) continue
+
+    await assertOk(
+      supabase.from('products').update({ active: false }).eq('product_id', product.product_id),
+      `Unable to deactivate stale product ${product.product_id}`,
+    )
+  }
+
   const variantCount = records.reduce((total, product) => total + product.variants.length, 0)
-  console.log(`Synced ${records.length} products and ${variantCount} variants to Supabase`)
+  const sizeCount = records.reduce(
+    (total, product) =>
+      total + product.variants.reduce((variantTotal, variant) => variantTotal + variant.sizes.length, 0),
+    0,
+  )
+  console.log(`Synced ${records.length} products, ${variantCount} variants, and ${sizeCount} size rows to Supabase`)
 }
 
 async function assertOk<T>(
@@ -156,12 +216,6 @@ async function assertOk<T>(
   }
 }
 
-function requiredEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} is required`)
-  return value
-}
-
 function assertExpectedSupabaseProject(supabaseUrl: string) {
   const expectedRef = process.env.EXPECTED_SUPABASE_PROJECT_REF
   if (!expectedRef) {
@@ -173,25 +227,6 @@ function assertExpectedSupabaseProject(supabaseUrl: string) {
     throw new Error(
       `SUPABASE_URL points to ${actualRef}; expected ${expectedRef}. Refusing to sync products.`,
     )
-  }
-}
-
-async function loadEnvFile() {
-  const envPath = path.join(projectRoot, '.env')
-
-  try {
-    const content = await readFile(envPath, 'utf8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue
-
-      const [key, ...valueParts] = trimmed.split('=')
-      if (!key || process.env[key]) continue
-
-      process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '')
-    }
-  } catch {
-    // .env is optional; CI can provide environment variables directly.
   }
 }
 

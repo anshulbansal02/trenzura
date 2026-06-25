@@ -8,6 +8,7 @@ import {
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
 import { verifyRazorpayPaymentSignature } from '../_shared/integrations/razorpay.ts'
+import { notifyOrderConfirmedOnWhatsApp } from '../_shared/integrations/whatsapp.ts'
 
 type VerifyPaymentInput = {
   orderUuid: string
@@ -46,7 +47,7 @@ Deno.serve(async (request) => {
     const input = normalizeInput(await request.json().catch(() => null))
     const supabase = createClient(
       requiredEnv('SUPABASE_URL'),
-      requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      serviceRoleKey(),
       { auth: { persistSession: false } },
     )
     const { data: payment, error: paymentError } = await supabase
@@ -145,6 +146,9 @@ Deno.serve(async (request) => {
     }
 
     const shipment = await attemptShipmentCreation(supabase, input.orderUuid)
+    await notifyOrderConfirmedOnWhatsApp(supabase, { orderId: input.orderUuid }).catch((error) => {
+      console.error('WhatsApp order notification failed after payment verification', error)
+    })
 
     return jsonResponse({
       verified: true,
@@ -238,6 +242,10 @@ function requiredEnv(name: string) {
   const value = Deno.env.get(name)
   if (!value) throw new CheckoutError(`${name} is not configured`, 503)
   return value
+}
+
+function serviceRoleKey() {
+  return Deno.env.get('OPS_SERVICE_ROLE_KEY') || requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
 }
 
 class CheckoutError extends Error {

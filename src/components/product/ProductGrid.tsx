@@ -11,9 +11,11 @@ type ProductGridProps = {
 export function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[var(--color-line)] bg-[var(--color-paper)] px-6 py-10">
+      <div className="border border-dashed border-[var(--color-line)] bg-[var(--color-paper)] px-5 py-10 sm:px-8">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-xl font-medium text-[var(--color-ink)]">No styles match this</p>
+          <p className="font-serif text-4xl font-normal leading-none text-[var(--color-ink)]">
+            No styles match this
+          </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
             Clear a filter or jump into one of the main edits. We keep the catalog small, so the
             right piece is usually only a step away.
@@ -21,21 +23,21 @@ export function ProductGrid({ products }: ProductGridProps) {
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link
               to="/products"
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              className="border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Clear filters
             </Link>
             <Link
               to="/products"
-              search={{ category: 'kurtis' }}
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              search={{ category: 'kurti' }}
+              className="border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Shop kurtis
             </Link>
             <Link
               to="/products"
-              search={{ category: 'sets' }}
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-rouge)] hover:text-[var(--color-rouge)]"
+              search={{ category: 'co-ord-sets' }}
+              className="border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               Shop sets
             </Link>
@@ -53,9 +55,9 @@ export function ProductGrid({ products }: ProductGridProps) {
   }
 
   return (
-    <div className="grid gap-x-5 gap-y-11 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 sm:gap-y-11 lg:grid-cols-4">
       {products.map((product) => (
-        <ProductCard key={product.productId} product={product} />
+        <ProductCard key={product.variantId} product={product} />
       ))}
     </div>
   )

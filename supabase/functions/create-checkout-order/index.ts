@@ -3,6 +3,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2.105.4'
 import { handleCors, jsonResponse } from '../_shared/http/cors.ts'
 import { RateLimitError, requireRateLimit } from '../_shared/http/rate-limit.ts'
 import { createRazorpayOrder } from '../_shared/integrations/razorpay.ts'
+import { calculateShippingPaise } from '../../../shared/shipping.ts'
+import {
+  isKnownIndianState,
+  isPincodeLikelyForIndianState,
+  isValidIndianPincode,
+} from '../../../shared/indian-address.ts'
 
 type CartItemInput = {
   productId: string
@@ -15,6 +21,7 @@ type CustomerInput = {
   email: string
   fullName: string
   phone: string
+  whatsappUpdatesOptIn: boolean
   addressLine: string
   landmark: string
   city: string
@@ -24,24 +31,40 @@ type CustomerInput = {
 
 type ProductRow = {
   product_id: string
-  slug: string
   title: string
-  images: string[]
-  mrp_paise: number
-  selling_price_paise: number
   active: boolean
 }
 
 type VariantRow = {
   variant_id: string
   product_id: string
+  product_code: string
+  slug: string
+  title: string
+  images: string[]
+  mrp_paise: number
+  selling_price_paise: number
+  min_order_quantity: number
+  package_length_cm: number | null
+  package_breadth_cm: number | null
+  package_height_cm: number | null
+  package_weight_kg: number | null
+  active: boolean
+}
+
+type VariantSizeRow = {
+  inventory_id: string
+  variant_id: string
   size_label: string
   stock_available: number
   active: boolean
 }
 
+type CheckoutSupabaseClient = {
+  from: (table: string) => any
+}
+
 const currency = 'INR'
-const standardShippingPaise = 14900
 const maxCheckoutQuantity = 20
 
 Deno.serve(async (request) => {
@@ -65,30 +88,44 @@ Deno.serve(async (request) => {
 
     const supabase = createClient(
       requiredEnv('SUPABASE_URL'),
-      requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      serviceRoleKey(),
       { auth: { persistSession: false } },
     )
     const productIds = [...new Set(items.map((item) => item.productId))]
     const variantIds = [...new Set(items.map((item) => item.variantId))]
     const { data: products, error: productError } = await supabase
       .from('products')
-      .select('product_id,slug,title,images,mrp_paise,selling_price_paise,active')
+      .select('product_id,title,active')
       .in('product_id', productIds)
 
     if (productError) throw productError
 
     const { data: variants, error: variantError } = await supabase
       .from('product_variants')
-      .select('variant_id,product_id,size_label,stock_available,active')
+      .select('variant_id,product_id,product_code,slug,title,images,mrp_paise,selling_price_paise,min_order_quantity,package_length_cm,package_breadth_cm,package_height_cm,package_weight_kg,active')
       .in('variant_id', variantIds)
 
     if (variantError) throw variantError
+
+    const inventoryIds = items.map((item) => createInventoryId(item.variantId, item.size))
+    const { data: variantSizes, error: variantSizeError } = await supabase
+      .from('product_variant_sizes')
+      .select('inventory_id,variant_id,size_label,stock_available,active')
+      .in('inventory_id', inventoryIds)
+
+    if (variantSizeError) throw variantSizeError
 
     const productById = new Map(
       ((products ?? []) as ProductRow[]).map((product) => [product.product_id, product]),
     )
     const variantById = new Map(
       ((variants ?? []) as VariantRow[]).map((variant) => [variant.variant_id, variant]),
+    )
+    const variantSizeById = new Map(
+      ((variantSizes ?? []) as VariantSizeRow[]).map((variantSize) => [
+        variantSize.inventory_id,
+        variantSize,
+      ]),
     )
     const orderItems = items.map((item) => {
       const product = productById.get(item.productId)
@@ -100,19 +137,37 @@ Deno.serve(async (request) => {
       if (
         !variant ||
         !variant.active ||
-        variant.product_id !== product.product_id ||
-        variant.size_label !== item.size
+        variant.product_id !== product.product_id
       ) {
-        throw new CheckoutError(`${product.title} is unavailable in ${item.size}`, 400)
+        throw new CheckoutError(`${product.title} is unavailable`, 400)
       }
 
-      if (variant.stock_available < 1) {
-        throw new CheckoutError(`${product.title} is sold out in ${item.size}`, 400)
+      const inventoryId = createInventoryId(item.variantId, item.size)
+      const variantSize = variantSizeById.get(inventoryId)
+
+      if (
+        !variantSize ||
+        !variantSize.active ||
+        variantSize.variant_id !== variant.variant_id ||
+        variantSize.size_label !== item.size
+      ) {
+        throw new CheckoutError(`${variant.title} is unavailable in ${item.size}`, 400)
       }
 
-      if (item.quantity > variant.stock_available) {
+      if (item.quantity < variant.min_order_quantity) {
         throw new CheckoutError(
-          `Only ${variant.stock_available} item(s) available in ${item.size}`,
+          `Minimum order quantity for ${variant.title} is ${variant.min_order_quantity}`,
+          400,
+        )
+      }
+
+      if (variantSize.stock_available < 1) {
+        throw new CheckoutError(`${variant.title} is sold out in ${item.size}`, 400)
+      }
+
+      if (item.quantity > variantSize.stock_available) {
+        throw new CheckoutError(
+          `Only ${variantSize.stock_available} item(s) available in ${item.size}`,
           400,
         )
       }
@@ -120,19 +175,26 @@ Deno.serve(async (request) => {
       return {
         product_id: product.product_id,
         variant_id: variant.variant_id,
-        product_slug: product.slug,
-        title: product.title,
-        size_label: variant.size_label,
+        inventory_id: variantSize.inventory_id,
+        product_slug: variant.slug,
+        variant_slug: variant.slug,
+        product_code: variant.product_code,
+        title: variant.title,
+        size_label: variantSize.size_label,
         quantity: item.quantity,
-        unit_selling_price_paise: product.selling_price_paise,
-        unit_mrp_paise: product.mrp_paise,
-        discount_amount_paise: Math.max(0, product.mrp_paise - product.selling_price_paise),
-        line_total_paise: product.selling_price_paise * item.quantity,
-        primary_image_url: product.images[0] ?? null,
+        unit_selling_price_paise: variant.selling_price_paise,
+        unit_mrp_paise: variant.mrp_paise,
+        discount_amount_paise: Math.max(0, variant.mrp_paise - variant.selling_price_paise),
+        line_total_paise: variant.selling_price_paise * item.quantity,
+        primary_image_url: variant.images[0] ?? null,
+        package_length_cm: variant.package_length_cm,
+        package_breadth_cm: variant.package_breadth_cm,
+        package_height_cm: variant.package_height_cm,
+        package_weight_kg: variant.package_weight_kg,
       }
     })
     const subtotal = orderItems.reduce((total, item) => total + item.line_total_paise, 0)
-    const shipping = standardShippingPaise
+    const shipping = calculateShippingPaise(subtotal)
     const total = subtotal + shipping
 
     if (total < 100) {
@@ -151,6 +213,7 @@ Deno.serve(async (request) => {
         customer_email: customer.email,
         customer_name: customer.fullName,
         customer_phone: customer.phone,
+        whatsapp_updates_opt_in: customer.whatsappUpdatesOptIn,
         shipping_address: {
           addressLine: customer.addressLine,
           landmark: customer.landmark,
@@ -183,6 +246,22 @@ Deno.serve(async (request) => {
         orderNumber: String(order.order_number),
         customerEmail: customer.email,
       },
+    }).catch(async (error) => {
+      await markOrderPaymentFailed(supabase, orderId)
+      await logCheckoutIntegrationError(supabase, {
+        orderId,
+        source: 'razorpay',
+        eventType: 'create_order',
+        error,
+        payload: {
+          orderNumber: String(order.order_number),
+          amount: total,
+          currency,
+          keyIdPrefix: keyId.slice(0, 8),
+        },
+      })
+
+      throw error
     })
 
     const { error: paymentError } = await supabase
@@ -197,7 +276,21 @@ Deno.serve(async (request) => {
         raw_payload: razorpayOrder,
       })
 
-    if (paymentError) throw paymentError
+    if (paymentError) {
+      await markOrderPaymentFailed(supabase, orderId)
+      await logCheckoutIntegrationError(supabase, {
+        orderId,
+        source: 'supabase',
+        eventType: 'create_payment_row',
+        error: paymentError,
+        payload: {
+          orderNumber: String(order.order_number),
+          razorpayOrderId: razorpayOrder.id,
+        },
+      })
+
+      throw paymentError
+    }
 
     return jsonResponse({
       keyId,
@@ -264,6 +357,10 @@ function normalizeCartItems(value: unknown): CartItemInput[] {
   })
 }
 
+function createInventoryId(variantId: string, size: string) {
+  return `${variantId}:${size.trim().toLowerCase()}`
+}
+
 function normalizeCustomer(value: unknown): CustomerInput {
   if (!value || typeof value !== 'object') {
     throw new CheckoutError('Delivery details are required', 400)
@@ -277,6 +374,7 @@ function normalizeCustomer(value: unknown): CustomerInput {
     email: String(input.email ?? '').trim(),
     fullName: String(input.fullName ?? '').trim(),
     phone: String(input.phone ?? '').trim(),
+    whatsappUpdatesOptIn: input.whatsappUpdatesOptIn === true,
     addressLine: String(input.addressLine ?? input.address ?? '').trim(),
     landmark: String(input.landmark ?? '').trim(),
     city: String(input.city ?? '').trim(),
@@ -302,8 +400,32 @@ function normalizeCustomer(value: unknown): CustomerInput {
     throw new CheckoutError('Enter a valid email address', 400)
   }
 
-  if (!/^\d{6}$/.test(customer.pincode)) {
+  if (customer.fullName.length < 2) {
+    throw new CheckoutError('Enter the full name for delivery', 400)
+  }
+
+  if (!/^\+?\d{10,15}$/.test(customer.phone.replace(/\s/g, ''))) {
+    throw new CheckoutError('Enter a valid phone number', 400)
+  }
+
+  if (customer.addressLine.length < 8) {
+    throw new CheckoutError('Enter a complete delivery address', 400)
+  }
+
+  if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(customer.city)) {
+    throw new CheckoutError('Enter a valid city or town', 400)
+  }
+
+  if (!isKnownIndianState(customer.state)) {
+    throw new CheckoutError('Select a valid state or union territory', 400)
+  }
+
+  if (!isValidIndianPincode(customer.pincode)) {
     throw new CheckoutError('Enter a valid 6 digit pincode', 400)
+  }
+
+  if (!isPincodeLikelyForIndianState(customer.pincode, customer.state)) {
+    throw new CheckoutError('Pincode does not look valid for the selected state', 400)
   }
 
   return customer
@@ -325,6 +447,63 @@ function requiredEnv(name: string) {
   const value = Deno.env.get(name)
   if (!value) throw new CheckoutError(`${name} is not configured`, 503)
   return value
+}
+
+function serviceRoleKey() {
+  return Deno.env.get('OPS_SERVICE_ROLE_KEY') || requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
+}
+
+async function logCheckoutIntegrationError(
+  supabase: CheckoutSupabaseClient,
+  input: {
+    orderId: string
+    source: string
+    eventType: string
+    error: unknown
+    payload: Record<string, unknown>
+  },
+) {
+  const message = readErrorMessage(input.error)
+  const { error } = await supabase.from('integration_events').insert({
+    source: input.source,
+    event_type: input.eventType,
+    order_id: input.orderId,
+    status: 'failed',
+    payload: input.payload,
+    error_message: message,
+  })
+
+  if (error) {
+    console.error('Unable to log checkout integration error', error)
+  }
+
+  console.error('checkout integration failed', {
+    source: input.source,
+    eventType: input.eventType,
+    orderId: input.orderId,
+    message,
+  })
+}
+
+async function markOrderPaymentFailed(supabase: CheckoutSupabaseClient, orderId: string) {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: 'payment_failed' })
+    .eq('id', orderId)
+
+  if (error) {
+    console.error('Unable to mark checkout order payment_failed', error)
+  }
+}
+
+function readErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === 'string') return message
+  }
+
+  return 'checkout_integration_failed'
 }
 
 class CheckoutError extends Error {

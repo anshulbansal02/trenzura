@@ -12,6 +12,10 @@ export type OrderItemForShipment = {
   size_label: string
   quantity: number
   unit_selling_price_paise: number
+  package_length_cm: number | null
+  package_breadth_cm: number | null
+  package_height_cm: number | null
+  package_weight_kg: number | null
 }
 
 export type OrderForShipment = {
@@ -162,7 +166,7 @@ export async function createShipmentWorkflow(
   })
 
   return {
-    ok: providerResult.skipped,
+    ok: providerResult.skipped === true,
     orderId: order.id,
     orderNumber: order.order_number,
     orderStatus: 'shipment_pending',
@@ -198,7 +202,7 @@ async function loadOrder(
   const query = supabase
     .from('orders')
     .select(
-      'id,order_number,status,total_amount_paise,currency,customer_name,customer_phone,customer_email,shipping_address,order_items(product_id,variant_id,title,size_label,quantity,unit_selling_price_paise)',
+      'id,order_number,status,total_amount_paise,currency,customer_name,customer_phone,customer_email,shipping_address,order_items(product_id,variant_id,title,size_label,quantity,unit_selling_price_paise,package_length_cm,package_breadth_cm,package_height_cm,package_weight_kg)',
     )
 
   const { data, error } = input.orderId

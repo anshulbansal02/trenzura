@@ -2,6 +2,9 @@ name: Deploy storefront
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - sanity-content-production
   push:
     branches:
       - main
@@ -15,7 +18,6 @@ jobs:
       GOOGLE_SHEETS_SPREADSHEET_ID: ${{ vars.GOOGLE_SHEETS_SPREADSHEET_ID }}
       GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       GOOGLE_SHEETS_RANGE: ${{ vars.GOOGLE_SHEETS_RANGE }}
-      GOOGLE_DRIVE_IMAGE_FOLDER_ID: ${{ vars.GOOGLE_DRIVE_IMAGE_FOLDER_ID }}
       PRODUCT_IMAGE_MANIFEST_PATH: src/generated/product-image-manifest.json
       PRODUCT_IMAGE_PUBLIC_BASE_URL: ${{ vars.PRODUCT_IMAGE_PUBLIC_BASE_URL }}
       R2_PRODUCT_IMAGES_BUCKET: ${{ vars.R2_PRODUCT_IMAGES_BUCKET }}
@@ -23,6 +25,13 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_UMAMI_DOMAINS: ${{ vars.VITE_UMAMI_DOMAINS }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+      VITE_SANITY_PROJECT_ID: ${{ vars.VITE_SANITY_PROJECT_ID }}
+      VITE_SANITY_DATASET: ${{ vars.VITE_SANITY_DATASET }}
+      VITE_SANITY_API_VERSION: ${{ vars.VITE_SANITY_API_VERSION }}
+      SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -34,6 +43,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref || 'main' }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -55,13 +66,19 @@ jobs:
           required GOOGLE_SHEETS_SPREADSHEET_ID
           required GOOGLE_SERVICE_ACCOUNT_JSON
           required GOOGLE_SHEETS_RANGE
-          required GOOGLE_DRIVE_IMAGE_FOLDER_ID
           required PRODUCT_IMAGE_PUBLIC_BASE_URL
           required R2_PRODUCT_IMAGES_BUCKET
           required R2_ACCESS_KEY_ID
           required R2_SECRET_ACCESS_KEY
           required VITE_SUPABASE_URL
           required VITE_SUPABASE_ANON_KEY
+          required VITE_UMAMI_DOMAINS
+          required VITE_UMAMI_SCRIPT_URL
+          required VITE_UMAMI_WEBSITE_ID
+          required VITE_SANITY_PROJECT_ID
+          required VITE_SANITY_DATASET
+          required VITE_SANITY_API_VERSION
+          required SANITY_READ_TOKEN
           required SUPABASE_URL
           required SUPABASE_SERVICE_ROLE_KEY
           required EXPECTED_SUPABASE_PROJECT_REF
@@ -79,4 +96,9 @@ jobs:
       - run: pnpm build
 
       - name: Deploy to Cloudflare Workers
-        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN" --domain "$CLOUDFLARE_WWW_DOMAIN"
+        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
+
+      - name: Verify production domains
+        run: |
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
+          curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_WWW_DOMAIN}"

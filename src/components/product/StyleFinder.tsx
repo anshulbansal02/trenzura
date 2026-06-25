@@ -4,6 +4,7 @@ import { Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { productSizes } from '../../data/products'
+import { createProductAnalyticsPayload, trackAnalyticsEvent } from '../../lib/analytics'
 import { formatPrice, joinClasses } from '../../lib/format'
 import {
   getDefaultStyleFinderAnswers,
@@ -62,8 +63,8 @@ export function StyleFinder({
   const triggerClasses =
     triggerClassName ??
     (triggerVariant === 'primary'
-      ? 'fashion-button-primary h-12 px-5'
-      : 'fashion-button-secondary h-12 gap-2 px-5')
+      ? 'inline-flex h-12 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]'
+      : 'inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-line)] bg-[var(--color-paper)] px-5 text-sm font-medium text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]')
 
   function updateAnswer(nextAnswers: Partial<StyleFinderAnswers>) {
     setAnswers((currentAnswers) => ({
@@ -73,7 +74,13 @@ export function StyleFinder({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (nextOpen) trackAnalyticsEvent('style_finder_open')
+      }}
+    >
       <Dialog.Trigger
         render={
           <button type="button" className={triggerClasses} />
@@ -85,10 +92,10 @@ export function StyleFinder({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-stone-950/40 backdrop-blur-sm transition duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex min-h-svh items-end justify-center p-0 sm:items-center sm:p-6">
-          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto rounded-t-lg border border-[var(--color-line)] bg-[var(--color-paper)] shadow-sm outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:rounded-lg sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
+          <Dialog.Popup className="max-h-[100svh] w-full overflow-y-auto border border-[var(--color-line)] bg-[var(--color-paper)] outline-none transition duration-200 data-[ending-style]:translate-y-4 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-4 data-[starting-style]:opacity-0 sm:max-h-[90svh] sm:max-w-5xl sm:data-[ending-style]:scale-[0.98] sm:data-[starting-style]:scale-[0.98]">
             <div className="sticky top-0 z-10 flex items-start justify-between gap-5 border-b border-[var(--color-line)] bg-[var(--color-paper)]/94 px-5 py-4 backdrop-blur sm:px-6">
-              <div>
-                <Dialog.Title className="font-serif text-2xl text-[var(--color-ink)]">
+              <div className="min-w-0">
+                <Dialog.Title className="font-serif text-3xl font-normal leading-none text-[var(--color-ink)]">
                   Help me choose
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
@@ -98,7 +105,7 @@ export function StyleFinder({
               </div>
               <Dialog.Close
                 aria-label="Close style finder"
-                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition hover:border-[#b58b91] hover:text-[var(--color-rouge)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2"
+                className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] transition duration-150 ease-out hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-95"
               >
                 <X className="size-4" aria-hidden="true" />
               </Dialog.Close>
@@ -148,7 +155,7 @@ export function StyleFinder({
                   <button
                     type="button"
                     onClick={() => setAnswers(getDefaultStyleFinderAnswers())}
-                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition hover:text-[var(--color-rouge)]"
+                    className="text-sm font-semibold text-[var(--color-muted)] underline decoration-[var(--color-line)] underline-offset-4 transition duration-150 ease-out hover:text-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                   >
                     Reset
                   </button>
@@ -157,11 +164,19 @@ export function StyleFinder({
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {results.map(({ product, reasons }) => (
                     <Link
-                      key={product.productId}
+                      key={product.variantId}
                       to="/products/$slug"
                       params={{ slug: product.slug }}
-                      onClick={() => setOpen(false)}
-                      className="group rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition hover:border-[var(--color-rouge)] hover:shadow-sm"
+                      onClick={() => {
+                        trackAnalyticsEvent('style_finder_product_click', {
+                          ...createProductAnalyticsPayload(product),
+                          budget: answers.budget,
+                          occasion: answers.occasion,
+                          preference: answers.preference,
+                        })
+                        setOpen(false)
+                      }}
+                      className="group border border-[var(--color-line)] bg-[var(--color-paper)] p-3 transition duration-150 ease-out hover:border-[var(--color-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
                     >
                       <ProductMedia product={product} className="aspect-[3/4]" hoverZoom />
                       <div className="mt-3">
@@ -181,7 +196,7 @@ export function StyleFinder({
                         <ul className="mt-3 space-y-1.5 text-xs leading-5 text-[var(--color-muted)]">
                           {reasons.map((reason) => (
                             <li key={reason} className="flex gap-2">
-                              <span className="mt-2 size-1 rounded-full bg-[var(--color-rouge)]" />
+                              <span className="mt-2 size-1 bg-[var(--color-primary)]" />
                               <span>{reason}</span>
                             </li>
                           ))}
@@ -226,10 +241,10 @@ function OptionGroup<T extends string>({
               aria-pressed={isSelected}
               onClick={() => onChange(option.value)}
               className={joinClasses(
-                'min-h-9 rounded-full border px-3 text-sm font-semibold transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rouge)] focus-visible:ring-offset-2',
+                'min-h-9 border px-3 text-sm font-medium transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2',
                 isSelected
-                  ? 'border-[var(--color-rouge)] bg-[var(--color-rouge)] text-[var(--color-paper)]'
-                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-rouge)] hover:bg-white',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-paper)]'
+                  : 'border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-soft)]',
               )}
             >
               {option.label}
