@@ -45,6 +45,7 @@ jobs:
       CLOUDFLARE_WORKER_NAME: ${{ vars.CLOUDFLARE_WORKER_NAME }}
       CLOUDFLARE_DOMAIN: ${{ vars.CLOUDFLARE_DOMAIN }}
       CLOUDFLARE_WWW_DOMAIN: ${{ vars.CLOUDFLARE_WWW_DOMAIN }}
+      DELHIVERY_API_TOKEN: ${{ secrets.DELHIVERY_API_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -92,6 +93,7 @@ jobs:
           required CLOUDFLARE_WORKER_NAME
           required CLOUDFLARE_DOMAIN
           required CLOUDFLARE_WWW_DOMAIN
+          required DELHIVERY_API_TOKEN
 
       - run: pnpm typecheck
 
@@ -99,6 +101,9 @@ jobs:
         run: pnpm publish:catalog
 
       - run: pnpm build
+
+      - name: Sync production Worker secrets
+        run: printf '%s' "$DELHIVERY_API_TOKEN" | pnpm exec wrangler secret put DELHIVERY_API_TOKEN --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Deploy to Cloudflare Workers
         run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
