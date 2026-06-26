@@ -8,6 +8,7 @@
     "enabled": true
   },
   "vars": {
+    "ADMIN_EMAILS": "hello.trenzura@gmail.com",
     "GITHUB_REPOSITORY": "anshulbansal02/trenzura",
     "CATALOG_PUBLISH_WORKFLOW_FILE": "publish-catalog.yml",
     "CATALOG_PUBLISH_QA_REF": "dev",
@@ -16,6 +17,7 @@
   "env": {
     "qa": {
       "vars": {
+        "ADMIN_EMAILS": "hello.trenzura@gmail.com",
         "GITHUB_REPOSITORY": "anshulbansal02/trenzura",
         "CATALOG_PUBLISH_WORKFLOW_FILE": "publish-catalog.yml",
         "CATALOG_PUBLISH_QA_REF": "dev",
