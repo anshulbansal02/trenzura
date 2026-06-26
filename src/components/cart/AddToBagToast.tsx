@@ -3,6 +3,7 @@ import { ShoppingBag, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { formatPrice } from '../../lib/format'
+import { isOrdersEnabled } from '../../lib/supabase'
 import { ProductMedia } from '../product/ProductMedia'
 import { type AddedCartItem, useOptionalCart } from './CartProvider'
 
@@ -105,13 +106,19 @@ export function AddToBagToast() {
         >
           View bag
         </button>
-        <Link
-          to="/checkout"
-          onClick={closeToast}
-          className="inline-flex h-10 items-center justify-center bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
-        >
-          Checkout
-        </Link>
+        {isOrdersEnabled ? (
+          <Link
+            to="/checkout"
+            onClick={closeToast}
+            className="inline-flex h-10 items-center justify-center bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-paper)] transition duration-150 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
+          >
+            Checkout
+          </Link>
+        ) : (
+          <span className="inline-flex h-10 cursor-not-allowed items-center justify-center bg-stone-100 px-4 text-sm font-medium text-stone-500">
+            Orders unavailable
+          </span>
+        )}
       </div>
     </div>
   )
