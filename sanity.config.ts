@@ -5,16 +5,20 @@ import { structureTool } from 'sanity/structure'
 import { schemaTypes } from './sanity/schemas'
 
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID ?? 'o4p78bwk'
-const dataset = process.env.SANITY_STUDIO_DATASET ?? 'production'
 
-export default defineConfig({
-  name: 'trenzura',
-  title: 'Trenzura CMS',
+const workspace = (name: string, title: string, dataset: string, basePath: string) => ({
+  name,
+  title,
   projectId,
   dataset,
-  basePath: '/studio',
+  basePath,
   plugins: [structureTool(), visionTool()],
   schema: {
     types: schemaTypes,
   },
 })
+
+export default defineConfig([
+  workspace('production', 'Production', 'production', '/production'),
+  workspace('qa', 'QA', 'qa', '/qa'),
+])

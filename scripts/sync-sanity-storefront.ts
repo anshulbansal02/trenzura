@@ -8,6 +8,7 @@ import { projectRoot } from './lib/runtime'
 const projectId = process.env.VITE_SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID
 const dataset = process.env.VITE_SANITY_DATASET || process.env.SANITY_STUDIO_DATASET
 const apiVersion = process.env.VITE_SANITY_API_VERSION || '2026-06-16'
+const perspective = parsePerspective(process.env.SANITY_CONTENT_PERSPECTIVE)
 const token = process.env.SANITY_READ_TOKEN || process.env.SANITY_WRITE_TOKEN || process.env.SANITY_AUTH_TOKEN
 const generatedDir = path.join(projectRoot, 'src/generated')
 const blogOutputPath = path.join(generatedDir, 'blog-posts.json')
@@ -28,6 +29,7 @@ const client = createClient({
   projectId,
   dataset,
   apiVersion,
+  perspective,
   token,
   useCdn: false,
 })
@@ -113,7 +115,7 @@ await writeJson(blogOutputPath, posts)
 await writeJson(siteContentOutputPath, siteContent)
 
 console.log(
-  `Synced ${Array.isArray(posts) ? posts.length : 0} blog posts and storefront content from ${dataset}.`,
+  `Synced ${Array.isArray(posts) ? posts.length : 0} blog posts and storefront content from ${dataset} with ${perspective} perspective.`,
 )
 
 async function writeJson(filePath: string, value: unknown) {
@@ -169,4 +171,12 @@ function shouldRequireContent() {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function parsePerspective(value: string | undefined): 'drafts' | 'published' {
+  if (!value) return 'published'
+
+  if (value === 'drafts' || value === 'published') return value
+
+  throw new Error('SANITY_CONTENT_PERSPECTIVE must be "drafts" or "published".')
 }

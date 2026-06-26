@@ -52,6 +52,8 @@ type ExistingProductRow = {
 }
 
 type ExistingVariantRow = {
+  active: boolean
+  slug: string
   variant_id: string
 }
 
@@ -83,7 +85,7 @@ async function main() {
 
   const { data: existingVariants, error: variantReadError } = await supabase
     .from('product_variants')
-    .select('variant_id')
+    .select('variant_id, slug, active')
 
   if (variantReadError) throw variantReadError
 
@@ -95,6 +97,9 @@ async function main() {
 
   const productIds = new Set(records.map((product) => product.productId))
   const variantIds = new Set(records.flatMap((product) => product.variants.map((variant) => variant.variantId)))
+  const variantSlugToId = new Map(
+    records.flatMap((product) => product.variants.map((variant) => [variant.slug, variant.variantId] as const)),
+  )
   const inventoryIds = new Set(
     records.flatMap((product) =>
       product.variants.flatMap((variant) => variant.sizes.map((size) => size.inventoryId)),
@@ -115,6 +120,22 @@ async function main() {
     ),
     'Unable to upsert products',
   )
+
+  for (const variant of (existingVariants ?? []) as ExistingVariantRow[]) {
+    const incomingVariantId = variantSlugToId.get(variant.slug)
+    if (!incomingVariantId || incomingVariantId === variant.variant_id) continue
+
+    await assertOk(
+      supabase
+        .from('product_variants')
+        .update({
+          active: false,
+          slug: archiveVariantSlug(variant.slug, variant.variant_id),
+        })
+        .eq('variant_id', variant.variant_id),
+      `Unable to archive stale variant slug ${variant.slug}`,
+    )
+  }
 
   await assertOk(
     supabase.from('product_variants').upsert(
@@ -228,6 +249,11 @@ function assertExpectedSupabaseProject(supabaseUrl: string) {
       `SUPABASE_URL points to ${actualRef}; expected ${expectedRef}. Refusing to sync products.`,
     )
   }
+}
+
+function archiveVariantSlug(slug: string, variantId: string) {
+  const suffix = variantId.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  return `${slug}--archived-${suffix}`
 }
 
 main().catch((error: unknown) => {
