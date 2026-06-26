@@ -145,15 +145,18 @@ function overrideHeroSlides(content: Record<string, unknown>) {
   const hero = homePage.hero
   if (!isRecord(hero)) return
 
-  const slides = hero.slides
-  if (!Array.isArray(slides)) return
-
   const bannerSlides = [
     { url: '/banners/40.jpg', alt: 'Trenzura collection — style 1' },
     { url: '/banners/37.jpg', alt: 'Trenzura collection — style 2' },
   ]
 
   hero.slides = bannerSlides
+
+  // Also update the OG image to use the first banner
+  const seo = homePage.seo
+  if (isRecord(seo)) {
+    seo.image = { url: '/banners/40.jpg', alt: 'Trenzura fashion' }
+  }
 }
 
 function normalizeStaticPages(staticPages: unknown[]) {
