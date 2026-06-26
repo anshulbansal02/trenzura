@@ -169,6 +169,8 @@ type AdminEnv = {
   catalogPublishWorkflowFile: string
   catalogPublishQaRef: string
   catalogPublishProdRef: string
+  delhiveryApiToken?: string
+  delhiveryCancelShipmentUrl: string
 }
 
 export async function loadAdminDashboard(): Promise<AdminDashboard> {
@@ -306,7 +308,7 @@ export async function cancelOrderFromAdmin(orderNumber: string): Promise<CancelO
 
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
-      .select('id,status')
+      .select('id,provider,provider_order_id,tracking_number,status')
       .eq('order_id', orderId)
       .maybeSingle()
 
@@ -316,6 +318,34 @@ export async function cancelOrderFromAdmin(orderNumber: string): Promise<CancelO
 
     if (shipment && ['in_transit', 'delivered'].includes(readString(shipment.status))) {
       throw new AdminError('Shipment is already in transit. Cancel it with the carrier first.', 409, true)
+    }
+
+    const trackingNumber = shipment ? readNullableString(shipment.tracking_number) : null
+    const shipmentProvider = shipment ? readString(shipment.provider) : null
+    let carrierCancelPayload: unknown = null
+
+    if (shipment && shipmentProvider === 'delhivery' && trackingNumber) {
+      const carrierCancelResult = await cancelDelhiveryShipment(env, trackingNumber)
+      carrierCancelPayload = carrierCancelResult.rawPayload
+
+      if (!carrierCancelResult.ok) {
+        await supabase.from('integration_events').insert({
+          source: 'delhivery',
+          event_type: 'cancel_shipment',
+          event_key: `cancel:${trackingNumber}:${Date.now()}`,
+          order_id: orderId,
+          status: 'failed',
+          payload: {
+            adminEmail,
+            trackingNumber,
+            providerOrderId: readNullableString(shipment.provider_order_id),
+            response: carrierCancelResult.rawPayload,
+          },
+          error_message: carrierCancelResult.reason,
+        })
+
+        throw new AdminError('Shipment could not be cancelled with the carrier.', 502, true)
+      }
     }
 
     const { error: updateOrderError } = await supabase
@@ -352,6 +382,7 @@ export async function cancelOrderFromAdmin(orderNumber: string): Promise<CancelO
         adminEmail,
         previousOrderStatus: orderStatus,
         previousShipmentStatus: shipment ? readString(shipment.status) : null,
+        carrierCancelPayload,
       },
     })
 
@@ -1155,6 +1186,15 @@ function readNullableString(value: unknown) {
   return typeof value === 'string' ? value : null
 }
 
+function readStringFromRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'string' && value.trim()) return value
+  }
+
+  return null
+}
+
 function normalizeCatalogPublishRun(value: unknown): CatalogPublishRun {
   if (!value || typeof value !== 'object') {
     throw new AdminError('GitHub Actions returned an invalid workflow run', 502, false)
@@ -1230,6 +1270,63 @@ function isLocalDevRuntime() {
   return import.meta.env.DEV || nodeEnv === 'development'
 }
 
+async function cancelDelhiveryShipment(
+  env: AdminEnv,
+  trackingNumber: string,
+): Promise<{ ok: true; rawPayload: unknown } | { ok: false; reason: string; rawPayload: unknown }> {
+  if (!env.delhiveryApiToken) {
+    return {
+      ok: false,
+      reason: 'delhivery_config_missing',
+      rawPayload: null,
+    }
+  }
+
+  const response = await fetch(env.delhiveryCancelShipmentUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${env.delhiveryApiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      waybill: trackingNumber,
+      cancellation: 'true',
+    }),
+  })
+  const responsePayload = await response.json().catch(() => null)
+  const providerError = readDelhiveryCancelError(responsePayload)
+
+  if (!response.ok || providerError) {
+    return {
+      ok: false,
+      reason: providerError ?? `delhivery_http_${response.status}`,
+      rawPayload: responsePayload,
+    }
+  }
+
+  return {
+    ok: true,
+    rawPayload: responsePayload,
+  }
+}
+
+function readDelhiveryCancelError(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+
+  const record = payload as Record<string, unknown>
+  const success = record.success ?? record.Success
+  if (success === false || success === 'false') {
+    return readStringFromRecord(record, ['error', 'message', 'remark', 'remarks']) ?? 'delhivery_cancel_failed'
+  }
+
+  const status = readStringFromRecord(record, ['status', 'Status'])
+  if (status && ['failed', 'failure', 'error'].includes(status.toLowerCase())) {
+    return readStringFromRecord(record, ['error', 'message', 'remark', 'remarks']) ?? 'delhivery_cancel_failed'
+  }
+
+  return readStringFromRecord(record, ['error', 'Error']) ?? null
+}
+
 function readAdminEnv(): AdminEnv {
   const adminEmails = parseAdminEmails(readEnv('ADMIN_EMAILS'))
   const supabaseUrl = requireEnv('SUPABASE_URL')
@@ -1250,6 +1347,9 @@ function readAdminEnv(): AdminEnv {
     catalogPublishWorkflowFile: readEnv('CATALOG_PUBLISH_WORKFLOW_FILE') ?? 'publish-catalog.yml',
     catalogPublishQaRef: readEnv('CATALOG_PUBLISH_QA_REF') ?? 'dev',
     catalogPublishProdRef: readEnv('CATALOG_PUBLISH_PROD_REF') ?? 'main',
+    delhiveryApiToken: readEnv('DELHIVERY_API_TOKEN'),
+    delhiveryCancelShipmentUrl:
+      readEnv('DELHIVERY_CANCEL_SHIPMENT_URL') ?? 'https://track.delhivery.com/api/p/edit',
   }
 }
 
