@@ -93,7 +93,7 @@ export function getSiteSettingsContent(): SiteSettingsContent {
     ]),
     footerShortCopy: requireString(settings, 'siteSettings.footerShortCopy', ['footerShortCopy']),
     footerSections: requireFooterSections(settings.footerSections),
-    socialLinks: requireLinks(settings.socialLinks, 'siteSettings.socialLinks'),
+    socialLinks: readSocialLinks(settings.socialLinks),
     benefits: requireBenefits(settings.benefits),
     copyrightLine: requireString(settings, 'siteSettings.copyrightLine', ['copyrightLine']),
     bottomNote: requireString(settings, 'siteSettings.bottomNote', ['bottomNote']),
@@ -240,6 +240,55 @@ function requireLink(value: unknown, path: string): StorefrontLink {
   }
 }
 
+function readSocialLinks(value: unknown): StorefrontLink[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((item): StorefrontLink[] => {
+    if (!isRecord(item)) return []
+
+    const url = readTrimmedString(item.url)
+    if (!url) return []
+
+    return [
+      {
+        label: readTrimmedString(item.label) ?? inferSocialLabel(url),
+        url,
+      },
+    ]
+  })
+}
+
+function inferSocialLabel(url: string) {
+  try {
+    const parsedUrl = new URL(url, 'https://trenzura.in')
+    const host = parsedUrl.hostname.replace(/^www\./, '')
+    const knownLabels: Record<string, string> = {
+      'facebook.com': 'Facebook',
+      'instagram.com': 'Instagram',
+      'linkedin.com': 'LinkedIn',
+      'pinterest.com': 'Pinterest',
+      'twitter.com': 'X',
+      'x.com': 'X',
+      'youtube.com': 'YouTube',
+      'youtu.be': 'YouTube',
+    }
+
+    if (knownLabels[host]) return knownLabels[host]
+
+    const domainLabel = host.split('.')[0]
+    if (domainLabel) return toTitleCase(domainLabel)
+  } catch {
+    // Fall through to route/path label inference.
+  }
+
+  const pathLabel = url
+    .replace(/^https?:\/\//, '')
+    .replace(/^\/+/, '')
+    .split(/[/?#]/)[0]
+
+  return pathLabel ? toTitleCase(pathLabel.replace(/[-_]+/g, ' ')) : 'Social'
+}
+
 function requireImages(value: unknown, path: string): StorefrontImage[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error(`Generated Sanity content is missing ${path}.`)
@@ -281,6 +330,18 @@ function requireString(
   }
 
   return candidate.trim()
+}
+
+function readTrimmedString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function toTitleCase(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
