@@ -17,6 +17,7 @@ const accessJwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
 
 export type AdminOrderRow = {
   order_number: string
+  invoice_number: string | null
   order_status: string
   customer_name: string | null
   customer_phone: string | null
@@ -104,6 +105,14 @@ export type RetryShipmentResult = {
     providerAttempt: string
     reason?: string
   }
+}
+
+export type CancelOrderResult = {
+  adminEmail: string
+  orderNumber: string
+  invoiceNumber: string | null
+  status: string
+  shipmentStatus: string | null
 }
 
 export type CatalogPublishEnvironment = 'qa' | 'prod'
@@ -269,6 +278,102 @@ export async function retryShipmentFromAdmin(orderNumber: string): Promise<Retry
   }
 }
 
+export async function cancelOrderFromAdmin(orderNumber: string): Promise<CancelOrderResult> {
+  setAdminResponseHeaders()
+
+  try {
+    requireSameOriginMutation()
+
+    const adminEmail = await requireAdminEmail()
+    const env = readAdminEnv()
+    const supabase = createAdminSupabaseClient(env)
+    const normalizedOrderLookup = normalizeOrderLookup(orderNumber)
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id,order_number,invoice_number,status')
+      .or(createOrderLookupFilter(normalizedOrderLookup))
+      .single()
+
+    if (orderError || !order) {
+      throw new AdminError('Order not found', orderError?.code === 'PGRST116' ? 404 : 500, true)
+    }
+
+    const orderId = String(order.id)
+    const orderStatus = readString(order.status)
+    if (['delivered', 'cancelled'].includes(orderStatus)) {
+      throw new AdminError('This order cannot be cancelled from admin.', 409, true)
+    }
+
+    const { data: shipment, error: shipmentError } = await supabase
+      .from('shipments')
+      .select('id,status')
+      .eq('order_id', orderId)
+      .maybeSingle()
+
+    if (shipmentError) {
+      throw new AdminError(`Unable to load shipment: ${shipmentError.message}`, 500, false)
+    }
+
+    if (shipment && ['in_transit', 'delivered'].includes(readString(shipment.status))) {
+      throw new AdminError('Shipment is already in transit. Cancel it with the carrier first.', 409, true)
+    }
+
+    const { error: updateOrderError } = await supabase
+      .from('orders')
+      .update({ status: 'cancelled' })
+      .eq('id', orderId)
+
+    if (updateOrderError) {
+      throw new AdminError(`Unable to cancel order: ${updateOrderError.message}`, 500, false)
+    }
+
+    let shipmentStatus: string | null = null
+    if (shipment) {
+      const { data: updatedShipment, error: updateShipmentError } = await supabase
+        .from('shipments')
+        .update({ status: 'cancelled', provider_status: 'cancelled_by_admin' })
+        .eq('id', shipment.id)
+        .select('status')
+        .single()
+
+      if (updateShipmentError) {
+        throw new AdminError(`Order cancelled, but shipment status could not be updated: ${updateShipmentError.message}`, 500, false)
+      }
+
+      shipmentStatus = readString(updatedShipment.status)
+    }
+
+    await supabase.from('integration_events').insert({
+      source: 'admin',
+      event_type: 'cancel_order',
+      order_id: orderId,
+      status: 'processed',
+      payload: {
+        adminEmail,
+        previousOrderStatus: orderStatus,
+        previousShipmentStatus: shipment ? readString(shipment.status) : null,
+      },
+    })
+
+    console.log('admin cancel-order', {
+      adminEmail,
+      orderNumber: readString(order.order_number),
+      invoiceNumber: readNullableString(order.invoice_number),
+      orderId,
+    })
+
+    return {
+      adminEmail,
+      orderNumber: readString(order.order_number),
+      invoiceNumber: readNullableString(order.invoice_number),
+      status: 'cancelled',
+      shipmentStatus,
+    }
+  } catch (error) {
+    throw sanitizeAdminError(error, 'Unable to cancel order')
+  }
+}
+
 export async function publishCatalogFromAdmin(
   environment: CatalogPublishEnvironment,
 ): Promise<CatalogPublishDispatchResult> {
@@ -373,7 +478,7 @@ export async function generateAdminInvoicePdf(orderNumber: string): Promise<Admi
 
     return {
       bytes,
-      filename: `${normalizedOrderNumber}-invoice.pdf`,
+      filename: `${invoiceData.order.invoice_number ?? normalizedOrderNumber}-invoice.pdf`,
     }
   } catch (error) {
     throw sanitizeAdminError(error, 'Unable to generate invoice')
@@ -416,6 +521,7 @@ export async function loadAdminOrderDetails(orderNumber: string): Promise<AdminO
 export type InvoiceOrder = {
   id: string
   order_number: string
+  invoice_number: string | null
   status: string
   currency: string
   subtotal_amount_paise: number
@@ -500,14 +606,14 @@ type InvoicePdfContext = {
 
 async function loadInvoiceData(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
-  orderNumber: string,
+  orderLookup: string,
 ): Promise<InvoiceData> {
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select(
-      'id,order_number,status,currency,subtotal_amount_paise,shipping_amount_paise,total_amount_paise,customer_name,customer_phone,customer_email,shipping_address,created_at',
+      'id,order_number,invoice_number,status,currency,subtotal_amount_paise,shipping_amount_paise,total_amount_paise,customer_name,customer_phone,customer_email,shipping_address,created_at',
     )
-    .eq('order_number', orderNumber)
+    .or(createOrderLookupFilter(orderLookup))
     .single()
 
   if (orderError || !order) {
@@ -585,6 +691,7 @@ async function loadInvoiceData(
     order: {
       id: orderId,
       order_number: readString(order.order_number),
+      invoice_number: readNullableString(order.invoice_number),
       status: readString(order.status),
       currency: readString(order.currency) || 'INR',
       subtotal_amount_paise: readNumber(order.subtotal_amount_paise),
@@ -681,7 +788,7 @@ function drawInvoiceHeader(context: InvoicePdfContext, invoice: InvoiceData) {
     size: 9,
     color: rgb(0.45, 0.42, 0.36),
   })
-  drawText(context, invoice.order.order_number, 404, context.y, {
+  drawText(context, invoice.order.invoice_number ?? invoice.order.order_number, 404, context.y, {
     font: context.fonts.bold,
     size: 10,
     color: rgb(0.45, 0.42, 0.36),
@@ -725,6 +832,7 @@ function drawOrderMeta(context: InvoicePdfContext, invoice: InvoiceData) {
   const shipment = invoice.shipment
   const rows = [
     ['Invoice date', formatInvoiceDate(invoice.order.created_at)],
+    ['Order number', invoice.order.order_number],
     ['Order status', formatStatus(invoice.order.status)],
     ['Payment', payment ? formatStatus(payment.status) : 'Not recorded'],
     ['Payment ID', payment?.provider_payment_id || '-'],
@@ -1239,13 +1347,25 @@ function getAccessJwks(issuer: string) {
 }
 
 function normalizeOrderNumber(value: string) {
+  return normalizeOrderLookup(value)
+}
+
+function normalizeOrderLookup(value: string) {
   const orderNumber = value.trim().toUpperCase()
 
-  if (!/^TZ-\d{8}-[A-Z0-9]{6}$/.test(orderNumber)) {
-    throw new AdminError('Enter a valid order number like TZ-20260511-A7K2F1', 400)
+  if (
+    !/^TZ-\d{8}-[A-Z0-9]{6,8}$/.test(orderNumber) &&
+    !/^TZ\/ECOM\/\d{3,}\/\d{2}-\d{2}$/.test(orderNumber)
+  ) {
+    throw new AdminError('Enter a valid order or invoice number', 400)
   }
 
   return orderNumber
+}
+
+function createOrderLookupFilter(value: string) {
+  const escapedValue = value.replace(/["\\]/g, '\\$&')
+  return `order_number.eq.${escapedValue},invoice_number.eq.${escapedValue}`
 }
 
 function setAdminResponseHeaders() {

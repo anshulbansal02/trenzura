@@ -62,6 +62,7 @@ type VariantSizeRow = {
 
 type CheckoutSupabaseClient = {
   from: (table: string) => any
+  rpc: (name: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>
 }
 
 const currency = 'INR'
@@ -204,7 +205,8 @@ Deno.serve(async (request) => {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        order_number: await createOrderNumber(supabase),
+        order_number: createOrderNumber(),
+        invoice_number: await createInvoiceNumber(supabase),
         status: 'payment_pending',
         currency,
         subtotal_amount_paise: subtotal,
@@ -222,7 +224,7 @@ Deno.serve(async (request) => {
           pincode: customer.pincode,
         },
       })
-      .select('id,order_number')
+      .select('id,order_number,invoice_number')
       .single()
 
     if (orderError) throw orderError
@@ -240,10 +242,11 @@ Deno.serve(async (request) => {
       keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
       amount: total,
       currency,
-      receipt: String(order.order_number).slice(0, 40),
+      receipt: String(order.invoice_number).slice(0, 40),
       notes: {
         orderId,
         orderNumber: String(order.order_number),
+        invoiceNumber: String(order.invoice_number),
         customerEmail: customer.email,
       },
     }).catch(async (error) => {
@@ -255,6 +258,7 @@ Deno.serve(async (request) => {
         error,
         payload: {
           orderNumber: String(order.order_number),
+          invoiceNumber: String(order.invoice_number),
           amount: total,
           currency,
           keyIdPrefix: keyId.slice(0, 8),
@@ -285,6 +289,7 @@ Deno.serve(async (request) => {
         error: paymentError,
         payload: {
           orderNumber: String(order.order_number),
+          invoiceNumber: String(order.invoice_number),
           razorpayOrderId: razorpayOrder.id,
         },
       })
@@ -296,6 +301,7 @@ Deno.serve(async (request) => {
       keyId,
       orderUuid: orderId,
       orderNumber: order.order_number,
+      invoiceNumber: order.invoice_number,
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
@@ -431,16 +437,28 @@ function normalizeCustomer(value: unknown): CustomerInput {
   return customer
 }
 
-async function createOrderNumber(supabase: CheckoutSupabaseClient) {
-  const { data, error } = await supabase.rpc('next_order_number')
+function createOrderNumber() {
+  const date = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date()).replaceAll('-', '')
+  const suffix = crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase()
+
+  return `TZ-${date}-${suffix}`
+}
+
+async function createInvoiceNumber(supabase: CheckoutSupabaseClient) {
+  const { data, error } = await supabase.rpc('next_invoice_number')
   if (error) throw error
 
-  const orderNumber = typeof data === 'string' ? data : ''
-  if (!/^TZ\/ECOM\/\d{3,}\/\d{2}-\d{2}$/.test(orderNumber)) {
-    throw new CheckoutError('Unable to reserve order number', 500)
+  const invoiceNumber = typeof data === 'string' ? data : ''
+  if (!/^TZ\/ECOM\/\d{3,}\/\d{2}-\d{2}$/.test(invoiceNumber)) {
+    throw new CheckoutError('Unable to reserve invoice number', 500)
   }
 
-  return orderNumber
+  return invoiceNumber
 }
 
 function requiredEnv(name: string) {

@@ -14,6 +14,7 @@ type CustomerOrderResponse = {
 
 type CustomerOrder = {
   orderNumber: string
+  invoiceNumber: string | null
   status: string
   subtotalAmountPaise: number
   shippingAmountPaise: number
@@ -197,14 +198,14 @@ function OrderLookupForm({
         Track your order
       </h1>
       <p className="mt-4 text-sm leading-6 text-[var(--color-muted)]">
-        Enter the order number and phone used at checkout to view shipment status or request a return.
+        Enter the order or invoice number and phone used at checkout to view shipment status or request a return.
       </p>
 
       <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
         <FormField
           label="Order number"
           value={orderNumber}
-          placeholder="TZ-20260619-ABC123"
+          placeholder="TZ-20260619-ABC123 or TZ/ECOM/001/26-27"
           onChange={(value) => onOrderNumberChange(value.toUpperCase())}
         />
         <FormField

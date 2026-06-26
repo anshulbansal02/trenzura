@@ -1,5 +1,5 @@
 import { createServerFn, useServerFn } from '@tanstack/react-start'
-import { Download, Eye, PackageCheck, X } from 'lucide-react'
+import { Ban, Download, Eye, PackageCheck, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
@@ -47,6 +47,21 @@ const loadOrderDetails = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { loadAdminOrderDetails } = await import('../../lib/admin.server')
     return loadAdminOrderDetails(data.orderNumber)
+  })
+
+const cancelAdminOrder = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Order number is required')
+    }
+
+    return {
+      orderNumber: String((data as { orderNumber?: unknown }).orderNumber ?? ''),
+    }
+  })
+  .handler(async ({ data }) => {
+    const { cancelOrderFromAdmin } = await import('../../lib/admin.server')
+    return cancelOrderFromAdmin(data.orderNumber)
   })
 
 export function AdminDataTable({
@@ -132,6 +147,9 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
               <tr key={`${row.order_number}-${row.created_at}`} className="border-t border-[var(--color-line)] transition duration-150 ease-out hover:bg-[var(--color-paper)]">
                 <TableCell>
                   <p className="font-medium text-[var(--color-ink)]">{row.order_number}</p>
+                  {row.invoice_number ? (
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">Invoice {row.invoice_number}</p>
+                  ) : null}
                   <StatusBadge value={row.order_status} />
                 </TableCell>
                 <TableCell>
@@ -161,6 +179,11 @@ function OrdersTable({ rows }: { rows: AdminOrderRow[] }) {
                       onClick={() => void handleOpenDetails(row.order_number)}
                     />
                     <InvoiceDownloadButton orderNumber={row.order_number} />
+                    <CancelOrderButton
+                      orderNumber={row.order_number}
+                      orderStatus={row.order_status}
+                      shipmentStatus={row.shipment_status}
+                    />
                   </div>
                   {detailsError && loadingOrderNumber === null ? (
                     <p className="mt-2 max-w-40 text-xs leading-5 text-red-700">{detailsError}</p>
@@ -345,6 +368,11 @@ function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
                 <p className="break-words text-sm font-medium text-[var(--color-ink)]">
                   {row.order_number}
                 </p>
+                {row.invoice_number ? (
+                  <p className="mt-1 break-words text-xs text-[var(--color-muted)]">
+                    Invoice {row.invoice_number}
+                  </p>
+                ) : null}
                 <StatusBadge value={row.order_status} />
               </div>
               <p className="shrink-0 text-sm font-medium text-[var(--color-ink)]">
@@ -384,6 +412,11 @@ function OrderMobileCards({ rows }: { rows: AdminOrderRow[] }) {
                   onClick={() => void handleOpenDetails(row.order_number)}
                 />
                 <InvoiceDownloadButton orderNumber={row.order_number} />
+                <CancelOrderButton
+                  orderNumber={row.order_number}
+                  orderStatus={row.order_status}
+                  shipmentStatus={row.shipment_status}
+                />
               </div>
               {detailsError && loadingOrderNumber === null ? (
                 <p className="text-xs leading-5 text-red-700">{detailsError}</p>
@@ -572,6 +605,56 @@ function InvoiceDownloadButton({ orderNumber }: { orderNumber: string }) {
   )
 }
 
+function CancelOrderButton({
+  orderNumber,
+  orderStatus,
+  shipmentStatus,
+}: {
+  orderNumber: string
+  orderStatus: string
+  shipmentStatus: string | null
+}) {
+  const cancelOrder = useServerFn(cancelAdminOrder)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const canCancel =
+    !['cancelled', 'delivered'].includes(orderStatus) &&
+    !['in_transit', 'delivered'].includes(shipmentStatus ?? '')
+
+  async function handleCancel() {
+    if (!canCancel) return
+    const confirmed = window.confirm(
+      `Cancel order ${orderNumber}? This marks the order as cancelled in admin.`,
+    )
+    if (!confirmed) return
+
+    setStatus('loading')
+
+    try {
+      await cancelOrder({ data: { orderNumber } })
+      window.location.reload()
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleCancel}
+        disabled={!canCancel || status === 'loading'}
+        className="inline-flex w-fit items-center gap-2 border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800 transition duration-150 ease-out hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-paper)] disabled:text-[var(--color-muted)] disabled:opacity-70"
+      >
+        <Ban className="size-3.5" aria-hidden="true" />
+        {status === 'loading' ? 'Cancelling...' : 'Cancel'}
+      </button>
+      {status === 'error' ? (
+        <p className="mt-2 max-w-40 text-xs leading-5 text-red-700">Unable to cancel order.</p>
+      ) : null}
+    </div>
+  )
+}
+
 function OrderDetailsButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
   return (
     <button
@@ -606,6 +689,11 @@ function OrderDetailsModal({
             <h2 className="mt-1 text-xl font-medium text-[var(--color-ink)]">
               {order.order.order_number}
             </h2>
+            {order.order.invoice_number ? (
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Invoice {order.order.invoice_number}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -669,6 +757,8 @@ function OrderDetailsModal({
             </DetailPanel>
 
             <DetailPanel title="Order">
+              <DetailRow label="Order number" value={order.order.order_number} />
+              <DetailRow label="Invoice number" value={order.order.invoice_number || '-'} />
               <DetailRow label="Status" value={formatStatusText(order.order.status)} />
               <DetailRow label="Created" value={formatAdminDateTime(order.order.created_at)} />
               <DetailRow label="Subtotal" value={formatPrice(order.order.subtotal_amount_paise)} />
