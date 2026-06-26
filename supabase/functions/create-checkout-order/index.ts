@@ -60,6 +60,10 @@ type VariantSizeRow = {
   active: boolean
 }
 
+type CheckoutSupabaseClient = {
+  from: (table: string) => any
+}
+
 const currency = 'INR'
 const maxCheckoutQuantity = 20
 
@@ -242,6 +246,22 @@ Deno.serve(async (request) => {
         orderNumber: String(order.order_number),
         customerEmail: customer.email,
       },
+    }).catch(async (error) => {
+      await markOrderPaymentFailed(supabase, orderId)
+      await logCheckoutIntegrationError(supabase, {
+        orderId,
+        source: 'razorpay',
+        eventType: 'create_order',
+        error,
+        payload: {
+          orderNumber: String(order.order_number),
+          amount: total,
+          currency,
+          keyIdPrefix: keyId.slice(0, 8),
+        },
+      })
+
+      throw error
     })
 
     const { error: paymentError } = await supabase
@@ -256,7 +276,21 @@ Deno.serve(async (request) => {
         raw_payload: razorpayOrder,
       })
 
-    if (paymentError) throw paymentError
+    if (paymentError) {
+      await markOrderPaymentFailed(supabase, orderId)
+      await logCheckoutIntegrationError(supabase, {
+        orderId,
+        source: 'supabase',
+        eventType: 'create_payment_row',
+        error: paymentError,
+        payload: {
+          orderNumber: String(order.order_number),
+          razorpayOrderId: razorpayOrder.id,
+        },
+      })
+
+      throw paymentError
+    }
 
     return jsonResponse({
       keyId,
@@ -417,6 +451,59 @@ function requiredEnv(name: string) {
 
 function serviceRoleKey() {
   return Deno.env.get('OPS_SERVICE_ROLE_KEY') || requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
+}
+
+async function logCheckoutIntegrationError(
+  supabase: CheckoutSupabaseClient,
+  input: {
+    orderId: string
+    source: string
+    eventType: string
+    error: unknown
+    payload: Record<string, unknown>
+  },
+) {
+  const message = readErrorMessage(input.error)
+  const { error } = await supabase.from('integration_events').insert({
+    source: input.source,
+    event_type: input.eventType,
+    order_id: input.orderId,
+    status: 'failed',
+    payload: input.payload,
+    error_message: message,
+  })
+
+  if (error) {
+    console.error('Unable to log checkout integration error', error)
+  }
+
+  console.error('checkout integration failed', {
+    source: input.source,
+    eventType: input.eventType,
+    orderId: input.orderId,
+    message,
+  })
+}
+
+async function markOrderPaymentFailed(supabase: CheckoutSupabaseClient, orderId: string) {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: 'payment_failed' })
+    .eq('id', orderId)
+
+  if (error) {
+    console.error('Unable to mark checkout order payment_failed', error)
+  }
+}
+
+function readErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === 'string') return message
+  }
+
+  return 'checkout_integration_failed'
 }
 
 class CheckoutError extends Error {
