@@ -19,8 +19,6 @@ const requiredStaticPageSlugs = ['about', 'contact', 'shipping-returns', 'terms'
 await mkdir(generatedDir, { recursive: true })
 
 if (!projectId || !dataset) {
-  await writeJson(blogOutputPath, [])
-  await writeJson(siteContentOutputPath, {})
   console.log('Sanity storefront content sync skipped: missing project or dataset.')
   process.exit(0)
 }

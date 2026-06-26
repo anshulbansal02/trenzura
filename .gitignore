@@ -20,3 +20,4 @@ product-images/
 scripts/product-slugs.json
 scripts/seed-products.json
 src/generated/*.json
+!src/generated/site-content.json
