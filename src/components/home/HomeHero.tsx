@@ -12,7 +12,7 @@ export function HomeHero({ content }: HomeHeroProps) {
     <section>
       <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
         <h1 className="sr-only">{content.screenReaderTitle}</h1>
-        <div className="relative aspect-[2/1] overflow-hidden bg-[#f5eadc] sm:aspect-[16/7] lg:aspect-[5/2] xl:max-h-[590px]">
+        <div className="relative aspect-[2/1] overflow-hidden bg-[#f5eadc] sm:aspect-[16/7] lg:aspect-[5/2] xl:aspect-[21/9]">
           {content.slides.map((slide, index) => (
             <img
               key={slide.url}

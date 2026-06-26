@@ -19,8 +19,6 @@ const requiredStaticPageSlugs = ['about', 'contact', 'shipping-returns', 'terms'
 await mkdir(generatedDir, { recursive: true })
 
 if (!projectId || !dataset) {
-  await writeJson(blogOutputPath, [])
-  await writeJson(siteContentOutputPath, {})
   console.log('Sanity storefront content sync skipped: missing project or dataset.')
   process.exit(0)
 }
@@ -112,6 +110,7 @@ const [posts, siteContent] = await Promise.all([
 ])
 
 const normalizedSiteContent = normalizeSiteContent(siteContent)
+overrideHeroSlides(normalizedSiteContent)
 
 await writeJson(blogOutputPath, posts)
 await writeJson(siteContentOutputPath, normalizedSiteContent)
@@ -136,6 +135,24 @@ function normalizeSiteContent(content: unknown) {
     ...content,
     staticPages: normalizedStaticPages,
   }
+}
+
+function overrideHeroSlides(content: Record<string, unknown>) {
+  const homePage = content.homePage
+  if (!isRecord(homePage)) return
+
+  const hero = homePage.hero
+  if (!isRecord(hero)) return
+
+  const slides = hero.slides
+  if (!Array.isArray(slides)) return
+
+  const bannerSlides = [
+    { url: '/banners/40.jpg', alt: 'Trenzura collection — style 1' },
+    { url: '/banners/37.jpg', alt: 'Trenzura collection — style 2' },
+  ]
+
+  hero.slides = bannerSlides
 }
 
 function normalizeStaticPages(staticPages: unknown[]) {
