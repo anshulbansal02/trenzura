@@ -71,19 +71,18 @@ Deno.serve(async (request) => {
           .eq('provider_order_id', providerOrderId)
           .maybeSingle()
       : { data: null }
-    const { error: eventError } = await supabase.from('integration_events').upsert(
-      {
+    const { error: eventError } = await supabase
+      .from('integration_events')
+      .insert({
         source: 'razorpay',
         event_type: eventName,
         event_key: eventKey,
         order_id: payment?.order_id ?? null,
         status: payment ? 'received' : 'ignored',
         payload: event,
-      },
-      { onConflict: 'source,event_key', ignoreDuplicates: true },
-    )
+      })
 
-    if (eventError) throw eventError
+    if (eventError && eventError.code !== '23505') throw eventError
 
     if (payment && providerOrderId && paymentId && eventName === 'payment.captured') {
       const { data: confirmation, error: confirmError } = await supabase.rpc('confirm_paid_order', {
