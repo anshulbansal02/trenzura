@@ -19,6 +19,7 @@ type VerifyPaymentInput = {
 
 type OrderSummary = {
   order_number: string
+  invoice_number: string | null
   status: string
 }
 
@@ -70,6 +71,7 @@ Deno.serve(async (request) => {
         verified: true,
         orderUuid: input.orderUuid,
         orderNumber: order.order_number,
+        invoiceNumber: order.invoice_number,
         orderId: input.razorpay_order_id,
         paymentId: paymentSummary.provider_payment_id ?? input.razorpay_payment_id,
         orderStatus: order.status,
@@ -139,6 +141,7 @@ Deno.serve(async (request) => {
               : 'Payment requires manual review.',
           orderUuid: input.orderUuid,
           orderNumber: order.order_number,
+          invoiceNumber: order.invoice_number,
           paymentId: input.razorpay_payment_id,
           orderStatus: result.orderStatus,
         },
@@ -154,6 +157,7 @@ Deno.serve(async (request) => {
       verified: true,
       orderUuid: input.orderUuid,
       orderNumber: order.order_number,
+      invoiceNumber: order.invoice_number,
       orderId: input.razorpay_order_id,
       paymentId: input.razorpay_payment_id,
       orderStatus: shipment?.orderStatus ?? 'shipment_pending',
@@ -207,7 +211,7 @@ async function attemptShipmentCreation(supabase: SupabaseClient, orderId: string
 async function loadOrderSummary(supabase: SupabaseClient, orderId: string) {
   const { data, error } = await supabase
     .from('orders')
-    .select('order_number,status')
+    .select('order_number,invoice_number,status')
     .eq('id', orderId)
     .single()
 

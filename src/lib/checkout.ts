@@ -51,6 +51,7 @@ export type CreateOrderResponse = {
   keyId: string
   orderUuid: string
   orderNumber: string
+  invoiceNumber?: string
   orderId: string
   amount: number
   currency: string
@@ -65,6 +66,7 @@ export type VerifyPaymentResponse = {
   verified: boolean
   orderUuid?: string
   orderNumber?: string
+  invoiceNumber?: string
   paymentId?: string
   orderId?: string
   orderStatus?: string

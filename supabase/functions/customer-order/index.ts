@@ -48,6 +48,7 @@ type ReturnRequestRow = {
 type OrderRow = {
   id: string
   order_number: string
+  invoice_number: string | null
   status: string
   currency: string
   subtotal_amount_paise: number
@@ -90,7 +91,7 @@ Deno.serve(async (request) => {
 
     const body = await request.json().catch(() => null)
     const action = normalizeAction(body?.action)
-    const orderNumber = normalizeOrderNumber(body?.orderNumber)
+    const orderLookup = normalizeOrderLookup(body?.orderNumber)
     const phone = normalizePhone(body?.phone)
 
     await verifyTurnstileIfConfigured(body?.turnstileToken, request)
@@ -100,7 +101,7 @@ Deno.serve(async (request) => {
       requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
       { auth: { persistSession: false } },
     )
-    const order = await loadCustomerOrder(supabase, orderNumber, phone)
+    const order = await loadCustomerOrder(supabase, orderLookup, phone)
 
     if (action === 'request_return') {
       const reason = normalizeReturnReason(body?.reason)
@@ -143,7 +144,7 @@ Deno.serve(async (request) => {
         throw insertError
       }
 
-      const updatedOrder = await loadCustomerOrder(supabase, orderNumber, phone)
+      const updatedOrder = await loadCustomerOrder(supabase, orderLookup, phone)
       return jsonResponse({ order: serializeCustomerOrder(updatedOrder), returnRequested: true })
     }
 
@@ -170,15 +171,15 @@ Deno.serve(async (request) => {
 
 async function loadCustomerOrder(
   supabase: SupabaseClient,
-  orderNumber: string,
+  orderLookup: string,
   phone: string,
 ) {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id,order_number,status,currency,subtotal_amount_paise,shipping_amount_paise,total_amount_paise,customer_name,customer_phone,customer_email,shipping_address,created_at,order_items(id,product_slug,variant_slug,product_code,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,primary_image_url),payments(status,amount_paise,currency,verified_at,created_at),shipments(provider,status,provider_status,tracking_number,created_at,updated_at),order_return_requests(id,status,reason,customer_note,created_at)',
+      'id,order_number,invoice_number,status,currency,subtotal_amount_paise,shipping_amount_paise,total_amount_paise,customer_name,customer_phone,customer_email,shipping_address,created_at,order_items(id,product_slug,variant_slug,product_code,title,size_label,quantity,unit_selling_price_paise,unit_mrp_paise,discount_amount_paise,line_total_paise,primary_image_url),payments(status,amount_paise,currency,verified_at,created_at),shipments(provider,status,provider_status,tracking_number,created_at,updated_at),order_return_requests(id,status,reason,customer_note,created_at)',
     )
-    .eq('order_number', orderNumber)
+    .or(`order_number.eq.${escapePostgrestValue(orderLookup)},invoice_number.eq.${escapePostgrestValue(orderLookup)}`)
     .eq('customer_phone', phone)
     .maybeSingle()
 
@@ -196,6 +197,7 @@ function serializeCustomerOrder(order: OrderRow) {
 
   return {
     orderNumber: order.order_number,
+    invoiceNumber: order.invoice_number,
     status: order.status,
     currency: order.currency,
     subtotalAmountPaise: order.subtotal_amount_paise,
@@ -260,13 +262,20 @@ function normalizeAction(value: unknown): CustomerOrderAction {
   throw new CustomerOrderError('Invalid order action.', 400)
 }
 
-function normalizeOrderNumber(value: unknown) {
-  const orderNumber = String(value ?? '').trim().toUpperCase()
-  if (!/^TZ-\d{8}-[A-Z0-9]{6}$/.test(orderNumber)) {
-    throw new CustomerOrderError('Enter a valid order number.', 400)
+function normalizeOrderLookup(value: unknown) {
+  const orderLookup = String(value ?? '').trim().toUpperCase()
+  if (
+    !/^TZ-\d{8}-[A-Z0-9]{6,8}$/.test(orderLookup) &&
+    !/^TZ\/ECOM\/\d{3,}\/\d{2}-\d{2}$/.test(orderLookup)
+  ) {
+    throw new CustomerOrderError('Enter a valid order or invoice number.', 400)
   }
 
-  return orderNumber
+  return orderLookup
+}
+
+function escapePostgrestValue(value: string) {
+  return value.replace(/["\\]/g, '\\$&')
 }
 
 function normalizePhone(value: unknown) {
