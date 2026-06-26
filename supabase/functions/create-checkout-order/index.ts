@@ -204,7 +204,7 @@ Deno.serve(async (request) => {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        order_number: createOrderNumber(),
+        order_number: await createOrderNumber(supabase),
         status: 'payment_pending',
         currency,
         subtotal_amount_paise: subtotal,
@@ -431,16 +431,16 @@ function normalizeCustomer(value: unknown): CustomerInput {
   return customer
 }
 
-function createOrderNumber() {
-  const date = new Date()
-  const datePart = [
-    date.getUTCFullYear(),
-    String(date.getUTCMonth() + 1).padStart(2, '0'),
-    String(date.getUTCDate()).padStart(2, '0'),
-  ].join('')
-  const randomPart = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()
+async function createOrderNumber(supabase: CheckoutSupabaseClient) {
+  const { data, error } = await supabase.rpc('next_order_number')
+  if (error) throw error
 
-  return `TZ-${datePart}-${randomPart}`
+  const orderNumber = typeof data === 'string' ? data : ''
+  if (!/^TZ\/ECOM\/\d{3,}\/\d{2}-\d{2}$/.test(orderNumber)) {
+    throw new CheckoutError('Unable to reserve order number', 500)
+  }
+
+  return orderNumber
 }
 
 function requiredEnv(name: string) {

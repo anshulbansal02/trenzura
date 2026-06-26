@@ -1,5 +1,6 @@
 import { PortableText, type PortableTextComponents } from '@portabletext/react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
+import { ArrowLeft } from 'lucide-react'
 
 import { formatBlogDate, getBlogPostBySlug } from '../lib/blog'
 import { getSanityImageUrl, type SanityImage } from '../lib/sanity'
@@ -67,7 +68,7 @@ export const Route = createFileRoute('/blog_/$slug')({
 const portableTextComponents: PortableTextComponents = {
   block: {
     h2: ({ children }) => (
-      <h2 className="mt-10 font-serif text-4xl font-normal leading-tight text-[var(--color-ink)]">
+      <h2 className="mt-12 text-2xl font-medium leading-tight text-[var(--color-ink)] sm:text-3xl">
         {children}
       </h2>
     ),
@@ -75,22 +76,24 @@ const portableTextComponents: PortableTextComponents = {
       <h3 className="mt-8 text-xl font-medium leading-tight text-[var(--color-ink)]">{children}</h3>
     ),
     normal: ({ children }) => (
-      <p className="mt-5 text-base leading-8 text-[var(--color-ink-soft)]">{children}</p>
+      <p className="mt-5 text-base leading-8 text-[var(--color-ink-soft)] sm:text-lg sm:leading-9">
+        {children}
+      </p>
     ),
     blockquote: ({ children }) => (
-      <blockquote className="mt-7 border-l-2 border-[var(--color-primary)] pl-5 font-serif text-2xl leading-9 text-[var(--color-ink)]">
+      <blockquote className="my-9 border-l-2 border-[var(--color-primary)] bg-[var(--color-surface-soft)] py-5 pl-5 pr-6 font-serif text-2xl leading-9 text-[var(--color-ink)] sm:text-3xl sm:leading-10">
         {children}
       </blockquote>
     ),
   },
   list: {
     bullet: ({ children }) => (
-      <ul className="mt-5 list-disc space-y-2 pl-5 text-base leading-8 text-[var(--color-ink-soft)]">
+      <ul className="mt-5 list-disc space-y-2 pl-6 text-base leading-8 text-[var(--color-ink-soft)] sm:text-lg sm:leading-9">
         {children}
       </ul>
     ),
     number: ({ children }) => (
-      <ol className="mt-5 list-decimal space-y-2 pl-5 text-base leading-8 text-[var(--color-ink-soft)]">
+      <ol className="mt-5 list-decimal space-y-2 pl-6 text-base leading-8 text-[var(--color-ink-soft)] sm:text-lg sm:leading-9">
         {children}
       </ol>
     ),
@@ -119,15 +122,15 @@ const portableTextComponents: PortableTextComponents = {
       if (!url) return null
 
       return (
-        <figure className="my-9">
+        <figure className="my-10">
           <img
             src={url}
             alt={image.alt || ''}
-            className="w-full bg-[var(--color-surface)] object-cover"
+            className="aspect-[16/10] w-full bg-[var(--color-surface)] object-cover"
             loading="lazy"
           />
           {image.alt ? (
-            <figcaption className="mt-3 text-xs leading-5 text-[var(--color-muted)]">
+            <figcaption className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
               {image.alt}
             </figcaption>
           ) : null}
@@ -140,15 +143,15 @@ const portableTextComponents: PortableTextComponents = {
       if (!url) return null
 
       return (
-        <figure className="my-9">
+        <figure className="my-10">
           <img
             src={url}
             alt={image.alt || ''}
-            className="w-full bg-[var(--color-surface)] object-cover"
+            className="aspect-[16/10] w-full bg-[var(--color-surface)] object-cover"
             loading="lazy"
           />
           {image.alt ? (
-            <figcaption className="mt-3 text-xs leading-5 text-[var(--color-muted)]">
+            <figcaption className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
               {image.alt}
             </figcaption>
           ) : null}
@@ -160,50 +163,93 @@ const portableTextComponents: PortableTextComponents = {
 
 function BlogDetailPage() {
   const { post } = Route.useLoaderData()
-  const coverImage = getSanityImageUrl(post.coverImage, { width: 1400, height: 1750 })
+  const coverImage = getSanityImageUrl(post.coverImage, { width: 1600, height: 1000 })
 
   return (
-    <main className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <article className="mx-auto max-w-[90rem]">
+    <main className="px-4 pb-20 pt-8 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8">
+      <article className="mx-auto max-w-7xl">
         <nav
           aria-label="Blog breadcrumb"
-          className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--color-muted)]"
+          className="mb-7 flex flex-wrap items-center gap-2 text-sm text-[var(--color-muted)]"
         >
-          <Link to="/blog" className="transition hover:text-[var(--color-ink)]">
+          <Link
+            to="/blog"
+            className="inline-flex items-center gap-2 transition hover:text-[var(--color-ink)]"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             Blog
           </Link>
-          <span aria-hidden="true">/</span>
-          <span className="text-[var(--color-ink)]">{post.title}</span>
         </nav>
 
-        <header className="grid gap-8 border-b border-[var(--color-line)] pb-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(360px,0.54fr)] lg:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
-              {post.category ? <span>{post.category}</span> : null}
-              {post.category ? <span aria-hidden="true">/</span> : null}
-              <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
-            </div>
-            <h1 className="mt-4 max-w-4xl font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl lg:text-7xl">
+        <header className="border-b border-[var(--color-line)] pb-10">
+          <div className="mx-auto max-w-4xl text-center">
+            <PostMeta post={post} />
+            <h1 className="mt-5 font-serif text-5xl font-normal leading-[0.98] text-[var(--color-ink)] sm:text-6xl lg:text-7xl">
               {post.title}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--color-muted)]">
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[var(--color-muted)] sm:text-lg sm:leading-8">
               {post.excerpt}
             </p>
-            <p className="mt-5 text-sm text-[var(--color-muted)]">By {post.authorName}</p>
           </div>
           {coverImage ? (
-            <img
-              src={coverImage}
-              alt={post.coverImage?.alt || post.title}
-              className="aspect-[4/5] w-full bg-[var(--color-surface)] object-cover"
-            />
+            <div className="mt-9 overflow-hidden bg-[var(--color-surface)]">
+              <img
+                src={coverImage}
+                alt={post.coverImage?.alt || post.title}
+                className="aspect-[16/10] w-full object-cover"
+              />
+            </div>
           ) : null}
         </header>
 
-        <div className="mx-auto max-w-3xl py-10">
-          <PortableText value={post.content} components={portableTextComponents} />
+        <div className="grid gap-10 py-10 lg:grid-cols-[220px_minmax(0,760px)_220px] lg:items-start">
+          <aside className="border-y border-[var(--color-line)] py-5 text-sm text-[var(--color-muted)] lg:sticky lg:top-[calc(var(--site-header-height)+1.5rem)] lg:border-b-0">
+            <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-[0.12em]">Written by</dt>
+                <dd className="mt-1 text-[var(--color-ink)]">{post.authorName}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-[0.12em]">Published</dt>
+                <dd className="mt-1 text-[var(--color-ink)]">
+                  <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
+                </dd>
+              </div>
+              {post.category ? (
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-[0.12em]">Category</dt>
+                  <dd className="mt-1 text-[var(--color-ink)]">{post.category}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </aside>
+
+          <div className="min-w-0">
+            <PortableText value={post.content} components={portableTextComponents} />
+            <footer className="mt-12 border-t border-[var(--color-line)] pt-6">
+              <Link
+                to="/blog"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-ink)] transition hover:text-[var(--color-primary-dark)]"
+              >
+                <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                Back to journal
+              </Link>
+            </footer>
+          </div>
+
+          <div aria-hidden="true" className="hidden lg:block" />
         </div>
       </article>
     </main>
+  )
+}
+
+function PostMeta({ post }: { post: { category: string | null; publishedAt: string } }) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
+      {post.category ? <span>{post.category}</span> : null}
+      {post.category ? <span aria-hidden="true">/</span> : null}
+      <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
+    </div>
   )
 }
