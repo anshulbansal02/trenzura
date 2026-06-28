@@ -9,6 +9,7 @@ type OrderForWhatsApp = {
   order_number: string
   customer_name: string
   customer_phone: string
+  created_at: string
   total_amount_paise: number
   currency: string
   whatsapp_updates_opt_in: boolean
@@ -134,7 +135,7 @@ export async function notifyOrderConfirmedOnWhatsApp(
 async function loadOrder(supabase: SupabaseClient, orderId: string) {
   const { data, error } = await supabase
     .from('orders')
-    .select('id,order_number,customer_name,customer_phone,total_amount_paise,currency,whatsapp_updates_opt_in')
+    .select('id,order_number,customer_name,customer_phone,created_at,total_amount_paise,currency,whatsapp_updates_opt_in')
     .eq('id', orderId)
     .single()
 
@@ -243,7 +244,7 @@ async function sendOrderConfirmedTemplate(input: {
               parameters: [
                 { type: 'text', text: firstName(input.order.customer_name) },
                 { type: 'text', text: input.order.order_number },
-                { type: 'text', text: formatAmount(input.order.total_amount_paise, input.order.currency) },
+                { type: 'text', text: estimatedDeliveryDate(input.order.created_at) },
               ],
             },
           ],
@@ -280,14 +281,23 @@ function firstName(name: string) {
   return name.trim().split(/\s+/)[0] ?? 'there'
 }
 
-function formatAmount(amountPaise: number, currency: string) {
-  const amount = new Intl.NumberFormat('en-IN', {
-    currency,
-    style: 'currency',
-    maximumFractionDigits: 0,
-  }).format(amountPaise / 100)
+function estimatedDeliveryDate(orderCreatedAt: string) {
+  const baseDateMs = Date.parse(orderCreatedAt)
+  const baseDate = Number.isFinite(baseDateMs) ? new Date(baseDateMs) : new Date()
+  const deliveryDays = readPositiveIntegerEnv('WHATSAPP_ESTIMATED_DELIVERY_DAYS', 7)
+  baseDate.setUTCDate(baseDate.getUTCDate() + deliveryDays)
 
-  return amount.replace(/\s/g, '')
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+  }).format(baseDate)
+}
+
+function readPositiveIntegerEnv(name: string, fallback: number) {
+  const value = Number(Deno.env.get(name))
+  return Number.isInteger(value) && value > 0 ? value : fallback
 }
 
 function readProviderMessageId(payload: unknown) {
