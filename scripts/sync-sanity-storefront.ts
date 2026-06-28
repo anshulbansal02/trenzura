@@ -14,7 +14,7 @@ const generatedDir = path.join(projectRoot, 'src/generated')
 const blogOutputPath = path.join(generatedDir, 'blog-posts.json')
 const siteContentOutputPath = path.join(generatedDir, 'site-content.json')
 
-const requiredStaticPageSlugs = ['about', 'contact', 'shipping-returns', 'terms', 'privacy']
+const reservedStaticPageSlugs = new Set(['admin', 'blog', 'checkout', 'orders', 'products'])
 
 await mkdir(generatedDir, { recursive: true })
 
@@ -163,45 +163,39 @@ function normalizeStaticPages(staticPages: unknown[]) {
   const pageBySlug = new Map<string, Record<string, unknown>>()
 
   for (const page of staticPages) {
-    if (!isRecord(page) || typeof page.slug !== 'string') {
+    if (!isRecord(page)) {
       throw new Error('Sanity staticPage documents must include a valid slug.')
     }
 
-    if (!requiredStaticPageSlugs.includes(page.slug)) {
-      throw new Error(
-        `Sanity staticPage slug "${page.slug}" is not supported. Expected one of ${requiredStaticPageSlugs.join(', ')}.`,
-      )
+    const slug = normalizeStaticPageSlug(page.slug)
+    if (!slug) {
+      throw new Error('Sanity staticPage documents must include a valid slug.')
     }
 
-    if (seenSlugs.has(page.slug)) {
+    if (reservedStaticPageSlugs.has(slug)) {
+      throw new Error(`Sanity staticPage slug "${slug}" is reserved by the storefront.`)
+    }
+
+    page.slug = slug
+
+    if (seenSlugs.has(slug)) {
       if (perspective !== 'drafts') {
-        throw new Error(`Sanity has multiple staticPage documents for "${page.slug}".`)
+        throw new Error(`Sanity has multiple staticPage documents for "${slug}".`)
       }
 
-      const existingPage = pageBySlug.get(page.slug)
+      const existingPage = pageBySlug.get(slug)
       if (!existingPage || compareUpdatedAtDesc(page, existingPage) < 0) {
-        pageBySlug.set(page.slug, page)
+        pageBySlug.set(slug, page)
       }
 
       continue
     }
 
-    seenSlugs.add(page.slug)
-    pageBySlug.set(page.slug, page)
+    seenSlugs.add(slug)
+    pageBySlug.set(slug, page)
   }
 
-  if (!shouldRequireContent()) return [...pageBySlug.values()]
-
-  for (const slug of requiredStaticPageSlugs) {
-    if (!seenSlugs.has(slug)) {
-      throw new Error(`Sanity required staticPage missing: ${slug}.`)
-    }
-  }
-
-  return requiredStaticPageSlugs.flatMap((slug) => {
-    const page = pageBySlug.get(slug)
-    return page ? [page] : []
-  })
+  return [...pageBySlug.values()]
 }
 
 validateContent(normalizedSiteContent)
@@ -224,6 +218,19 @@ function compareUpdatedAtDesc(left: Record<string, unknown>, right: Record<strin
 
 function readDateMs(value: unknown) {
   return typeof value === 'string' ? Date.parse(value) || 0 : 0
+}
+
+function normalizeStaticPageSlug(value: unknown) {
+  const rawSlug = typeof value === 'string'
+    ? value
+    : isRecord(value) && typeof value.current === 'string'
+      ? value.current
+      : ''
+  const slug = rawSlug.trim().replace(/^\/+|\/+$/g, '')
+
+  if (!slug || slug.includes('/') || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null
+
+  return slug
 }
 
 function shouldRequireContent() {

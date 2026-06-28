@@ -82,7 +82,7 @@ function ProductPreviewPage() {
       <div className="mx-auto max-w-[90rem]">
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:gap-14">
           <div className="min-w-0 max-w-full lg:sticky lg:top-28 lg:self-start">
-            <ProductGallery product={product} />
+            <ProductGallery product={product} imageFit="contain" />
           </div>
 
           <div className="min-w-0">

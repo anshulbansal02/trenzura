@@ -193,19 +193,3 @@ button:disabled,
 #page-content {
   padding-top: var(--site-header-height);
 }
-
-@keyframes trenzura-hero-fade {
-  0%,
-  31% {
-    opacity: 1;
-  }
-
-  35%,
-  96% {
-    opacity: 0;
-  }
-
-  100% {
-    opacity: 1;
-  }
-}
