@@ -39,6 +39,8 @@ jobs:
       SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      OPS_SERVICE_ROLE_KEY: ${{ secrets.OPS_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_ACTIONS_TOKEN: ${{ secrets.GITHUB_ACTIONS_TOKEN }}
       EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -103,7 +105,19 @@ jobs:
       - run: pnpm build
 
       - name: Sync production Worker secrets
-        run: printf '%s' "$DELHIVERY_API_TOKEN" | pnpm exec wrangler secret put DELHIVERY_API_TOKEN --name "$CLOUDFLARE_WORKER_NAME"
+        run: |
+          put_secret() {
+            local name="$1"
+            local value="${!name:-}"
+            test -n "$value" || return 0
+            printf '%s' "$value" | pnpm exec wrangler secret put "$name" --name "$CLOUDFLARE_WORKER_NAME"
+          }
+
+          put_secret SUPABASE_URL
+          put_secret SUPABASE_SERVICE_ROLE_KEY
+          put_secret OPS_SERVICE_ROLE_KEY
+          put_secret GITHUB_ACTIONS_TOKEN
+          put_secret DELHIVERY_API_TOKEN
 
       - name: Deploy to Cloudflare Workers
         run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
