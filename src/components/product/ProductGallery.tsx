@@ -114,7 +114,10 @@ export function ProductGallery({
                 setActiveIndex(index)
                 setViewerOpen(true)
               }}
-              className="relative aspect-[4/5] min-w-full max-w-full shrink-0 snap-center overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-inset"
+              className={joinClasses(
+                'relative min-w-full max-w-full shrink-0 snap-center overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-inset',
+                imageFit === 'contain' ? '' : 'aspect-[4/5]',
+              )}
             >
               <GalleryImage
                 product={product}
@@ -122,8 +125,8 @@ export function ProductGallery({
                 sizes="100vw"
                 alt={index === 0 ? product.imageAlt : ''}
                 className={joinClasses(
-                  'h-full w-full text-transparent',
-                  imageFit === 'contain' ? 'object-contain' : 'object-cover object-top',
+                  'w-full text-transparent',
+                  imageFit === 'contain' ? 'h-auto' : 'h-full object-cover object-top',
                 )}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
@@ -199,11 +202,15 @@ export function ProductGallery({
               decoding="async"
               fetchPriority="high"
               className={joinClasses(
-                'h-full w-full text-transparent',
-                isQuickLook
-                  ? 'aspect-[4/5] lg:aspect-auto'
-                  : 'aspect-[4/5] lg:h-[calc(100svh-var(--site-header-height)-2rem)] lg:min-h-[680px]',
-                imageFit === 'contain' ? 'object-contain' : 'object-cover object-top',
+                'w-full text-transparent',
+                imageFit === 'contain'
+                  ? 'h-auto'
+                  : joinClasses(
+                      'h-full object-cover object-top',
+                      isQuickLook
+                        ? 'aspect-[4/5] lg:aspect-auto'
+                        : 'aspect-[4/5] lg:h-[calc(100svh-var(--site-header-height)-2rem)] lg:min-h-[680px]',
+                    ),
               )}
             />
             {!isQuickLook ? (
