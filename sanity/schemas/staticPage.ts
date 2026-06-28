@@ -9,19 +9,25 @@ export const staticPage = defineType({
   fields: [
     defineField({
       name: 'slug',
-      title: 'Page',
+      title: 'Slug',
       type: 'string',
-      options: {
-        list: [
-          { title: 'About', value: 'about' },
-          { title: 'Contact', value: 'contact' },
-          { title: 'Shipping & Returns', value: 'shipping-returns' },
-          { title: 'Terms', value: 'terms' },
-          { title: 'Privacy', value: 'privacy' },
-        ],
-        layout: 'radio',
-      },
-      validation: (rule) => rule.required(),
+      description: 'Use one URL segment, for example "about" or "size-guide". The page opens at /slug.',
+      validation: (rule) =>
+        rule.required().custom((value) => {
+          if (typeof value !== 'string') return 'Slug is required'
+
+          const slug = value.trim().replace(/^\/+|\/+$/g, '')
+          if (!slug) return 'Slug is required'
+          if (slug.includes('/')) return 'Use one URL segment without slashes'
+          if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+            return 'Use lowercase letters, numbers, and hyphens only'
+          }
+          if (['admin', 'blog', 'checkout', 'orders', 'products'].includes(slug)) {
+            return 'This slug is reserved by the storefront'
+          }
+
+          return true
+        }),
     }),
     defineField({
       name: 'eyebrow',

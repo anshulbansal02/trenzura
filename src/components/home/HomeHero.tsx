@@ -1,4 +1,5 @@
 import { Button } from '@base-ui/react/button'
+import { useEffect, useState } from 'react'
 
 import type { HomePageContent } from '../../lib/storefront-content'
 import { StyleFinder } from '../product/StyleFinder'
@@ -8,20 +9,38 @@ type HomeHeroProps = {
 }
 
 export function HomeHero({ content }: HomeHeroProps) {
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  const slides = content.slides
+
+  useEffect(() => {
+    if (slides.length <= 1) return
+
+    const interval = window.setInterval(() => {
+      setActiveSlideIndex((current) => (current + 1) % slides.length)
+    }, 5000)
+
+    return () => window.clearInterval(interval)
+  }, [slides.length])
+
+  useEffect(() => {
+    setActiveSlideIndex(0)
+  }, [slides])
+
   return (
     <section>
       <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
         <h1 className="sr-only">{content.screenReaderTitle}</h1>
         <div className="relative aspect-[2/1] overflow-hidden bg-[#f5eadc] sm:aspect-[16/7] lg:aspect-[5/2] xl:max-h-[590px]">
-          {content.slides.map((slide, index) => (
+          {slides.map((slide, index) => (
             <img
               key={slide.url}
               src={slide.url}
               alt={slide.alt}
-              className={`absolute inset-0 block h-full w-full object-cover object-center opacity-0 [animation:trenzura-hero-fade_15s_linear_infinite] [will-change:opacity] ${
-                index === 0 ? 'motion-reduce:opacity-100' : 'motion-reduce:hidden'
+              className={`absolute inset-0 block h-full w-full object-cover object-center transition-opacity duration-700 ease-out motion-reduce:transition-none ${
+                index === activeSlideIndex ? 'opacity-100' : 'opacity-0'
+              } ${
+                index === 0 ? 'motion-reduce:opacity-100' : 'motion-reduce:opacity-0'
               }`}
-              style={{ animationDelay: `${index * 5}s` }}
               loading="eager"
               decoding="async"
             />

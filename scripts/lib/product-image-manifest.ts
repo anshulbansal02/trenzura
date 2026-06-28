@@ -60,8 +60,14 @@ export function resolveProductImagesFromManifest({
   const manifestImages = imageManifest.products[productId]
 
   if (explicitPaths.length > 0) {
+    if (!manifestImages || manifestImages.length === 0) {
+      throw new Error(`Image manifest has no images for ${productId} on row ${rowNumber}`)
+    }
+
     const resolvedManifestImages = orderManifestImages(productId, explicitPaths, imageManifest, rowNumber)
-    return resolvedManifestImages.map(toResolvedProductImage(productId, rowNumber))
+    return dedupeProductImages(
+      resolvedManifestImages.map(toResolvedProductImage(productId, rowNumber)),
+    )
   }
 
   if (!manifestImages || manifestImages.length === 0) {
@@ -71,7 +77,7 @@ export function resolveProductImagesFromManifest({
     return []
   }
 
-  return manifestImages.map(toResolvedProductImage(productId, rowNumber))
+  return dedupeProductImages(manifestImages.map(toResolvedProductImage(productId, rowNumber)))
 }
 
 function toResolvedProductImage(productId: string, rowNumber: number) {
@@ -100,8 +106,9 @@ function orderManifestImages(
   rowNumber: number,
 ) {
   const byName = new Map<string, ImageManifestEntry>()
+  const manifestImages = imageManifest.products[productId] ?? []
 
-  for (const image of Object.values(imageManifest.products).flat()) {
+  for (const image of manifestImages) {
     const fileName = image.storagePath.split('/').pop() ?? image.storagePath
     byName.set(fileName.toLowerCase(), image)
     byName.set(image.storagePath.toLowerCase(), image)
@@ -120,6 +127,18 @@ function orderManifestImages(
     }
 
     return match
+  })
+}
+
+function dedupeProductImages(images: ResolvedProductImage[]) {
+  const seen = new Set<string>()
+
+  return images.filter((image) => {
+    const key = image.storagePath || image.publicUrl
+    if (seen.has(key)) return false
+
+    seen.add(key)
+    return true
   })
 }
 
