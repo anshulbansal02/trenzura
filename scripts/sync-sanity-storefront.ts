@@ -14,7 +14,6 @@ const generatedDir = path.join(projectRoot, 'src/generated')
 const blogOutputPath = path.join(generatedDir, 'blog-posts.json')
 const siteContentOutputPath = path.join(generatedDir, 'site-content.json')
 
-const defaultStaticPageSlugs = ['about', 'contact', 'shipping-returns', 'terms', 'privacy']
 const reservedStaticPageSlugs = new Set(['admin', 'blog', 'checkout', 'orders', 'products'])
 
 await mkdir(generatedDir, { recursive: true })
@@ -194,14 +193,6 @@ function normalizeStaticPages(staticPages: unknown[]) {
 
     seenSlugs.add(slug)
     pageBySlug.set(slug, page)
-  }
-
-  if (!shouldRequireContent()) return [...pageBySlug.values()]
-
-  for (const slug of defaultStaticPageSlugs) {
-    if (!seenSlugs.has(slug)) {
-      throw new Error(`Sanity required staticPage missing: ${slug}.`)
-    }
   }
 
   return [...pageBySlug.values()]
