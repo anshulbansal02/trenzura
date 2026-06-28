@@ -106,7 +106,7 @@ jobs:
         run: printf '%s' "$DELHIVERY_API_TOKEN" | pnpm exec wrangler secret put DELHIVERY_API_TOKEN --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Deploy to Cloudflare Workers
-        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
+        run: pnpm exec wrangler deploy --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN" --domain "$CLOUDFLARE_WWW_DOMAIN"
 
       - name: Verify production domains
         run: |
