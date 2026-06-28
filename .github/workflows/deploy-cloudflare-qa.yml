@@ -106,7 +106,7 @@ jobs:
         run: printf '%s' "$DELHIVERY_API_TOKEN" | pnpm exec wrangler secret put DELHIVERY_API_TOKEN --env qa --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Deploy QA to Cloudflare Workers
-        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME"
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"
 
       - name: Verify QA domain
         run: curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"

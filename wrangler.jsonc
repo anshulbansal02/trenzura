@@ -14,16 +14,6 @@
     "CATALOG_PUBLISH_QA_REF": "dev",
     "CATALOG_PUBLISH_PROD_REF": "main"
   },
-  "routes": [
-    {
-      "pattern": "trenzura.in",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.trenzura.in",
-      "custom_domain": true
-    }
-  ],
   "env": {
     "qa": {
       "vars": {
