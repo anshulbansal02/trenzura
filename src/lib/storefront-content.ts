@@ -54,7 +54,7 @@ export type SiteSettingsContent = {
   socialLinks: StorefrontLink[]
 }
 
-export type StaticPageSlug = 'about' | 'contact' | 'privacy' | 'shipping-returns' | 'terms'
+export type StaticPageSlug = string
 
 export type StaticPageContent = {
   body: unknown[]
@@ -70,8 +70,6 @@ type SectionContent = {
   heading: string
   link: StorefrontLink
 }
-
-const staticPageSlugs: StaticPageSlug[] = ['about', 'contact', 'privacy', 'shipping-returns', 'terms']
 
 export function getSiteSettingsContent(): SiteSettingsContent {
   const settings = requireRecord(getGeneratedContent().siteSettings, 'siteSettings')
@@ -135,37 +133,65 @@ export function getHomePageContent(): HomePageContent {
 }
 
 export function getStaticPageContent(slug: StaticPageSlug): StaticPageContent {
+  const page = findStaticPageContent(slug)
+  if (!page) {
+    throw new Error(`Generated Sanity content is missing staticPage.${slug}.`)
+  }
+
+  return page
+}
+
+export function findStaticPageContent(slug: StaticPageSlug): StaticPageContent | null {
   const pagesValue = getGeneratedContent().staticPages
   if (!Array.isArray(pagesValue)) {
     throw new Error('Generated Sanity content is missing staticPages.')
   }
 
-  const page = pagesValue.find((item) => isRecord(item) && item.slug === slug)
-  const record = requireRecord(page, `staticPage.${slug}`)
+  const normalizedSlug = normalizeStaticPageSlug(slug)
+  if (!normalizedSlug) return null
+
+  const page = pagesValue.find(
+    (item) => isRecord(item) && normalizeStaticPageSlug(item.slug) === normalizedSlug,
+  )
+  if (!page) return null
+
+  const record = requireRecord(page, `staticPage.${normalizedSlug}`)
   const body = record.body
 
   if (!Array.isArray(body) || body.length === 0) {
-    throw new Error(`Generated Sanity content is missing staticPage.${slug}.body.`)
+    throw new Error(`Generated Sanity content is missing staticPage.${normalizedSlug}.body.`)
   }
 
   return {
-    slug,
-    eyebrow: requireString(record, `staticPage.${slug}.eyebrow`, ['eyebrow']),
-    title: requireString(record, `staticPage.${slug}.title`, ['title']),
-    seoTitle: requireString(record, `staticPage.${slug}.seoTitle`, ['seoTitle']),
-    seoDescription: requireString(record, `staticPage.${slug}.seoDescription`, [
+    slug: normalizedSlug,
+    eyebrow: requireString(record, `staticPage.${normalizedSlug}.eyebrow`, ['eyebrow']),
+    title: requireString(record, `staticPage.${normalizedSlug}.title`, ['title']),
+    seoTitle: requireString(record, `staticPage.${normalizedSlug}.seoTitle`, ['seoTitle']),
+    seoDescription: requireString(record, `staticPage.${normalizedSlug}.seoDescription`, [
       'seoDescription',
     ]),
     body,
   }
 }
 
+export function getStaticPagePaths() {
+  const pagesValue = getGeneratedContent().staticPages
+  if (!Array.isArray(pagesValue)) return []
+
+  return pagesValue.flatMap((item) => {
+    if (!isRecord(item)) return []
+
+    const slug = normalizeStaticPageSlug(item.slug)
+    return slug ? [`/${slug}`] : []
+  })
+}
+
 export function validateGeneratedStorefrontContent() {
   getSiteSettingsContent()
   getHomePageContent()
 
-  for (const slug of staticPageSlugs) {
-    getStaticPageContent(slug)
+  for (const path of getStaticPagePaths()) {
+    getStaticPageContent(path)
   }
 }
 
@@ -334,6 +360,18 @@ function requireString(
 
 function readTrimmedString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function normalizeStaticPageSlug(value: unknown) {
+  if (typeof value === 'string') {
+    return value.trim().replace(/^\/+|\/+$/g, '') || null
+  }
+
+  if (isRecord(value) && typeof value.current === 'string') {
+    return value.current.trim().replace(/^\/+|\/+$/g, '') || null
+  }
+
+  return null
 }
 
 function toTitleCase(value: string) {

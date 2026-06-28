@@ -70,12 +70,11 @@ export const siteSettings = defineType({
               title: 'Links',
               type: 'array',
               of: [{ type: 'routeLink' }],
-              validation: (rule) => rule.required().min(1).max(8),
+              validation: (rule) => rule.required().min(1),
             }),
           ],
         },
       ],
-      validation: (rule) => rule.max(5),
     }),
     defineField({
       name: 'socialLinks',
