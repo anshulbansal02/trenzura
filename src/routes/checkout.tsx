@@ -33,7 +33,7 @@ import {
 import { formatPrice } from '../lib/format'
 import { createPageMeta } from '../lib/seo'
 import { calculateShippingPaise } from '../lib/shipping'
-import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
+import { getSupabaseClient, isOrdersEnabled, isSupabaseConfigured } from '../lib/supabase'
 import {
   getCitiesForIndianState,
   indianStateNames,
@@ -331,6 +331,35 @@ function CheckoutPage() {
               }
             >
               Continue shopping
+            </Button>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (!isOrdersEnabled) {
+    return (
+      <main className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto flex min-h-[58svh] max-w-3xl items-center border-b border-[var(--color-line)] pb-10 text-center">
+          <div className="mx-auto">
+            <p className="text-sm font-medium text-[var(--color-muted)]">Checkout</p>
+            <h1 className="mt-3 font-serif text-5xl font-normal leading-none text-[var(--color-ink)] sm:text-6xl">
+              Orders are disabled
+            </h1>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[var(--color-muted)]">
+              We are not accepting orders right now. Browse our products and check back soon.
+            </p>
+            <Button
+              nativeButton={false}
+              render={
+                <Link
+                  to="/products"
+                  className="mt-7 inline-flex h-11 items-center justify-center bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-paper)] transition duration-200 ease-out hover:bg-[var(--color-primary-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 active:scale-[0.99]"
+                />
+              }
+            >
+              Browse products
             </Button>
           </div>
         </section>
