@@ -102,11 +102,15 @@ jobs:
 
       - run: pnpm build
 
+      - name: Pin QA Worker custom domain
+        run: |
+          node -e "const fs=require('node:fs'); const path='dist/server/wrangler.json'; const config=JSON.parse(fs.readFileSync(path,'utf8')); config.routes=[{pattern:process.env.CLOUDFLARE_DOMAIN, custom_domain:true}]; fs.writeFileSync(path, JSON.stringify(config));"
+
       - name: Sync QA Worker secrets
         run: printf '%s' "$DELHIVERY_API_TOKEN" | pnpm exec wrangler secret put DELHIVERY_API_TOKEN --env qa --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Deploy QA to Cloudflare Workers
-        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME" --domain "$CLOUDFLARE_DOMAIN"
+        run: pnpm exec wrangler deploy --env qa --name "$CLOUDFLARE_WORKER_NAME"
 
       - name: Verify QA domain
         run: curl --fail --silent --show-error --head --retry 5 --retry-delay 3 "https://${CLOUDFLARE_DOMAIN}"
